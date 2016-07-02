@@ -32,6 +32,8 @@ namespace TestApp
             var d2 = Serializer.Clone(d);
             d.Show();
             d2.Show();
+            d2.Top += 10;
+            d2.Left += 10;
             System.Windows.Forms.Application.Run();
         }
 

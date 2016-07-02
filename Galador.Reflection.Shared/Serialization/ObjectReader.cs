@@ -81,7 +81,13 @@ namespace Galador.Reflection.Serialization
             }
 
             object o = null;
-            if (actual == ReflectType.RReflectType)
+            if (actual.IsIgnored)
+            {
+                o = null;
+                if (oid > 0)
+                    Context.Register(oid, null);
+            }
+            else if (actual == ReflectType.RReflectType)
             {
                 var rt = new ReflectType();
                 Context.Register(oid, rt);

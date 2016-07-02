@@ -79,7 +79,11 @@ namespace Galador.Reflection.Serialization
             }
 
             // finally write the item
-            if (ots == ReflectType.RReflectType)
+            if (ots.IsIgnored)
+            {
+                // nothing!
+            }
+            else if (ots == ReflectType.RReflectType)
             {
                 ((ReflectType)o).Write(this);
             }

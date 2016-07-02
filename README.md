@@ -64,15 +64,15 @@ Here is a simple use case, of registering an event when a property changes:
 ### Registry
 An IoC container, `IServiceProvider`, MEF clone all in one.
 
-On first create an instance of a register `var registry = new Registry()`
+First create an instance of a registry `var registry = new Registry()`
 
 Service class are then registered with `registry.Register<T>()` or all of those marked with `ExportAttribute` via `registry.RegisterAssemblies(...)`.
 Remark class (not interface) class should be registered. They could then be access though **any** type or interface they implement.
 
-After service registration it can be use as a replace for `Activator` class, 
+After service registration it can be use as a replacement for `Activator` class, 
 it will also do constructor injection (using the constructor with the most parameters) 
-and property injection, when a property is marked with [ImportAttribute]. 
-The injection will use all the interface registered previously, or create instances on demand recursively.
+and property injection, when a property is marked with `ImportAttribute`. 
+The injection will use all the interfaces registered previously, or create instances on demand recursively.
 
 Finally to solve mutually dependent object implement `IRegistryDelegate` such as
 

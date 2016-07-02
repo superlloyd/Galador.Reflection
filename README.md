@@ -11,7 +11,7 @@ Most interesting classed exposed:
 
 ### Serializer
 A class which helps implement `File > Save` with very little setup. 
-By design it ignores pointers, `IntPtr`, `Delegate`. Also it is designed to work with object that can fully be describe by their public and/or properties and, optionally by `IList` or `IDictionary` interfaces (generic or not).
+By design it ignores pointers, `IntPtr`, `Delegate`. Also it is designed to work with object that can fully be describe by their public fields and/or properties and, optionally by `IList` or `IDictionary` interfaces (generic or not).
 And it will NOT restore private field / property, unless explicitly told to, with some attribute annotation on the class itself.
 
 To serialize an object one does:
@@ -69,7 +69,7 @@ First create an instance of a registry `var registry = new Registry()`
 Service class are then registered with `registry.Register<T>()` or all of those marked with `ExportAttribute` via `registry.RegisterAssemblies(...)`.
 Remark class (not interface) class should be registered. They could then be access though **any** type or interface they implement.
 
-After service registration it can be use as a replacement for `Activator` class, 
+After service registration it can be use as a replacement for the `Activator` class, 
 it will also do constructor injection (using the constructor with the most parameters) 
 and property injection, when a property is marked with `ImportAttribute`. 
 The injection will use all the interfaces registered previously, or create instances on demand recursively.

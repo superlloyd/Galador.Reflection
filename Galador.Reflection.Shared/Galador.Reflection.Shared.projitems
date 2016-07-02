@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <SharedGUID>d9a212a5-3e6c-427b-bc19-0ad1d9911db6</SharedGUID>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <Import_RootNamespace>Galador.Reflection</Import_RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)AssemblyInfo.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Logging\TraceKey.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Logging\TraceKeys.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)PropertyPath.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Registry.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Serialization\IDeserialized.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Serialization\IPrimitiveReader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Serialization\IPrimitiveWriter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Serialization\KnownTypes.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Serialization\Missing.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Serialization\ObjectContext.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Serialization\ObjectReader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Serialization\ObjectWriter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Serialization\PrimitiveBinaryReader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Serialization\PrimitiveBinaryWriter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Serialization\PrimitiveTextReader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Serialization\PrimitiveTextWriter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Serialization\PrimitiveType.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Serialization\ReflectType.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Serialization\SerializationAttributes.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Serialization\Serializer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Serialization\StreamExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Serialization\Surrogate.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Serialization\TypeDescription.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)TypeForwarded.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utils\AsyncQueue.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utils\CollectionEx.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utils\Empty.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utils\ReflectionEx.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utils\ValueTuple.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utils\WeakEvents.cs" />
+  </ItemGroup>
+</Project>

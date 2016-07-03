@@ -11,7 +11,7 @@ namespace Galador.Reflection.Serialization
         internal Missing(ReflectType type)
         {
             this.Type = type;
-            foreach (var m in type.Members)
+            foreach (var m in type.RuntimeMembers())
             {
                 var mm = new Member
                 {

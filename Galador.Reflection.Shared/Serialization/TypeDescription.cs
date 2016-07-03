@@ -107,7 +107,7 @@ namespace Galador.Reflection.Serialization
             }
             Fullname = type.FullName;
             var ass = type.Assembly;
-            if (ass != typeof(object).Assembly)
+            if (ass != ReflectType.MSCORLIB)
             {
                 AssemblyName = ass.GetName().Name;
             }

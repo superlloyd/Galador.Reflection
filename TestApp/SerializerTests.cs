@@ -13,6 +13,59 @@ namespace TestApp
 {
     public class SerializationTests
     {
+        [SerializationName("TEST-NAME", null)]
+        public class Serial1
+        {
+            public int ID { get; set; }
+            public string Name { get; set; }
+            public Serial2 Serial2 { get; set; }
+        }
+        [SerializationName("TEST-NAME", "TEST Assembly")]
+        public class Serial2
+        {
+            public int ID { get; set; }
+            public string Name { get; set; }
+            public Serial1 Serial1 { get; set; }
+        }
+
+        [Fact]
+        public void CheckSerializationName()
+        {
+            var s1 = new Serial1
+            {
+                ID = 1,
+                Name = "serial1",
+                Serial2 = new Serial2
+                {
+                    ID = 2,
+                    Name = "serial2",
+                },
+            };
+            s1.Serial2.Serial1 = s1;
+
+            // needed for attribute name to work during deserialization
+            KnownTypes.Register(typeof(Serial1), typeof(Serial2));
+
+            var clone = Serializer.Clone(s1);
+            Assert.Equal(s1.ID, clone.ID);
+            Assert.Equal(s1.Name, clone.Name);
+            Assert.Equal(s1.Serial2.ID, clone.Serial2.ID);
+            Assert.Equal(s1.Serial2.Name, clone.Serial2.Name);
+            Assert.Equal(s1.Serial2.Serial1.ID, clone.Serial2.Serial1.ID);
+
+            var ms = new MemoryStream();
+            var w = new ObjectWriter(new PrimitiveBinaryWriter(ms));
+            w.Write(s1);
+
+            var csharp = w.Context.GenerateCSharpCode("Generated");
+            var t1 = w.Context.Objects.OfType<ReflectType>().First(x => x.Type == typeof(Serial1));
+            var t2 = w.Context.Objects.OfType<ReflectType>().First(x => x.Type == typeof(Serial2));
+            Assert.Equal(t1.TypeName, "TEST-NAME");
+            Assert.Equal(t1.AssemblyName, null);
+            Assert.Equal(t2.TypeName, "TEST-NAME");
+            Assert.Equal(t2.AssemblyName, "TEST Assembly");
+        }
+
         [Fact]
         public void ExoticTest()
         {
@@ -32,8 +85,6 @@ namespace TestApp
             var d2 = Serializer.Clone(d);
             d.Show();
             d2.Show();
-            d2.Top += 10;
-            d2.Left += 10;
             System.Windows.Forms.Application.Run();
         }
 
@@ -159,7 +210,7 @@ namespace TestApp
             Assert.True(meser.Length < json.Length - 4 * N);
         }
 
-        [Conditional("RELEASE")] // Remark this condition doesn't work
+        [Conditional("RELEASE")]
         [Fact]
         public void CheckIsFastEnough()
         {
@@ -186,8 +237,32 @@ namespace TestApp
             for (int i = 0; i < N2; i++)
                 Serializer.ToSerializedString(list);
             mDT.Stop();
-            // :"( this only work in release mode...
             Assert.True(mDT.Elapsed.Ticks < jDT.Elapsed.Ticks);
+        }
+
+        public class BList : List<string>
+        {
+            public string Name { get; set; }
+        }
+
+        [Fact]
+        public void CheckComplexClass2()
+        {
+            var b = new BList()
+            {
+                "one",
+                "two",
+                "threww",
+            };
+            b.Name = "haha";
+
+
+            var c = Serializer.Clone(b);
+            Assert.Equal(b.Count, c.Count);
+            Assert.Equal(b[0], c[0]);
+            Assert.Equal(b[1], c[1]);
+            Assert.Equal(b[2], c[2]);
+            Assert.Equal(b.Name, c.Name);
         }
 
         public class BigClass

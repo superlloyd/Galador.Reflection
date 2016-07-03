@@ -132,8 +132,12 @@ namespace Galador.Reflection.Serialization
                 select t;
             q.ForEach(t => Register(t.AsType()));
         }
+        public static void Register(params Type[] types) { Register((IEnumerable<Type>)types); }
+        public static void Register(IEnumerable<Type> types) { types.ForEach(x => Register(x)); }
         public static void Register(Type type)
         {
+            if (type == null)
+                return;
             lock (typeToSurrogate)
             {
                 foreach (var t in GetSurrogateElements(type))

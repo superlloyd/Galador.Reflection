@@ -36,7 +36,8 @@ namespace Galador.Reflection.Serialization
         }
         public void Dispose() { Writer.Dispose(); }
 
-        const ulong VERSION = 1;
+        // v2 added BaseClass, IsSurrogateType
+        const ulong VERSION = 2;
 
         public ObjectContext Context { get; private set; }
         public IPrimitiveWriter Writer { get; private set; }
@@ -52,11 +53,10 @@ namespace Galador.Reflection.Serialization
             Write(ReflectType.RObject, o);
         }
 
-        // REMARK only cache surrogate for Well Known object ...
         internal void Write(ReflectType expected, object o)
         {
             // 1st write the ID of the object, return if already written
-            if (expected.IsReference) 
+            if (expected.IsReference)
             {
                 ulong oid;
                 var isKnown = Context.TryGetId(o, out oid);
@@ -96,7 +96,7 @@ namespace Galador.Reflection.Serialization
             {
                 WriteISerializable(ots, o);
             }
-            else if(ots.HasConverter)
+            else if (ots.HasConverter)
             {
                 WriteConverter(ots, o);
             }
@@ -220,20 +220,21 @@ namespace Galador.Reflection.Serialization
                             {
                                 Write(f.Type, f.Value);
                             }
-                            switch (ts.CollectionType)
+                            var colt = ts.GetCollectionType();
+                            switch (colt.CollectionType)
                             {
                                 case ReflectCollectionType.IList:
                                 case ReflectCollectionType.ICollectionT:
                                     Writer.WriteVInt(miss.Collection.Count);
-                                    var coll = ts.Collection1 ?? ReflectType.RObject;
+                                    var coll = colt.Collection1 ?? ReflectType.RObject;
                                     foreach (var item in miss.Collection)
                                         Write(coll, item.Item1);
                                     break;
                                 case ReflectCollectionType.IDictionary:
                                 case ReflectCollectionType.IDictionaryKV:
                                     Writer.WriteVInt(miss.Collection.Count);
-                                    var coll1 = ts.Collection1 ?? ReflectType.RObject;
-                                    var coll2 = ts.Collection2 ?? ReflectType.RObject;
+                                    var coll1 = colt.Collection1 ?? ReflectType.RObject;
+                                    var coll2 = colt.Collection2 ?? ReflectType.RObject;
                                     foreach (var item in miss.Collection)
                                     {
                                         Write(coll1, item.Item1);
@@ -244,12 +245,13 @@ namespace Galador.Reflection.Serialization
                         }
                         else
                         {
-                            foreach (var f in ts.Members)
+                            foreach (var f in ts.RuntimeMembers())
                             {
                                 var p = f.GetValue(o);
                                 Write(f.Type, p);
                             }
-                            switch (ts.CollectionType)
+                            var colt = ts.GetCollectionType();
+                            switch (colt.CollectionType)
                             {
                                 case ReflectCollectionType.IList:
                                     WriteList((IList)o);
@@ -258,16 +260,16 @@ namespace Galador.Reflection.Serialization
                                     WriteDict((IDictionary)o);
                                     break;
                                 case ReflectCollectionType.ICollectionT:
-                                    if (ts.listWrite == null)
-                                        ts.listWrite = GetType().TryGetMethods("WriteCollection", new[] { ts.Collection1.Type }, ts.Type).FirstOrDefault();
-                                    if (ts.listWrite != null)
-                                        ts.listWrite.Invoke(this, new object[] { o });
+                                    if (colt.listWrite == null)
+                                        colt.listWrite = GetType().TryGetMethods("WriteCollection", new[] { colt.Collection1.Type }, ts.Type).FirstOrDefault();
+                                    if (colt.listWrite != null)
+                                        colt.listWrite.Invoke(this, new object[] { o });
                                     break;
                                 case ReflectCollectionType.IDictionaryKV:
-                                    if (ts.listWrite == null)
-                                        ts.listWrite = GetType().TryGetMethods("WriteDictionary", new[] { ts.Collection1.Type, ts.Collection2.Type }, ts.Type).FirstOrDefault();
-                                    if (ts.listWrite != null)
-                                        ts.listWrite.Invoke(this, new object[] { o });
+                                    if (colt.listWrite == null)
+                                        colt.listWrite = GetType().TryGetMethods("WriteDictionary", new[] { colt.Collection1.Type, colt.Collection2.Type }, ts.Type).FirstOrDefault();
+                                    if (colt.listWrite != null)
+                                        colt.listWrite.Invoke(this, new object[] { o });
                                     break;
                             }
                         }

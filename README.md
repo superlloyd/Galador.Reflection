@@ -13,6 +13,8 @@ Most interesting classed exposed:
 A class which helps implement `File > Save` with very little setup. 
 By design it ignores pointers, `IntPtr`, `Delegate`. Also it is designed to work with object that can fully be describe by their public fields and/or properties and, optionally by `IList` or `IDictionary` interfaces (generic or not).
 And it will NOT restore private field / property, unless explicitly told to, with some attribute annotation on the class itself.
+Very much like JSON value property / field are matched by name when deserializing. 
+But unlike JSON default format this also store object as reference and save type information.
 
 To serialize an object one does:
 
@@ -42,7 +44,8 @@ And surrogate must be registered with the `KnownTypes` class so that they can be
     KnownTypes.Register(typeof(BitmapSurrogate).Assembly); 
 
 
-***Also (coming soon) it could generate Type hierarchy to restore its data in memory from an object stream.***
+Finally if provided with a stream created by a third party with this Serializer, one can use `ObjectContext.GenerateCSharpCode()` 
+or `Serializer.GenerateCSharpCode()` to generate a class hierarchy that can be used to deserialize the stream.
 
 
 ### PropertyPath

@@ -60,6 +60,9 @@ namespace Galador.Reflection.Serialization
         // this must be first
         static readonly SerializationSettingsAttribute DefaultSettings = new SerializationSettingsAttribute();
 
+        internal static readonly Assembly MSCORLIB = typeof(object).GetTypeInfo().Assembly;
+        internal bool IsMscorlib() { return Type != null && Type.GetTypeInfo().Assembly == MSCORLIB; }
+
         public static readonly ReflectType RObject = GetType(typeof(object));
         public static readonly ReflectType RReflectType = GetType(typeof(ReflectType));
         public static readonly ReflectType RString = GetType(typeof(string));
@@ -83,10 +86,12 @@ namespace Galador.Reflection.Serialization
         public bool IsISerializable { get; private set; }
         public bool IsReference { get; private set; }
         public bool IsDefaultSave { get; private set; }
+        public bool IsSurrogateType { get; set; }
 
         // non flags
         public string TypeName { get; private set; }
         public string AssemblyName { get; private set; }
+        public ReflectType BaseType { get; private set; } // introduced in v2
         public int ArrayRank { get; private set; }
         public int GenericParameterIndex { get; private set; }
         public Type Type { get; private set; }
@@ -97,7 +102,39 @@ namespace Galador.Reflection.Serialization
         public IReadOnlyList<ReflectType> GenericArguments { get; private set; } = Empty<ReflectType>.Array;
         public MemberList Members { get; } = new MemberList();
 
+        #region utilities: RuntimeMembers() ParentHierarchy() CollectionType()
+
+        public IEnumerable<Member> RuntimeMembers()
+        {
+            if (BaseType != null && BaseType != RObject)
+                foreach (var m in BaseType.RuntimeMembers())
+                    yield return m;
+            foreach (var m in Members)
+                yield return m;
+        }
+
         internal MethodInfo listWrite, listRead;
+
+        public IEnumerable<ReflectType> ParentHierarchy()
+        {
+            if (this == RObject || BaseType == null)
+                yield break;
+            yield return BaseType;
+            foreach (var sup in BaseType.ParentHierarchy())
+                yield return sup;
+        }
+
+        public ReflectType GetCollectionType()
+        {
+            if (CollectionType != ReflectCollectionType.None)
+                return this;
+            var result = ParentHierarchy().FirstOrDefault(x => x.CollectionType != ReflectCollectionType.None);
+            if (result == null)
+                return this;
+            return result;
+        }
+
+        #endregion
 
         #region ctors() Initialize()
 
@@ -160,15 +197,15 @@ namespace Galador.Reflection.Serialization
                         }
                         else
                         {
-#if __PCL__
-                        throw new NotSupportedException("PCL");
-#else
                             Element = GetType(ti.GetGenericTypeDefinition());
                             IsNullable = Element == RNullable;
-                            GenericArguments = ti.GetGenericArguments().Select(x => GetType(x)).ToArray();
-                            IsIgnored = GenericArguments.Any(x => x.IsIgnored);
-#endif
                         }
+#if __PCL__
+                            throw new NotSupportedException("PCL");
+#else
+                        GenericArguments = ti.GetGenericArguments().Select(x => GetType(x)).ToArray();
+                        IsIgnored = GenericArguments.Any(x => x.IsIgnored);
+#endif
                     }
                     if (!IsGeneric || IsGenericTypeDefinition)
                     {
@@ -176,7 +213,7 @@ namespace Galador.Reflection.Serialization
                         if (att == null)
                         {
                             TypeName = type.FullName;
-                            if (ti.Assembly != typeof(object).GetTypeInfo().Assembly)
+                            if (!IsMscorlib())
                                 AssemblyName = ti.Assembly.GetName().Name;
                         }
                         else
@@ -200,6 +237,13 @@ namespace Galador.Reflection.Serialization
                         IsReference = ti.IsClass || ti.IsInterface;
                         IsFinal = !ti.IsClass || ti.IsSealed;
                         IsDefaultSave = true;
+                        if (IsReference && Type != typeof(object))
+                        {
+                            BaseType = GetType(ti.BaseType);
+                        }
+#if !__PCL__
+                        IsSurrogateType = ti.GetTypeHierarchy().Any(x => x.IsInterface && x.IsGenericType && x.GetGenericTypeDefinition() == typeof(ISurrogate<>));
+#endif
                         Type tSurrogate;
                         if (KnownTypes.TryGetSurrogateType(type, out tSurrogate))
                         {
@@ -231,6 +275,8 @@ namespace Galador.Reflection.Serialization
                                     inc = true;
                                 if (!inc)
                                     continue;
+                                if (BaseType != null && BaseType.Members.ContainsKey(pi.Name))
+                                    continue;
                                 var m = new Member
                                 {
                                     Name = pi.Name,
@@ -253,6 +299,8 @@ namespace Galador.Reflection.Serialization
                                     inc = true;
                                 if (!inc)
                                     continue;
+                                if (BaseType != null && BaseType.Members.ContainsKey(pi.Name))
+                                    continue;
                                 var m = new Member
                                 {
                                     Name = pi.Name,
@@ -261,11 +309,15 @@ namespace Galador.Reflection.Serialization
                                 };
                                 Members.Add(m);
                             }
-                            var interfaces = type.GetTypeHierarchy().Where(x => x.GetTypeInfo().IsInterface).Distinct().ToList();
-                            var itype = interfaces.Where(t => t.GetTypeInfo().IsGenericType && t.GetTypeInfo().GetGenericTypeDefinition() == typeof(IDictionary<,>)).FirstOrDefault();
-                            if (itype == null) itype = interfaces.Where(t => t.GetTypeInfo().IsGenericType && t.GetTypeInfo().GetGenericTypeDefinition() == typeof(IDictionary)).FirstOrDefault();
-                            if (itype == null) itype = interfaces.Where(t => t.GetTypeInfo().IsGenericType && t.GetTypeInfo().GetGenericTypeDefinition() == typeof(ICollection<>)).FirstOrDefault();
-                            if (itype == null) itype = interfaces.Where(t => t.GetTypeInfo().IsGenericType && t.GetTypeInfo().GetGenericTypeDefinition() == typeof(IList)).FirstOrDefault();
+                            Type itype = null;
+                            if (ParentHierarchy().All(x => x.CollectionType == ReflectCollectionType.None))
+                            {
+                                var interfaces = type.GetTypeHierarchy().Where(x => x.GetTypeInfo().IsInterface).Distinct().ToList();
+                                itype = interfaces.Where(t => t.GetTypeInfo().IsGenericType && t.GetTypeInfo().GetGenericTypeDefinition() == typeof(IDictionary<,>)).FirstOrDefault();
+                                if (itype == null) itype = interfaces.Where(t => t.GetTypeInfo().IsGenericType && t.GetTypeInfo().GetGenericTypeDefinition() == typeof(IDictionary)).FirstOrDefault();
+                                if (itype == null) itype = interfaces.Where(t => t.GetTypeInfo().IsGenericType && t.GetTypeInfo().GetGenericTypeDefinition() == typeof(ICollection<>)).FirstOrDefault();
+                                if (itype == null) itype = interfaces.Where(t => t.GetTypeInfo().IsGenericType && t.GetTypeInfo().GetGenericTypeDefinition() == typeof(IList)).FirstOrDefault();
+                            }
                             if (itype != null)
                             {
                                 var iti = itype.GetTypeInfo();
@@ -615,6 +667,7 @@ namespace Galador.Reflection.Serialization
             if (IsISerializable) result |= 1 << 27;
             if (IsReference) result |= 1 << 28;
             if (IsDefaultSave) result |= 1 << 29;
+            if (IsSurrogateType) result |= 1 << 30;
             return result;
         }
         void IntToFlags(int flags)
@@ -635,6 +688,7 @@ namespace Galador.Reflection.Serialization
             IsISerializable = (flags & (1 << 27)) != 0;
             IsReference = (flags & (1 << 28)) != 0;
             IsDefaultSave = (flags & (1 << 29)) != 0;
+            IsSurrogateType = (flags & (1 << 30)) != 0;
         }
 
         #endregion
@@ -702,6 +756,11 @@ namespace Galador.Reflection.Serialization
                 }
                 else if (!IsGeneric || IsGenericTypeDefinition)
                 {
+                    if (IsReference && this != RObject)
+                    {
+                        if (reader.VERSION == 1) BaseType = RObject;
+                        else BaseType = (ReflectType)reader.Read(RReflectType, null);
+                    }
                     var fields = Type == null ? new Dictionary<string, FieldInfo>(0) : Type.GetRuntimeFields().ToDictionary(x => x.Name);
                     var properties = Type == null ? new Dictionary<string, PropertyInfo>(0) : Type.GetRuntimeProperties().ToDictionary(x => x.Name);
                     int NMembers = (int)reader.Reader.ReadVInt();
@@ -835,6 +894,10 @@ namespace Galador.Reflection.Serialization
                 }
                 else if (IsDefaultSave && (!IsGeneric || IsGenericTypeDefinition))
                 {
+                    if (IsReference && this != RObject)
+                    {
+                        writer.Write(RReflectType, BaseType);
+                    }
                     writer.Writer.WriteVInt(Members.Count);
                     for (int i = 0; i < Members.Count; i++)
                     {

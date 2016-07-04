@@ -227,17 +227,17 @@ namespace TestApp
                 Assert.Equal(list[i], clone[i]);
 
             int N2 = 100;
-            //var jDT = new Stopwatch();
-            //jDT.Start();
-            //for (int i = 0; i < N2; i++)
-            //    JsonConvert.SerializeObject(list);
-            //jDT.Stop();
+            var jDT = new Stopwatch();
+            jDT.Start();
+            for (int i = 0; i < N2; i++)
+                JsonConvert.SerializeObject(list);
+            jDT.Stop();
             var mDT = new Stopwatch();
             mDT.Start();
             for (int i = 0; i < N2; i++)
                 Serializer.ToSerializedString(list);
             mDT.Stop();
-            //Assert.True(mDT.Elapsed.Ticks < jDT.Elapsed.Ticks);
+            Assert.True(mDT.Elapsed.Ticks < jDT.Elapsed.Ticks);
         }
 
         public class BList : List<string>

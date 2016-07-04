@@ -106,7 +106,7 @@ namespace Galador.Reflection.Serialization
 
         public IEnumerable<Member> RuntimeMembers()
         {
-            if (BaseType != null && BaseType != RObject)
+            if (BaseType != null)
                 foreach (var m in BaseType.RuntimeMembers())
                     yield return m;
             foreach (var m in Members)
@@ -117,11 +117,12 @@ namespace Galador.Reflection.Serialization
 
         public IEnumerable<ReflectType> ParentHierarchy()
         {
-            if (this == RObject || BaseType == null)
-                yield break;
-            yield return BaseType;
-            foreach (var sup in BaseType.ParentHierarchy())
-                yield return sup;
+            var p = BaseType;
+            while (p != null)
+            {
+                yield return p;
+                p = p.BaseType;
+            }
         }
 
         public ReflectType GetCollectionType()

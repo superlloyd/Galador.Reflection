@@ -21,6 +21,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	EndProjectSection
 EndProject
 Global
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
+	EndGlobalSection
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		Galador.Reflection.Shared\Galador.Reflection.Shared.projitems*{419f3792-2cac-47ff-acd6-483d6bbfe846}*SharedItemsImports = 4
 		Galador.Reflection.Shared\Galador.Reflection.Shared.projitems*{70e036d3-b37d-474c-a786-43a8ffaf7bff}*SharedItemsImports = 4

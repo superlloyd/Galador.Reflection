@@ -593,18 +593,32 @@ namespace Galador.Reflection.Serialization
 
             public object GetValue(object instance)
             {
-                if (pInfo != null && pInfo.GetMethod != null)
-                    return pInfo.GetValue(instance);
-                if (fInfo != null)
-                    return fInfo.GetValue(instance);
+                try
+                {
+                    if (pInfo != null && pInfo.GetMethod != null)
+                        return pInfo.GetValue(instance);
+                    if (fInfo != null)
+                        return fInfo.GetValue(instance);
+                }
+                catch (Exception ex)
+                {
+                    Logging.TraceKeys.Serialization.Error($"Error while serializing {this}, couldn't get member {Name} because {ex}");
+                }
                 return null;
             }
             public void SetValue(object instance, object value)
             {
-                if (pInfo != null && pInfo.SetMethod != null && pInfo.PropertyType.IsInstanceOf(value))
-                    pInfo.SetValue(instance, value);
-                else if (fInfo != null && fInfo.FieldType.IsInstanceOf(value))
-                    fInfo.SetValue(instance, value);
+                try
+                { 
+                    if (pInfo != null && pInfo.SetMethod != null && pInfo.PropertyType.IsInstanceOf(value))
+                        pInfo.SetValue(instance, value);
+                    else if (fInfo != null && fInfo.FieldType.IsInstanceOf(value))
+                        fInfo.SetValue(instance, value);
+                }
+                catch (Exception ex)
+                {
+                    Logging.TraceKeys.Serialization.Error($"Error while deserializing {this}, couldn't set member {Name} because {ex}");
+                }
             }
         }
 

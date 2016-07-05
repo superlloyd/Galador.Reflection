@@ -113,7 +113,6 @@ Further if the type has already be written just its ID will be written.
 - If the type is a primitive type (written directly to the `IPrimitiveWriter`)
 - In all other case it will be written as a simple object
 
-
     // here is the default write object for simple object
     void WriteObject(ReflectType type, object o)
     {

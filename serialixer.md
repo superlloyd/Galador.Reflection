@@ -113,28 +113,28 @@ Further if the type has already be written just its ID will be written.
 - If the type is a primitive type (written directly to the `IPrimitiveWriter`)
 - In all other case it will be written as a simple object
 
-    // here is the default write object for simple object
-    void WriteObject(ReflectType type, object o)
-    {
-        foreach(Member m in type.RuntimeMembers())
-            Write(m.Type, m.GetValue(o)); // recursion
-
-        switch (type.CollectionType)
+        // here is the default write object for simple object
+        void WriteObject(ReflectType type, object o)
         {
-            case ReflectCollectionType.None: // Nothing!
-            case ReflectCollectionType.Ilist: // write IList
-                {
-                    var l = (IList)o;
-                    writer.WriteVInt(l.Count);
-                    for (int i=0; i < l.Count; i++)
-                        Write(ReflectType.Object, l[i]); // recursion
-                }
-            case ReflectCollectionType.ICollectionT: // write IList<T>
-            case ReflectCollectionType.IDictionary: // write IDictionary
-            case ReflectCollectionType.IDictionaryKV: // write IDictionary<K, V>
+            foreach(Member m in type.RuntimeMembers())
+                Write(m.Type, m.GetValue(o)); // recursion
+
+            switch (type.CollectionType)
+            {
+                case ReflectCollectionType.None: // Nothing!
+                case ReflectCollectionType.Ilist: // write IList
+                    {
+                        var l = (IList)o;
+                        writer.WriteVInt(l.Count);
+                        for (int i=0; i < l.Count; i++)
+                            Write(ReflectType.Object, l[i]); // recursion
+                    }
+                case ReflectCollectionType.ICollectionT: // write IList<T>
+                case ReflectCollectionType.IDictionary: // write IDictionary
+                case ReflectCollectionType.IDictionaryKV: // write IDictionary<K, V>
+            }
         }
-    }
-    
+
 That is in essence the whole algorithm. All the use case made it a bit tedious, yet relatively simple.
 `ObjectWriter` is about 400 lines, `ObjectReader` is about 500 lines and `ReflectType` is about 1000 lines.
 

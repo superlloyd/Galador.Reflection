@@ -9,8 +9,10 @@ namespace Galador.Reflection.Serialization
 {
     public class PrimitiveBinaryReader : IPrimitiveReader
     {
+        Union8 union;
         Stream Stream;
         byte[] buf16 = new byte[16];
+
 
         public PrimitiveBinaryReader(Stream stream)
         {
@@ -77,7 +79,9 @@ namespace Galador.Reflection.Serialization
         public char ReadChar()
         {
             ReadWellKnownBytes(2);
-            return BitConverter.ToChar(buf16, 0);
+            union.Byte0 = buf16[0];
+            union.Byte1 = buf16[1];
+            return union.Char;
         }
 
         public byte ReadByte()
@@ -96,61 +100,120 @@ namespace Galador.Reflection.Serialization
         public short ReadInt16()
         {
             ReadWellKnownBytes(2);
-            return BitConverter.ToInt16(buf16, 0);
+            union.Byte0 = buf16[0];
+            union.Byte1 = buf16[1];
+            return union.Int16;
         }
 
         public ushort ReadUInt16()
         {
             ReadWellKnownBytes(2);
-            return BitConverter.ToUInt16(buf16, 0);
+            union.Byte0 = buf16[0];
+            union.Byte1 = buf16[1];
+            return union.UInt16;
         }
 
         public int ReadInt32()
         {
             ReadWellKnownBytes(4);
-            return BitConverter.ToInt32(buf16, 0);
+            union.Byte0 = buf16[0];
+            union.Byte1 = buf16[1];
+            union.Byte2 = buf16[2];
+            union.Byte3 = buf16[3];
+            return union.Int32;
         }
 
         public uint ReadUInt32()
         {
             ReadWellKnownBytes(4);
-            return BitConverter.ToUInt32(buf16, 0);
+            union.Byte0 = buf16[0];
+            union.Byte1 = buf16[1];
+            union.Byte2 = buf16[2];
+            union.Byte3 = buf16[3];
+            return union.UInt32;
         }
 
         public long ReadInt64()
         {
             ReadWellKnownBytes(8);
-            return BitConverter.ToInt64(buf16, 0);
+            union.Byte0 = buf16[0];
+            union.Byte1 = buf16[1];
+            union.Byte2 = buf16[2];
+            union.Byte3 = buf16[3];
+            union.Byte4 = buf16[4];
+            union.Byte5 = buf16[5];
+            union.Byte6 = buf16[6];
+            union.Byte7 = buf16[7];
+            return union.Int64;
         }
 
         public ulong ReadUInt64()
         {
             ReadWellKnownBytes(8);
-            return BitConverter.ToUInt64(buf16, 0);
+            union.Byte0 = buf16[0];
+            union.Byte1 = buf16[1];
+            union.Byte2 = buf16[2];
+            union.Byte3 = buf16[3];
+            union.Byte4 = buf16[4];
+            union.Byte5 = buf16[5];
+            union.Byte6 = buf16[6];
+            union.Byte7 = buf16[7];
+            return union.UInt64;
         }
 
         public float ReadSingle()
         {
             ReadWellKnownBytes(4);
-            return BitConverter.ToSingle(buf16, 0);
+            union.Byte0 = buf16[0];
+            union.Byte1 = buf16[1];
+            union.Byte2 = buf16[2];
+            union.Byte3 = buf16[3];
+            return union.Single;
         }
 
         public double ReadDouble()
         {
             ReadWellKnownBytes(8);
-            return BitConverter.ToDouble(buf16, 0);
+            union.Byte0 = buf16[0];
+            union.Byte1 = buf16[1];
+            union.Byte2 = buf16[2];
+            union.Byte3 = buf16[3];
+            union.Byte4 = buf16[4];
+            union.Byte5 = buf16[5];
+            union.Byte6 = buf16[6];
+            union.Byte7 = buf16[7];
+            return union.Double;
         }
 
         public decimal ReadDecimal()
         {
             ReadWellKnownBytes(16);
-            var parts = new int[]
-            {
-                BitConverter.ToInt32(buf16, 0),
-                BitConverter.ToInt32(buf16, 4),
-                BitConverter.ToInt32(buf16, 8),
-                BitConverter.ToInt32(buf16, 12),
-            };
+            var parts = new int[4];
+
+            union.Byte0 = buf16[0];
+            union.Byte1 = buf16[1];
+            union.Byte2 = buf16[2];
+            union.Byte3 = buf16[3];
+            parts[0] = union.Int32;
+
+            union.Byte0 = buf16[4];
+            union.Byte1 = buf16[5];
+            union.Byte2 = buf16[6];
+            union.Byte3 = buf16[7];
+            parts[1] = union.Int32;
+
+            union.Byte0 = buf16[8];
+            union.Byte1 = buf16[9];
+            union.Byte2 = buf16[10];
+            union.Byte3 = buf16[11];
+            parts[2] = union.Int32;
+
+            union.Byte0 = buf16[12];
+            union.Byte1 = buf16[13];
+            union.Byte2 = buf16[14];
+            union.Byte3 = buf16[15];
+            parts[3] = union.Int32;
+
             return new decimal(parts);
         }
 

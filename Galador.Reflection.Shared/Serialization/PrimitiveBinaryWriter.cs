@@ -4,11 +4,54 @@ using System.IO;
 using System.Text;
 using System.Runtime.CompilerServices;
 using Galador.Reflection.Utils;
+using System.Runtime.InteropServices;
 
 namespace Galador.Reflection.Serialization
 {
+    // REMARK BitConverter follow Indianness, serializer should not, hopefully this will fix it
+    [StructLayout(LayoutKind.Explicit)]
+    struct Union8
+    {
+        [FieldOffset(0)]
+        public char Char;
+        [FieldOffset(0)]
+        public long Int64;
+        [FieldOffset(0)]
+        public ulong UInt64;
+        [FieldOffset(0)]
+        public int Int32;
+        [FieldOffset(0)]
+        public uint UInt32;
+        [FieldOffset(0)]
+        public short Int16;
+        [FieldOffset(0)]
+        public ushort UInt16;
+        [FieldOffset(0)]
+        public float Single;
+        [FieldOffset(0)]
+        public double Double;
+
+        [FieldOffset(0)]
+        public byte Byte0;
+        [FieldOffset(1)]
+        public byte Byte1;
+        [FieldOffset(2)]
+        public byte Byte2;
+        [FieldOffset(3)]
+        public byte Byte3;
+        [FieldOffset(4)]
+        public byte Byte4;
+        [FieldOffset(5)]
+        public byte Byte5;
+        [FieldOffset(6)]
+        public byte Byte6;
+        [FieldOffset(7)]
+        public byte Byte7;
+    }
+
     public class PrimitiveBinaryWriter : IPrimitiveWriter
     {
+        Union8 union;
         Stream Stream;
 
         public PrimitiveBinaryWriter(Stream stream)
@@ -42,12 +85,10 @@ namespace Galador.Reflection.Serialization
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void WriteKnownBytes(byte[] buf) { Stream.Write(buf, 0, buf.Length); }
-
         public void Write(Guid value)
         {
-            WriteKnownBytes(value.ToByteArray());
+            var buf = value.ToByteArray();
+            Stream.Write(buf, 0, buf.Length);
         }
 
         public void Write(bool value)
@@ -57,7 +98,9 @@ namespace Galador.Reflection.Serialization
 
         public void Write(char value)
         {
-            WriteKnownBytes(BitConverter.GetBytes(value));
+            union.Char = value;
+            Stream.WriteByte(union.Byte0);
+            Stream.WriteByte(union.Byte1);
         }
 
         public void Write(byte value)
@@ -72,42 +115,82 @@ namespace Galador.Reflection.Serialization
 
         public void Write(short value)
         {
-            WriteKnownBytes(BitConverter.GetBytes(value));
+            union.Int16 = value;
+            Stream.WriteByte(union.Byte0);
+            Stream.WriteByte(union.Byte1);
         }
 
         public void Write(ushort value)
         {
-            WriteKnownBytes(BitConverter.GetBytes(value));
+            union.UInt16 = value;
+            Stream.WriteByte(union.Byte0);
+            Stream.WriteByte(union.Byte1);
         }
 
         public void Write(int value)
         {
-            WriteKnownBytes(BitConverter.GetBytes(value));
+            union.Int32 = value;
+            Stream.WriteByte(union.Byte0);
+            Stream.WriteByte(union.Byte1);
+            Stream.WriteByte(union.Byte2);
+            Stream.WriteByte(union.Byte3);
         }
 
         public void Write(uint value)
         {
-            WriteKnownBytes(BitConverter.GetBytes(value));
+            union.UInt32 = value;
+            Stream.WriteByte(union.Byte0);
+            Stream.WriteByte(union.Byte1);
+            Stream.WriteByte(union.Byte2);
+            Stream.WriteByte(union.Byte3);
         }
 
         public void Write(long value)
         {
-            WriteKnownBytes(BitConverter.GetBytes(value));
+            union.Int64 = value;
+            Stream.WriteByte(union.Byte0);
+            Stream.WriteByte(union.Byte1);
+            Stream.WriteByte(union.Byte2);
+            Stream.WriteByte(union.Byte3);
+            Stream.WriteByte(union.Byte4);
+            Stream.WriteByte(union.Byte5);
+            Stream.WriteByte(union.Byte6);
+            Stream.WriteByte(union.Byte7);
         }
 
         public void Write(ulong value)
         {
-            WriteKnownBytes(BitConverter.GetBytes(value));
+            union.UInt64 = value;
+            Stream.WriteByte(union.Byte0);
+            Stream.WriteByte(union.Byte1);
+            Stream.WriteByte(union.Byte2);
+            Stream.WriteByte(union.Byte3);
+            Stream.WriteByte(union.Byte4);
+            Stream.WriteByte(union.Byte5);
+            Stream.WriteByte(union.Byte6);
+            Stream.WriteByte(union.Byte7);
         }
 
         public void Write(float value)
         {
-            WriteKnownBytes(BitConverter.GetBytes(value));
+            union.Single = value;
+            Stream.WriteByte(union.Byte0);
+            Stream.WriteByte(union.Byte1);
+            Stream.WriteByte(union.Byte2);
+            Stream.WriteByte(union.Byte3);
         }
 
         public void Write(double value)
         {
-            WriteKnownBytes(BitConverter.GetBytes(value));
+            union.Double = value;
+            Stream.WriteByte(union.Byte0);
+            Stream.WriteByte(union.Byte1);
+            Stream.WriteByte(union.Byte2);
+            Stream.WriteByte(union.Byte3);
+            Stream.WriteByte(union.Byte4);
+            Stream.WriteByte(union.Byte5);
+            Stream.WriteByte(union.Byte6);
+            Stream.WriteByte(union.Byte7);
         }
 
         public void Write(decimal value)

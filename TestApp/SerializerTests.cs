@@ -84,6 +84,8 @@ namespace TestApp
             var d = new TestForm();
             var d2 = Serializer.Clone(d);
             d.Show();
+            d2.Top += 10;
+            d2.Left += 10;
             d2.Show();
             System.Windows.Forms.Application.Run();
         }

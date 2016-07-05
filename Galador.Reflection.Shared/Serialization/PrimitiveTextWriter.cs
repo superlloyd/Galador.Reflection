@@ -113,13 +113,13 @@ namespace Galador.Reflection.Serialization
 
         public void Write(byte value)
         {
-            Writer.Write($"{value:x0}");
+            Writer.Write(value.ToString("x"));
             WriteSeparator();
         }
 
         public void Write(sbyte value)
         {
-            Writer.Write($"{value:x0}");
+            Writer.Write(value.ToString("x"));
             WriteSeparator();
         }
 
@@ -161,13 +161,13 @@ namespace Galador.Reflection.Serialization
 
         public void Write(float value)
         {
-            Writer.Write($"{value:R}");
+            Writer.Write(value.ToString("R"));
             WriteSeparator();
         }
 
         public void Write(double value)
         {
-            Writer.Write($"{value:R}");
+            Writer.Write(value.ToString("R"));
             WriteSeparator();
         }
 

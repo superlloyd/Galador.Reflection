@@ -9,7 +9,7 @@ namespace Galador.Reflection.Utils
     /// <summary>
     /// Static utility classes for collection
     /// </summary>
-    public static class CollectionEx
+    static class CollectionEx
     {
         public static byte[] SubArray(this byte[] data, int start, int count)
         {

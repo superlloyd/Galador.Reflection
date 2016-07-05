@@ -23,7 +23,6 @@ namespace Galador.Reflection.Serialization
             switch (VERSION)
             {
                 case 1:
-                case 2:
                     break;
                 default:
                     throw new ArgumentException("Unknown version number " + VERSION);
@@ -321,7 +320,7 @@ namespace Galador.Reflection.Serialization
                             }
                             else
                             {
-                                o = possibleValue ?? ts.Type.TryConstruct() ?? ts.Type.GetUninitializedObject();
+                                o = possibleValue ?? ts.TryConstruct();
                                 if (oid != 0)
                                     Context.Register(oid, o);
                                 foreach (var p in ts.RuntimeMembers())

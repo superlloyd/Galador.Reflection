@@ -68,8 +68,8 @@ namespace Galador.Reflection.Serialization
         {
             if (o == null)
                 return true;
-            ulong oid;
-            return TryGetId(o, out oid);
+            return (WellKnownContext != null && WellKnownContext.objectsToIds.ContainsKey(o))
+                || objectsToIds.ContainsKey(o);
         }
 
         /// <summary>
@@ -79,8 +79,8 @@ namespace Galador.Reflection.Serialization
         {
             if (oid == 0)
                 return true;
-            object o;
-            return TryGetObject(oid, out o);
+            return (WellKnownContext != null && WellKnownContext.idToObjects.ContainsKey(oid))
+                || idToObjects.ContainsKey(oid);
         }
 
         /// <summary>

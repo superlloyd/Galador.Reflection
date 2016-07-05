@@ -8,7 +8,7 @@ using System.Collections;
 
 namespace Galador.Reflection.Logging
 {
-    public static class TraceKeys
+    static class TraceKeys
     {
         public class TracesProperty : IEnumerable<TraceKey>
         {

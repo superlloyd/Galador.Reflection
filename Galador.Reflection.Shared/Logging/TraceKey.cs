@@ -12,7 +12,7 @@ namespace Galador.Reflection.Logging
     /// <summary>
     /// Tracing class. Tracing is done in a thread and won't slow down the app.
     /// </summary>
-    public partial class TraceKey
+    partial class TraceKey
     {
 
         public TraceKey()

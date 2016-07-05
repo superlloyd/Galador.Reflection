@@ -37,7 +37,7 @@ namespace Galador.Reflection.Serialization
         public void Dispose() { Writer.Dispose(); }
 
         // v2 added BaseClass, IsSurrogateType
-        const ulong VERSION = 2;
+        const ulong VERSION = 1;
 
         public ObjectContext Context { get; private set; }
         public IPrimitiveWriter Writer { get; private set; }

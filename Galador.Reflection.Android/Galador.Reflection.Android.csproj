@@ -42,12 +42,7 @@
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Xml" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\AboutResources.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Resources\Values\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <Compile Include="Logging\TraceKey.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

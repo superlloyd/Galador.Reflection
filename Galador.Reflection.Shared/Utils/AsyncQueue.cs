@@ -9,7 +9,7 @@ namespace Galador.Reflection.Utils
     /// <summary>
     /// Run action sequentially, but in a separate thread, so that they don't block the calling thread but their order is still preserved.
     /// </summary>
-    public class AsyncQueue : IDisposable
+    class AsyncQueue : IDisposable
     {
         // REMARK: All work is done by the underlying RunData class, 
         // and all properties are there too

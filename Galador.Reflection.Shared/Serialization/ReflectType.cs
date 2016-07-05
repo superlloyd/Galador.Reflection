@@ -20,7 +20,7 @@ namespace Galador.Reflection.Serialization
         IDictionaryKV,
     }
     // TODO add support for DataContract, DataMember, IgnoreMember
-    public sealed class ReflectType
+    public sealed partial class ReflectType
     {
         #region GetType()
 
@@ -102,15 +102,17 @@ namespace Galador.Reflection.Serialization
         public IReadOnlyList<ReflectType> GenericArguments { get; private set; } = Empty<ReflectType>.Array;
         public MemberList Members { get; } = new MemberList();
 
-        #region utilities: RuntimeMembers() ParentHierarchy() CollectionType()
+        #region utilities: RuntimeMembers() ParentHierarchy() CollectionType() TryConstruct()
 
         public IEnumerable<Member> RuntimeMembers()
         {
-            if (BaseType != null)
-                foreach (var m in BaseType.RuntimeMembers())
+            var p = this;
+            while (p != null)
+            {
+                foreach (var m in p.Members)
                     yield return m;
-            foreach (var m in Members)
-                yield return m;
+                p = p.BaseType;
+            }
         }
 
         internal MethodInfo listWrite, listRead;
@@ -135,7 +137,23 @@ namespace Galador.Reflection.Serialization
             return result;
         }
 
-        #endregion
+#if !__NET__
+        void SetConstructor(ConstructorInfo ctor)
+        {
+            emtpy_constructor = ctor;
+        }
+        public object TryConstruct()
+        {
+            if (Type == null)
+                return null;
+            if (emtpy_constructor != null)
+                return emtpy_constructor.TryConstruct();
+            return Type.GetUninitializedObject();
+        }
+        ConstructorInfo emtpy_constructor;
+#endif
+
+#endregion
 
         #region ctors() Initialize()
 
@@ -189,6 +207,7 @@ namespace Galador.Reflection.Serialization
                 }
                 else if (Kind == PrimitiveType.Object)
                 {
+                    SetConstructor(Type.TryGetConstructors().FirstOrDefault());
                     if (ti.IsGenericType)
                     {
                         IsGeneric = true;
@@ -282,8 +301,8 @@ namespace Galador.Reflection.Serialization
                                 {
                                     Name = pi.Name,
                                     Type = pType,
-                                    fInfo = pi,
                                 };
+                                m.SetMember(pi);
                                 Members.Add(m);
                             }
                             foreach (var pi in ti.GetRuntimeProperties())
@@ -306,8 +325,8 @@ namespace Galador.Reflection.Serialization
                                 {
                                     Name = pi.Name,
                                     Type = pType,
-                                    pInfo = pi,
                                 };
+                                m.SetMember(pi);
                                 Members.Add(m);
                             }
                             Type itype = null;
@@ -585,12 +604,22 @@ namespace Galador.Reflection.Serialization
 
         #region class Member MemberList
 
-        public class Member
+        public partial class Member
         {
             public string Name { get; internal set; }
             public ReflectType Type { get; internal set; }
-            internal PropertyInfo pInfo;
-            internal FieldInfo fInfo;
+
+#if !__NET__
+            PropertyInfo pInfo;
+            FieldInfo fInfo;
+            internal void SetMember(PropertyInfo pi)
+            {
+                pInfo = pi;
+            }
+            internal void SetMember(FieldInfo pi)
+            {
+                fInfo = pi;
+            }
 
             public object GetValue(object instance)
             {
@@ -621,6 +650,7 @@ namespace Galador.Reflection.Serialization
                     Logging.TraceKeys.Serialization.Error($"Error while deserializing {this}, couldn't set member {Name} because {ex}");
                 }
             }
+#endif
         }
 
         public class MemberList : IReadOnlyList<Member>, IReadOnlyDictionary<string, Member>
@@ -771,10 +801,9 @@ namespace Galador.Reflection.Serialization
                 }
                 else if (!IsGeneric || IsGenericTypeDefinition)
                 {
-                    if (IsReference && this != RObject)
+                    if (IsReference)
                     {
-                        if (reader.VERSION == 1) BaseType = RObject;
-                        else BaseType = (ReflectType)reader.Read(RReflectType, null);
+                        BaseType = (ReflectType)reader.Read(RReflectType, null);
                     }
                     var fields = Type == null ? new Dictionary<string, FieldInfo>(0) : Type.GetRuntimeFields().ToDictionary(x => x.Name);
                     var properties = Type == null ? new Dictionary<string, PropertyInfo>(0) : Type.GetRuntimeProperties().ToDictionary(x => x.Name);
@@ -788,11 +817,11 @@ namespace Galador.Reflection.Serialization
                         PropertyInfo pi;
                         if (fields.TryGetValue(m.Name, out fi) && fi.FieldType == m.Type.Type)
                         {
-                            m.fInfo = fi;
+                            m.SetMember(fi);
                         }
                         else if (properties.TryGetValue(m.Name, out pi) && pi.PropertyType == m.Type.Type)
                         {
-                            m.pInfo = pi;
+                            m.SetMember(pi);
                         }
                         Members.Add(m);
                     }
@@ -837,11 +866,11 @@ namespace Galador.Reflection.Serialization
                         PropertyInfo pi;
                         if (fields.TryGetValue(em.Name, out fi) && fi.FieldType == m.Type.Type)
                         {
-                            m.fInfo = fi;
+                            m.SetMember(fi);
                         }
                         else if (properties.TryGetValue(em.Name, out pi) && pi.PropertyType == m.Type.Type)
                         {
-                            m.pInfo = pi;
+                            m.SetMember(pi);
                         }
                         Members.Add(m);
                     }
@@ -863,6 +892,8 @@ namespace Galador.Reflection.Serialization
                     }
                 }
             }
+            if (Kind == PrimitiveType.Object && Type != null)
+                SetConstructor(Type.TryGetConstructors().FirstOrDefault());
         }
         internal void Write(ObjectWriter writer)
         {
@@ -909,7 +940,7 @@ namespace Galador.Reflection.Serialization
                 }
                 else if (IsDefaultSave && (!IsGeneric || IsGenericTypeDefinition))
                 {
-                    if (IsReference && this != RObject)
+                    if (IsReference)
                     {
                         writer.Write(RReflectType, BaseType);
                     }

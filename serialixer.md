@@ -95,7 +95,7 @@ One can get a `ReflectType` with `ReflectType.GetType()`
 
 i.e. graphically data would be as follow
     
-    Write(Type t, object o): | Version | GetID(Object) | Write(ReflectType.Type), ReflectType.GetType(o)) | WriteData(o) 
+    Write(Type t, object o): | Version | GetID(Object) | Write(ReflectType.GetType(o)) | WriteData(o) 
 
 *Step 1*, ID, is here to ensure that each object is written only once. Further write will only write the ID.
 
@@ -173,11 +173,11 @@ Json output is as follow, no type information and redundant "x", "y" "{}" "[]" r
 
 By contrast my serializer output start with a bulky MetaData Type header, followed by compact data part, i.e. only Xs and Ys:
 
-    2 7 8 805569025 9 806093313 10 "System.Collections.Generic.List`1" 0 1 2 11 "Capacity" 12 16777227 13 "Count" 
-    12 14 17825792 0 1 15 553648129 16 "Galador.Core.Tests.SerializationTests+Point2D" 17 "Galador.Core.Tests" 2 18 
-    "x" 19 16777232 20 "y" 19 8 5 5 
-    0.56640757460445523 0.66867056333863673 0.94807661927681264 0.15675181483698628 0.41150656361668675 0.74362293618899911 
-    0.0069035766678413272 0.8712547942396508 0.5437086026853456 0.6287862400658365 
+    2 7 8 805569025 9 806093313 10 "System.Collections.Generic.List`1" 0 1 2 11 "Capacity" 12 16777227 13 
+    "Count" 12 14 17825792 0 1 15 553648129 16 "Galador.Core.Tests.SerializationTests+Point2D" 17 
+    "Galador.Core.Tests" 2 18 "x" 19 16777232 20 "y" 19 8 5 5 
+    0.56640757460445523 0.66867056333863673 0.94807661927681264 0.15675181483698628 0.41150656361668675 
+    0.74362293618899911 0.0069035766678413272 0.8712547942396508 0.5437086026853456 0.6287862400658365 
 
 Also if I lose that code I can generate a reader class, here is the generated C#
 

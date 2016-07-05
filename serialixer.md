@@ -84,8 +84,9 @@ One can get a `ReflectType` with `ReflectType.GetType()`
 
     internal void Write(ReflectType expected, object o)
     {
-        // 1. if object is in Context, write ID then **return**
-        //    else write (newly acquireded ID) ID
+        // 1. if expected is a reference type
+        //      if object is in Context, write ID then **return**
+        //      else write (newly acquired ID) ID
 
         // 2. if expected is NOT final, i.e. is a non-sealed class (ex: this step is omitted for struct)
         if (expected.CanBeSubclassed) Write(ReflectType.Type, ReflectType.GetType(o)); // recursion
@@ -95,7 +96,7 @@ One can get a `ReflectType` with `ReflectType.GetType()`
 
 i.e. graphically data would be as follow
     
-    Write(Type t, object o): | Version | GetID(Object) | Write(ReflectType.GetType(o)) | WriteData(o) 
+    Write(Type t, object o): | Version | (is class?:) ID | (has subclass?:) write class | WriteData(o) 
 
 *Step 1*, ID, is here to ensure that each object is written only once. Further write will only write the ID.
 

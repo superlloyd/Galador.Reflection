@@ -212,7 +212,6 @@ namespace TestApp
             Assert.True(meser.Length < json.Length - 4 * N);
         }
 
-        //[Conditional("RELEASE")]
         [Fact]
         public void CheckIsFastEnough()
         {

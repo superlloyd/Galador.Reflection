@@ -15,7 +15,7 @@ namespace TestApp
             //var tSer = new SerializationTests();
             //tSer.CheckIsFastEnough();
 
-            KnownTypes.Register(typeof(SerializationTests).Assembly);
+            //KnownTypes.Register(typeof(SerializationTests).Assembly);
             var csharp = ObjectContext.GenerateCSharpCode("Generated"
                 , typeof(SerializationTests.BigClass)
                 , typeof(SerializationTests.SimpleClass<Dictionary<int, string>>)

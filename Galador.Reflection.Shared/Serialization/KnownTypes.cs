@@ -13,16 +13,16 @@ namespace Galador.Reflection.Serialization
 {
     public static class KnownTypes
     {
+#if !__PCL__
         static KnownTypes()
         {
-            Register(typeof(KnownTypes).GetTypeInfo().Assembly);
+            var domain = AppDomain.CurrentDomain;
+            domain.AssemblyLoad += (o, e) => Register(e.LoadedAssembly);
+            Register(domain.GetAssemblies());
         }
+#endif
 
-        #region ToString() Parse() GetType()
-
-        public static string ToString(Type type) { return new TypeDescription(type).ToString(); }
-
-        public static Type Parse(string s) { return new TypeDescription(s).Resolve(); }
+        #region GetType()
 
         public static Type GetType(object o)
         {
@@ -80,7 +80,7 @@ namespace Galador.Reflection.Serialization
                 case PrimitiveType.Double: return typeof(double);
                 case PrimitiveType.Decimal: return typeof(decimal);
             }
-        }
+        } 
 
         #endregion
 
@@ -121,16 +121,27 @@ namespace Galador.Reflection.Serialization
         static Dictionary<Type, Type> typeToSurrogate = new Dictionary<Type, Type>();
         static Dictionary<SerializationNameAttribute, Type> sReplacementTypes = new Dictionary<SerializationNameAttribute, Type>();
 
-        #region Register() TryGetSurrogateType()
+        #region Register()
 
         public static void Register(params Assembly[] ass) { Register((IEnumerable<Assembly>)ass); }
         public static void Register(IEnumerable<Assembly> assemblies)
         {
-            var q =
-                from ass in assemblies
-                from t in ass.DefinedTypes
-                select t;
-            q.ForEach(t => Register(t.AsType()));
+            if (assemblies == null)
+                return;
+            foreach (var ass in assemblies)
+            {
+                if (ass == null)
+                    return;
+                IEnumerable<TypeInfo> tInfos;
+                try { tInfos = ass.DefinedTypes; }
+                catch
+                {
+                    TraceKeys.Serialization.Warning($"Couldn't {nameof(Register)}({ass.GetName().Name})");
+                    continue;
+                }
+                foreach (var ti in tInfos)
+                    Register(ti.AsType());
+            }
         }
         public static void Register(params Type[] types) { Register((IEnumerable<Type>)types); }
         public static void Register(IEnumerable<Type> types) { types.ForEach(x => Register(x)); }
@@ -149,28 +160,6 @@ namespace Galador.Reflection.Serialization
             if (nattr != null)
                 lock (typeToSurrogate)
                     sReplacementTypes[nattr] = type;
-        }
-
-        public static bool TryGetSurrogateType(Type type, out Type result)
-        {
-            result = null;
-            lock (typeToSurrogate)
-                if (typeToSurrogate.TryGetValue(type, out result))
-                    return true;
-
-            if (type.GetTypeInfo().IsGenericType)
-            {
-                var t2 = type.GetGenericTypeDefinition();
-                Type result0;
-                lock (typeToSurrogate)
-                    typeToSurrogate.TryGetValue(t2, out result0);
-                if (result0 != null)
-                {
-                    result = result0.MakeGenericType(type.GenericTypeArguments);
-                    return true;
-                }
-            }
-            return false;
         }
 
         static IEnumerable<Type> GetSurrogateElements(Type type)
@@ -201,6 +190,32 @@ namespace Galador.Reflection.Serialization
                 }
                 yield return t3;
             }
+        }
+
+        #endregion
+
+        #region TryGetSurrogate()
+
+        public static bool TryGetSurrogate(Type type, out Type result)
+        {
+            result = null;
+            lock (typeToSurrogate)
+                if (typeToSurrogate.TryGetValue(type, out result))
+                    return true;
+
+            if (type.GetTypeInfo().IsGenericType)
+            {
+                var t2 = type.GetGenericTypeDefinition();
+                Type result0;
+                lock (typeToSurrogate)
+                    typeToSurrogate.TryGetValue(t2, out result0);
+                if (result0 != null)
+                {
+                    result = result0.MakeGenericType(type.GenericTypeArguments);
+                    return true;
+                }
+            }
+            return false;
         }
 
         #endregion

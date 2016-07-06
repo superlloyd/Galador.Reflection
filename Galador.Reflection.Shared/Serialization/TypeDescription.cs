@@ -33,23 +33,43 @@ namespace Galador.Reflection.Serialization
     }
 
     /// <summary>
-    /// Bonus class to help translate Type to string and vice versa. Also it is compatible 
-    /// with <code>Type.GetType()</code> and use it under the hood. It is also not used by the serialization code.
+    /// This class help transform type to string description and vice version. 
+    /// The string format is very similar to standard .NET type string, except the assembly name is just the name, without version of hash.
     /// </summary>
+    /// <remarks>This class is a left over of previous iteration and not use anywhere by the serializer currently</remarks>
     [System.ComponentModel.TypeConverter(typeof(TypeDescriptionConverter))]
     public sealed class TypeDescription
     {
+        /// <summary>
+        /// FullName of the represented type.
+        /// </summary>
         public string Fullname { get; private set; }
+        /// <summary>
+        /// Assembly name for the assembly declaring that type.
+        /// </summary>
         public string AssemblyName { get; private set; }
+        /// <summary>
+        /// How many 'stars' for pointer type.
+        /// </summary>
         public byte PointerCount { get; private set; }
 
+        /// <summary>
+        /// Type argument for generic type.
+        /// </summary>
         public IReadOnlyList<TypeDescription> TypeArguments { get { return mTypeArguments; } }
         List<TypeDescription> mTypeArguments = new List<TypeDescription>();
 
+        /// <summary>
+        /// Array ranks for array type.
+        /// </summary>
         public IReadOnlyList<byte> ArrayRanks { get { return mArrayRanks; } }
         List<byte> mArrayRanks = new List<byte>();
 
 
+        /// <summary>
+        /// Compare this to another <see cref="TypeDescription"/>
+        /// </summary>
+        /// <returns>Whether <param name="obj"/> is a <see cref="TypeDescription"/> of the same type, or not.</returns>
         public override bool Equals(object obj)
         {
             var o = obj as TypeDescription;
@@ -80,6 +100,9 @@ namespace Galador.Reflection.Serialization
             return base.GetHashCode();
         }
 
+        /// <summary>
+        /// Create a <see cref="TypeDescription"/> for <param name="type"></param>
+        /// </summary>
         public TypeDescription(Type type)
         {
 #if __PCL__
@@ -114,6 +137,10 @@ namespace Galador.Reflection.Serialization
 #endif
         }
 
+        /// <summary>
+        /// Parse a string as a TypeDescription
+        /// </summary>
+        /// <param name="s"></param>
         public TypeDescription(string s) { Parse(s, 0); }
 
         TypeDescription() { }
@@ -190,13 +217,16 @@ namespace Galador.Reflection.Serialization
             }
             return i2;
         }
+
+        /// <summary>
+        /// Attempt to create the type that corresponds to that description.
+        /// </summary>
         public Type Resolve()
         {
 #if __PCL__
             throw new PlatformNotSupportedException("PCL");
 #else
-            var elementName = AssemblyName != null ? $"{Fullname},{AssemblyName}" : Fullname;
-            var type = Type.GetType(elementName);
+            var type = KnownTypes.GetType(Fullname, AssemblyName);
             if (type == null)
                 return null;
             if (TypeArguments.Count > 0)

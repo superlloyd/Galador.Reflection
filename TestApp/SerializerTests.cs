@@ -44,7 +44,7 @@ namespace TestApp
             s1.Serial2.Serial1 = s1;
 
             // needed for attribute name to work during deserialization
-            KnownTypes.Register(typeof(Serial1), typeof(Serial2));
+            //KnownTypes.Register(typeof(Serial1), typeof(Serial2));
 
             var clone = Serializer.Clone(s1);
             Assert.Equal(s1.ID, clone.ID);

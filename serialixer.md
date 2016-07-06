@@ -235,7 +235,7 @@ Then create a writer (for serialization)
         public ObjectWriter(IPrimitiveWriter writer);
         public ObjectContext Context { get; private set; }
 
-        public void Write(object o)
+        public void Write(object o) // Sole public method
     }
 call `writer.Write(o)` to serialize object `o`.
 
@@ -246,7 +246,7 @@ Or a Reader, for deserialization
         public ObjectReader(IPrimitiveReader writer);
         public ObjectReader Context { get; private set; }
 
-        public object Read()
+        public object Read() // Sole public method
     }
 call `var o = reader.Read()` to get the next object in the stream.
 
@@ -351,7 +351,7 @@ Here is 2 quick surrogate example
         }
         Bitmap Instantiate() { return new Bitmap(new MemoryStream(Data)); }
 
-        public byte[] Data {get; set; }
+        public byte[] Data { get; set; }
     }
 
 ### Post deserialization activity

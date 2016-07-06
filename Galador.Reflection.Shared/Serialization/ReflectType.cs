@@ -129,8 +129,6 @@ namespace Galador.Reflection.Serialization
 
         public ReflectType GetCollectionType()
         {
-            if (CollectionType != ReflectCollectionType.None)
-                return this;
             var result = ParentHierarchy().FirstOrDefault(x => x.CollectionType != ReflectCollectionType.None);
             if (result == null)
                 return this;
@@ -265,7 +263,7 @@ namespace Galador.Reflection.Serialization
                         IsSurrogateType = ti.GetTypeHierarchy().Any(x => x.IsInterface && x.IsGenericType && x.GetGenericTypeDefinition() == typeof(ISurrogate<>));
 #endif
                         Type tSurrogate;
-                        if (KnownTypes.TryGetSurrogateType(type, out tSurrogate))
+                        if (KnownTypes.TryGetSurrogate(type, out tSurrogate))
                         {
                             Surrogate = GetType(tSurrogate);
                             HasSurrogate = true;

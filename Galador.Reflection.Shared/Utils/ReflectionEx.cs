@@ -87,33 +87,6 @@ namespace Galador.Reflection.Utils
         }
 
         /// <summary>
-        /// Determines whether this type has a parameterless constructor
-        /// </summary>
-        /// <param name="t">The type to assess.</param>
-        /// <returns>Whether the type has a parameterless constructor.</returns>
-        public static bool IsActivable(this Type t)
-        {
-            return IsActivable(t.GetTypeInfo());
-        }
-        /// <summary>
-        /// Determines whether this type has a parameterless constructor
-        /// </summary>
-        /// <param name="ti">The type to assess.</param>
-        /// <returns>Whether the type has a parameterless constructor.</returns>
-        public static bool IsActivable(this TypeInfo ti)
-        {
-            if (ti.IsAbstract || ti.IsInterface)
-                return false;
-            var q =
-                from c in ti.DeclaredConstructors
-                where c.GetParameters().Length == 0
-                where c.IsPublic
-                select c
-                ;
-            return q.FirstOrDefault() != null;
-        }
-
-        /// <summary>
         /// Determines whether <paramref name="t"/> is a base class of <paramref name="sub"/>
         /// </summary>
         /// <param name="t">The potential base class.</param>

@@ -72,21 +72,6 @@ namespace Galador.Reflection.Utils
         }
 
         /// <summary>
-        /// Gets the name of the last member expression of this lambda expression.
-        /// </summary>
-        /// <typeparam name="TProperty">The type of the property.</typeparam>
-        /// <param name="e">The expression to parse.</param>
-        /// <returns>A member (property or field) name.</returns>
-        /// <exception cref="System.ArgumentException">If the expression is empty</exception>
-        public static string GetName<TProperty>(this Expression<Func<TProperty>> e)
-        {
-            var l = GetLambdaPath(e);
-            if (l.Length == 0)
-                throw new ArgumentException();
-            return l[l.Length - 1].Name;
-        }
-
-        /// <summary>
         /// Determines whether <paramref name="t"/> is a base class of <paramref name="sub"/>
         /// </summary>
         /// <param name="t">The potential base class.</param>
@@ -107,19 +92,6 @@ namespace Galador.Reflection.Utils
             if (o == null)
                 return t.GetTypeInfo().IsClass || t.GetTypeInfo().IsInterface;
             return t.IsBaseClass(o.GetType());
-        }
-
-        /// <summary>
-        /// Determines whether <paramref name="type"/> is final, i.e. is a value type or a sealed class.
-        /// </summary>
-        /// <param name="type">The type to test.</param>
-        /// <returns>Whether the type can NOT have subclass or not.</returns>
-        public static bool IsFinal(this Type type)
-        {
-            if (type == typeof(Type))
-                return true;
-            var ti = type.GetTypeInfo();
-            return ti.IsValueType || ti.IsSealed || ti.IsArray;
         }
 
         /// <summary>

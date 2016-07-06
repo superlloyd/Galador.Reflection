@@ -11,8 +11,18 @@ using System.Runtime.CompilerServices;
 
 namespace Galador.Reflection.Serialization
 {
+    /// <summary>
+    /// This class will deserialize an object (or many object) from a given <see cref="IPrimitiveReader"/>.
+    /// </summary>
+    /// <seealso cref="ObjectWriter"/>
     public class ObjectReader : IDisposable
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ObjectReader"/> class.
+        /// </summary>
+        /// <param name="reader">The reader from which data is read.</param>
+        /// <exception cref="System.ArgumentNullException">If the reader is null</exception>
+        /// <exception cref="System.ArgumentException">If the data stream is a higher version number that this reader.</exception>
         public ObjectReader(IPrimitiveReader reader)
         {
             if (reader == null)
@@ -28,19 +38,37 @@ namespace Galador.Reflection.Serialization
                     throw new ArgumentException("Unknown version number " + VERSION);
             }
         }
+        /// <summary>
+        /// Releases unmanaged and - optionally - managed resources.
+        /// </summary>
         public void Dispose() { Reader.Dispose(); }
 
         internal ulong VERSION;
 
+
+        /// <summary>
+        /// this reader's context. That will hold reference of all objects read.
+        /// </summary>
         public ObjectContext Context { get; private set; }
+        /// <summary>
+        /// The data stream from which object are read.
+        /// </summary>
         public IPrimitiveReader Reader { get; private set; }
 
         /// <summary>
-        /// DO NOT USE THAT, it will completely break the serialization stream if there a slight class change...
-        /// ok for in process cloning though.
+        /// Whether the reader contain exhaustive (when <see cref="SkipMetaData"/> is <c>false</c>) or minimal (when <see cref="SkipMetaData"/> is <c>true</c>)
+        /// type information. It should match <see cref="ObjectWriter.SkipMetaData"/> (i.e. value set in the writer). 
+        /// <br/>
+        /// If <see cref="SkipMetaData"/> is <c>true</c> and the type can not be resolved or there is a version mismatch data would be irrecoverably corrupted.
+        /// <br/>
+        /// It should NOT be used, unless it is used for in process object deep cloning.
         /// </summary>
         public bool SkipMetaData { get; set; } = false;
 
+        /// <summary>
+        /// Reads the next object from the <see cref="Reader"/>.
+        /// </summary>
+        /// <returns>The next object in the stream.</returns>
         public object Read()
         {
             recurseDepth++;

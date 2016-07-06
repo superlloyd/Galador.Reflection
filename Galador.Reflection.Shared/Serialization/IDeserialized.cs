@@ -11,6 +11,9 @@ namespace Galador.Reflection.Serialization
     /// </summary>
     public interface IDeserialized
     {
+        /// <summary>
+        /// On completion of the deserialization process this method will be called.
+        /// </summary>
         void Deserialized();
     }
 }

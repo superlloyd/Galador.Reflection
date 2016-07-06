@@ -7,12 +7,16 @@ using Galador.Reflection.Utils;
 
 namespace Galador.Reflection.Serialization
 {
+    /// <summary>
+    /// An <see cref="IPrimitiveReader"/> reading from a <see cref="Stream"/>.
+    /// </summary>
     public class PrimitiveBinaryReader : IPrimitiveReader
     {
         Union8 union;
         Stream Stream;
         byte[] buf16 = new byte[16];
 
+#pragma warning disable 1591 // XML Comments
 
         public PrimitiveBinaryReader(Stream stream)
         {
@@ -236,5 +240,6 @@ namespace Galador.Reflection.Serialization
         {
             return Stream.ReadVNUInt();
         }
+#pragma warning restore 1591 // XML Comments
     }
 }

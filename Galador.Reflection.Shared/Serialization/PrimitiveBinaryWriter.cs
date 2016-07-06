@@ -49,8 +49,12 @@ namespace Galador.Reflection.Serialization
         public byte Byte7;
     }
 
+    /// <summary>
+    /// An <see cref="IPrimitiveWriter"/> writing to a <see cref="Stream"/>.
+    /// </summary>
     public class PrimitiveBinaryWriter : IPrimitiveWriter
     {
+#pragma warning disable 1591 // XML Comments
         Union8 union;
         Stream Stream;
 
@@ -221,5 +225,6 @@ namespace Galador.Reflection.Serialization
         {
             Stream.WriteVNUInt(value);
         }
+#pragma warning restore 1591 // XML Comments
     }
 }

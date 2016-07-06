@@ -4,8 +4,12 @@ using System.Text;
 
 namespace Galador.Reflection.Serialization
 {
+    /// <summary>
+    /// An interface that know how to write all primitive type (i.e. all non object <see cref="PrimitiveType"/>) to some underlying storage.
+    /// </summary>
     public interface IPrimitiveWriter : IDisposable
     {
+#pragma warning disable 1591 // XML Comments
         void Write(string value);
         void Write(byte[] value);
         void Write(Guid value);
@@ -22,11 +26,27 @@ namespace Galador.Reflection.Serialization
         void Write(float value);
         void Write(double value);
         void Write(decimal value);
-        // those are expected to be small number to be written in the most compact way possible
-        // use that for indexes / IDs / length
+#pragma warning restore 1591 // XML Comments
+
+        /// <summary>
+        /// Writes an <c>long</c> in a more compact format.
+        /// </summary>
+        /// <param name="value">The value to write.</param>
         void WriteVInt(long value);
+        /// <summary>
+        /// Writes an <c>ulong</c> in a more compact format.
+        /// </summary>
+        /// <param name="value">The value to write.</param>
         void WriteVInt(ulong value);
+        /// <summary>
+        /// Writes an <c>long?</c> in a more compact format.
+        /// </summary>
+        /// <param name="value">The value to write.</param>
         void WriteVInt(long? value);
+        /// <summary>
+        /// Writes an <c>ulong?</c> in a more compact format.
+        /// </summary>
+        /// <param name="value">The value to write.</param>
         void WriteVInt(ulong? value);
     }
 }

@@ -1,9 +1,3 @@
-Latest version at:
-
-https://github.com/superlloyd/Galador.Reflection
-
-Here I would describe the motivation, internal and use cases of my Serializer library found at:
-https://github.com/superlloyd/Galador.Reflection
 
 ## Introduction
 
@@ -11,11 +5,11 @@ I am working on some sort of desktop graph editor. I need to save my data to dis
 Also it should be able to read document made by different version of the application, hence it is tolerant to type and version mismatch.
 
 I rejected the build-in serialization mechanism in .NET (that is DataContractSerializer, XmlSerializer, BinaryFormatter) as unsatisfactory. 
-BinaryFormatters have versioning issues. And DataContact and XML serializer do not work very well when the type to deserialize is not know in advance and they are prone to serialization bug, if one forget a DataMember attribute.
-On the other hand JsonSerializer is very easy and intuitive to use (just make your property / field public) but it doesn't handle subclass very well. And, worst of all, it is way to verbose.
+BinaryFormatters have versioning issues. And DataContract and XML serializer do not work very well when the type to deserialize is not known in advance and they are prone to serialization bug, if one forget a DataMember attribute.
+On the other hand JsonSerializer is very easy and intuitive to use (just make properties / fields public) but it doesn't handle subclass very well. And, worst of all, it is way too verbose.
 
 Enter my serializer (`Galador.Reflection.Serialization.Serializer`), it supports both binary and text format. Text format is much more compact than Json (human readable but not human friendly). It is also faster than Newtonsoft.Json.
-Any type that has been serialized is completely described in the stream, along with the data. One can generate needed type hierarchy to read the stream from the stream itself. And when deserializing type and property are matched ny name when possible, or just ignored.
+Any types that have been serialized are completely described in the stream, along with the data. One can generate needed type hierarchy to read the stream from the stream itself. And when deserializing type and property are matched ny name when possible, or just ignored.
 It should support most classes whose state is fully described by their public field / property, ISerializable, IList and IDictionary interface. Except `IntPtr`, pointers and Delegate objects.
 
 When deserializing it will seldom throw an error. If some property do no match (from the source stream or on the target) they will just silently be ignored. 
@@ -43,11 +37,6 @@ And the reading is just as easy:
         return o as T;
     }
     
-The only, optional, setup is to register your assemblies with 
-
-     KnownObjects.Register(typeof(MyType).Assemby)
-
-It will enable a few advanced features like `ISurrogate<T>` (to serialize opaque type such as `Bitmap`) and naming type (with `SerializationNameAttribute`).
 
 Generating a C# code for a third party type hierarchy is done with 
 
@@ -58,11 +47,16 @@ Generating a C# code for a third party type hierarchy is done with
         return or.Context.GenerateCSharpCode(@namespace);
     }
 
+And that's mostly it!
+
 ## Implementation
 
 Since reading is just the reverse process of writing, I will only describe the writing process here. 
 
-`ObjectWriter` doesn't write to a stream of byte directly but to an `IPrimitiveWriter` interface.
+The `Serializer` class is mostly a wrapper around `ObjectWriter`, `IPrimitiveWriter`.
+    `ObjectWriter` doesn't write to a stream of byte directly but to an `IPrimitiveWriter` interface.
+    `ObjectWriter` also makes extensive use of `ReflectType` which contains all serialization information about a particular type
+    and `KnownTypes` that can resolve real .NET types from names and register special types (with serialization attributes or implementing `ISurrogate<>`)
 
 `IPrimitiveWriter` can write all primitive types, 
 i.e. `bool, char, byte, sbyte, short, ushort, int, uint, long, ulong, float, double, decimal, Guid, byte[], string`.
@@ -100,7 +94,7 @@ i.e. graphically data would be as follow
 
 *Step 1*, ID, is here to ensure that each object is written only once. Further write will only write the ID.
 
-*Step 2*, write the type meta data, so that the data can be deserialized. It only done when the type is not known for sure. 
+*Step 2*, write the type meta data, so that the data can be deserialized. It is only done when the type is not known for sure. 
 i.e if the expected type is sealed or is a value type, there is no need to write type information.
 Further if the type has already be written just its ID will be written.
 
@@ -269,7 +263,6 @@ One can prevent that by giving an arbitrary (unique) name to the type with `Seri
     public MyClass 
     {
     }
-**Remark** One **must** register the assemblies with named type with `KnownTypes.Register()` for named type to function.
 
 
 Maybe for some type one would like to save all field (whether public or private) and no property? or some other settings?
@@ -331,7 +324,6 @@ There might some type that you want to save that do not support out of the box s
         void Initialize(T value);
         T Instantiate();
     }
-And one **must** register with known type all the assembly that contains ISurrogates with `KnownTypes.Register()`
 
 Here is 2 quick surrogate example
 
@@ -365,3 +357,9 @@ Implement `IDeserialized` for that purpose and your object will be called once d
     {
         void Deserialized();
     }
+
+### Potential Pitfalls
+If your application load multiple version of the same assembly the deserialization 
+behavior is unfortunately undefined at the moment.
+
+Also if a class define member with the same name than one of its base type, this member will never be saved.

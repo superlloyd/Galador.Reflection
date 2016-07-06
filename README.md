@@ -38,11 +38,6 @@ To serialize opaque type, such as a `Bitmap` one must create a surrogate class
        public byte[] Data { get; set; }
     }
 
-And surrogate must be registered with the `KnownTypes` class so that they can be found with
-
-    // register all surrogates
-    KnownTypes.Register(typeof(BitmapSurrogate).Assembly); 
-
 
 Finally if provided with a stream created by a third party with this Serializer, one can use `ObjectContext.GenerateCSharpCode()` 
 or `Serializer.GenerateCSharpCode()` to generate a class hierarchy that can be used to deserialize the stream.

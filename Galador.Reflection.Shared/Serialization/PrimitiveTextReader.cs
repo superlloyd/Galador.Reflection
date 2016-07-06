@@ -7,8 +7,12 @@ using System.Text;
 
 namespace Galador.Reflection.Serialization
 {
+    /// <summary>
+    /// An <see cref="IPrimitiveReader"/> reading from a <see cref="TextReader"/>.
+    /// </summary>
     public class PrimitiveTextReader : IPrimitiveReader
     {
+#pragma warning disable 1591 // XML Comments
         TextReader Reader;
 
         public PrimitiveTextReader(TextReader reader)
@@ -244,5 +248,6 @@ namespace Galador.Reflection.Serialization
                 return null;
             return ulong.Parse(s);
         }
+#pragma warning restore 1591 // XML Comments
     }
 }

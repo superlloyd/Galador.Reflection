@@ -8,22 +8,51 @@ using System.Globalization;
 
 namespace Galador.Reflection.Serialization
 {
+    /// <summary>
+    /// <see cref="TypeConverter"/> for <see cref="TypeDescription"/>
+    /// </summary>
     public class TypeDescriptionConverter : System.ComponentModel.TypeConverter
     {
 #if !__PCL__
+        /// <summary>
+        /// Determines whether this instance [can convert from] the specified context.
+        /// </summary>
+        /// <param name="context">The context.</param>
+        /// <param name="sourceType">Type of the source.</param>
         public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
         {
             return sourceType == typeof(string);
         }
+        /// <summary>
+        /// Determines whether this instance [can convert to] the specified context.
+        /// </summary>
+        /// <param name="context">The context.</param>
+        /// <param name="destinationType">Type of the destination.</param>
+        /// <returns></returns>
         public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
         {
             return destinationType == typeof(string);
         }
+        /// <summary>
+        /// Converts from.
+        /// </summary>
+        /// <param name="context">The context.</param>
+        /// <param name="culture">The culture.</param>
+        /// <param name="value">The value.</param>
+        /// <returns></returns>
         public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
         {
             var s = (string)value;
             return new TypeDescription(s);
         }
+        /// <summary>
+        /// Converts to.
+        /// </summary>
+        /// <param name="context">The context.</param>
+        /// <param name="culture">The culture.</param>
+        /// <param name="value">The value.</param>
+        /// <param name="destinationType">Type of the destination.</param>
+        /// <returns></returns>
         public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
         {
             var ts = (TypeDescription)value;
@@ -89,6 +118,12 @@ namespace Galador.Reflection.Serialization
                     return false;
             return true;
         }
+        /// <summary>
+        /// Returns a hash code for this instance.
+        /// </summary>
+        /// <returns>
+        /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table. 
+        /// </returns>
         public override int GetHashCode()
         {
             int val = Fullname.GetHashCode();
@@ -252,6 +287,12 @@ namespace Galador.Reflection.Serialization
             return type;
 #endif
         }
+        /// <summary>
+        /// Returns a <see cref="System.String" /> that represents this instance.
+        /// </summary>
+        /// <returns>
+        /// A <see cref="System.String" /> that represents this instance.
+        /// </returns>
         public override string ToString()
         {
             var sb = new StringBuilder();

@@ -12,20 +12,36 @@ using System.Runtime.CompilerServices;
 namespace Galador.Reflection.Serialization
 {
     /// <summary>
-    /// This write object to a version tolerant serialization stream. Very much like JSON with the 
-    /// following relevant difference.
+    /// This write objects to a version tolerant serialization stream. Very much like JSON writing public field
+    /// and property and matching them by name. WIth the following differences:
+    /// <br/>
     /// 1. Class meta data is written, to avoid repeating property / field name. i.e. once a class has been written 
     /// only the property value need be written for each instance.
-    /// 2. It supports IList AND IDictionary
-    /// 3. Opaque type (such as Bitmap / Stream) or readonly type (such as Tuple) can still be serialized
-    /// using ISurrogate<> classes.
-    /// 4. It is a strongly typed serialization mechanism, however class name can be overridden using the
-    /// Guid attribute on each class, effectively enabling replacing one class by another. Also class name 
+    /// <br/>
+    /// 2. Object 'ID' are  created and written for each reference, to avoid circular reference.
+    /// <br/>
+    /// 3. It supports <see cref="IList"/>, <see cref="ICollection{T}"/>, 
+    /// <see cref="IDictionary"/>, <see cref="IDictionary{TKey, TValue}"/>
+    /// <br/>
+    /// 4. It supports <see cref="System.ComponentModel.TypeConverter"/>, <see cref="System.Runtime.Serialization.ISerializable"/>.
+    /// <br/>
+    /// 4. Opaque type (such as <c>Bitmap</c> or <see cref="System.IO.Stream"/>) or readonly type (such as Tuple) 
+    /// can still be serialized using <see cref="ISurrogate{T}"/> classes.
+    /// <br/>
+    /// 5. It is a strongly typed serialization mechanism, however class name and assembly name
+    /// can be overridden using the <see cref="SerializationNameAttribute"/> on each class, 
+    /// effectively enabling replacing one class by another. Also class name 
     /// is not matched on assembly, only full type name.
-    /// 5. Of course it also support various attribute to select which property fields are saved.
+    /// <br/>
+    /// 6. Of course it also support various attribute to select which property fields are saved.
     /// </summary>
     public class ObjectWriter : IDisposable
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ObjectWriter"/> class.
+        /// </summary>
+        /// <param name="writer">The writer to which the data is written.</param>
+        /// <exception cref="System.ArgumentNullException">If the writer is null</exception>
         public ObjectWriter(IPrimitiveWriter writer)
         {
             if (writer == null)
@@ -34,20 +50,37 @@ namespace Galador.Reflection.Serialization
             Context = new ObjectContext();
             Writer.WriteVInt(VERSION);
         }
+        /// <summary>
+        /// Releases unmanaged and - optionally - managed resources.
+        /// </summary>
         public void Dispose() { Writer.Dispose(); }
 
         // v2 added BaseClass, IsSurrogateType
         const ulong VERSION = 1;
 
+        /// <summary>
+        /// this writer's context. That will hold reference of all objects written.
+        /// </summary>
         public ObjectContext Context { get; private set; }
+        /// <summary>
+        /// The data stream to which object are written.
+        /// </summary>
         public IPrimitiveWriter Writer { get; private set; }
 
         /// <summary>
-        /// DO NOT USE THAT, it will completely break the serialization stream if there a slight class change...
-        /// ok for in process cloning though.
+        /// Whether to write exhaustive (when <see cref="SkipMetaData"/> is <c>false</c>) or minimal (when <see cref="SkipMetaData"/> is <c>true</c>)
+        /// type information. It should be matched <see cref="ObjectReader.SkipMetaData"/> (i.e. value set in the reader). 
+        /// <br/>
+        /// If <see cref="SkipMetaData"/> is <c>true</c> and the type can not be resolved by the reader, or there is a version mismatch data would be irrecoverably corrupted.
+        /// <br/>
+        /// It should NOT be used, unless it is used for in process object deep cloning.
         /// </summary>
         public bool SkipMetaData { get; set; } = false;
 
+        /// <summary>
+        /// Writes the next object to the <see cref="Writer"/>.
+        /// </summary>
+        /// <param name="o">The object to write.</param>
         public void Write(object o)
         {
             Write(ReflectType.RObject, o);

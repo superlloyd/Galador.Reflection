@@ -11,6 +11,9 @@ using System.Runtime.InteropServices;
 
 namespace Galador.Reflection.Serialization
 {
+    /// <summary>
+    /// This class does all the reflection work related to .NET type lookup.
+    /// </summary>
     public static class KnownTypes
     {
 #if !__PCL__
@@ -24,7 +27,7 @@ namespace Galador.Reflection.Serialization
 
         #region GetType()
 
-        public static Type GetType(object o)
+        internal static Type GetType(object o)
         {
             if (o == null)
                 return typeof(object);
@@ -33,6 +36,12 @@ namespace Galador.Reflection.Serialization
             return o.GetType();
         }
 
+        /// <summary>
+        /// Lookup a type by type name and assembly name. It will look for <see cref="SerializationNameAttribute"/> that match the arguments.
+        /// </summary>
+        /// <param name="typeName">Name of the type.</param>
+        /// <param name="assemblyName">Name of the assembly.</param>
+        /// <returns>A type or null.</returns>
         public static Type GetType(string typeName, string assemblyName)
         {
             Type result;
@@ -55,7 +64,7 @@ namespace Galador.Reflection.Serialization
 #endif
             return null;
         }
-        public static Type GetType(PrimitiveType type)
+        internal static Type GetType(PrimitiveType type)
         {
             switch (type)
             {
@@ -86,14 +95,7 @@ namespace Galador.Reflection.Serialization
 
         #region GetKind()
 
-        public static PrimitiveType GetKind(object o)
-        {
-            if (o == null)
-                return PrimitiveType.Object;
-            return GetKind(GetType(o));
-        }
-
-        public static PrimitiveType GetKind(Type type)
+        internal static PrimitiveType GetKind(Type type)
         {
             if (type == null)
                 throw new ArgumentNullException(nameof(type));
@@ -123,8 +125,8 @@ namespace Galador.Reflection.Serialization
 
         #region Register()
 
-        public static void Register(params Assembly[] ass) { Register((IEnumerable<Assembly>)ass); }
-        public static void Register(IEnumerable<Assembly> assemblies)
+        static void Register(params Assembly[] ass) { Register((IEnumerable<Assembly>)ass); }
+        static void Register(IEnumerable<Assembly> assemblies)
         {
             if (assemblies == null)
                 return;
@@ -143,9 +145,9 @@ namespace Galador.Reflection.Serialization
                     Register(ti.AsType());
             }
         }
-        public static void Register(params Type[] types) { Register((IEnumerable<Type>)types); }
-        public static void Register(IEnumerable<Type> types) { types.ForEach(x => Register(x)); }
-        public static void Register(Type type)
+        static void Register(params Type[] types) { Register((IEnumerable<Type>)types); }
+        static void Register(IEnumerable<Type> types) { types.ForEach(x => Register(x)); }
+        static void Register(Type type)
         {
             if (type == null)
                 return;
@@ -196,6 +198,12 @@ namespace Galador.Reflection.Serialization
 
         #region TryGetSurrogate()
 
+        /// <summary>
+        /// Tries the get the surrogate for a given type.
+        /// </summary>
+        /// <param name="type">The type that might have surrogate.</param>
+        /// <param name="result">The surrogate type, or null.</param>
+        /// <returns>Whether or not a surrogate type has been found.</returns>
         public static bool TryGetSurrogate(Type type, out Type result)
         {
             result = null;

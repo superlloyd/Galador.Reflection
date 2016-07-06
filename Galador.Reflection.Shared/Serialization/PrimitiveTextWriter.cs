@@ -7,15 +7,20 @@ using System.Runtime.CompilerServices;
 
 namespace Galador.Reflection.Serialization
 {
-    public enum TextPrimitiveSeparator
+    enum TextPrimitiveSeparator
     {
         Space,
         NewLine,
         Tab,
         Comma,
     }
+
+    /// <summary>
+    /// An <see cref="IPrimitiveWriter"/> writing to a <see cref="TextWriter"/>.
+    /// </summary>
     public class PrimitiveTextWriter : IPrimitiveWriter
     {
+#pragma warning disable 1591 // XML Comments
         TextWriter Writer;
 
         public PrimitiveTextWriter(TextWriter writer)
@@ -26,7 +31,7 @@ namespace Galador.Reflection.Serialization
         }
         public void Dispose() { Writer.Dispose(); }
 
-        public TextPrimitiveSeparator Separator { get; set; } = TextPrimitiveSeparator.Space;
+        internal TextPrimitiveSeparator Separator { get; set; } = TextPrimitiveSeparator.Space;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void WriteSeparator()
@@ -214,5 +219,6 @@ namespace Galador.Reflection.Serialization
             }
             WriteSeparator();
         }
+#pragma warning restore 1591 // XML Comments
     }
 }

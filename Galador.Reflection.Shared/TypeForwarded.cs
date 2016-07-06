@@ -1,4 +1,5 @@
-﻿#if !__PCL__
+﻿#pragma warning disable 1591 // XML Comments
+#if !__PCL__
 using System.Runtime.CompilerServices;
 #endif
 
@@ -50,3 +51,4 @@ namespace System.ComponentModel
 [assembly: TypeForwardedTo(typeof(System.ComponentModel.TypeConverterAttribute))]
 [assembly: TypeForwardedTo(typeof(System.ComponentModel.TypeConverter))]
 #endif
+#pragma warning restore 1591

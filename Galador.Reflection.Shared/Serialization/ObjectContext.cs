@@ -7,7 +7,7 @@ using System.Text;
 namespace Galador.Reflection.Serialization
 {
     /// <summary>
-    /// A class that will contain all references written or read by the <see cref="ObjectWriter"/> or <see cref="ObjectReader"/>
+    /// A class that will contain all references written by the <see cref="ObjectWriter"/> or read by the <see cref="ObjectReader"/>
     /// Could be use for reference purpose.
     /// </summary>
     public class ObjectContext
@@ -73,14 +73,14 @@ namespace Galador.Reflection.Serialization
         }
 
         /// <summary>
-        /// When writing object, check if they are already registered with this method
+        /// Whether an object has been registered with this ID
         /// </summary>
-        public bool Contains(ulong oid)
+        public bool Contains(ulong ID)
         {
-            if (oid == 0)
+            if (ID == 0)
                 return true;
-            return (WellKnownContext != null && WellKnownContext.idToObjects.ContainsKey(oid))
-                || idToObjects.ContainsKey(oid);
+            return (WellKnownContext != null && WellKnownContext.idToObjects.ContainsKey(ID))
+                || idToObjects.ContainsKey(ID);
         }
 
         /// <summary>
@@ -130,22 +130,37 @@ namespace Galador.Reflection.Serialization
 
         #region info: Count, IDs, Objects this[]
 
+        /// <summary>
+        /// Number of object that have been register with this context.
+        /// </summary>
         public int Count { get { return idToObjects.Count; } }
 
+        /// <summary>
+        /// All the IDs.
+        /// </summary>
         public IEnumerable<ulong> IDs { get { return idToObjects.Keys; } }
 
+        /// <summary>
+        /// All the objects
+        /// </summary>
         public IEnumerable<object> Objects { get { return idToObjects.Values; } }
 
-        public object this[ulong index]
+        /// <summary>
+        /// Gets the <see cref="System.Object"/> with the specified ID.
+        /// </summary>
+        /// <param name="ID">The ID of the object.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentOutOfRangeException">If no object was registered for that ID.</exception>
+        public object this[ulong ID]
         {
             get
             {
                 object o;
-                if (index == 0ul)
+                if (ID == 0ul)
                     return null;
-                if (this != WellKnownContext && WellKnownContext.idToObjects.TryGetValue(index, out o))
+                if (this != WellKnownContext && WellKnownContext.idToObjects.TryGetValue(ID, out o))
                     return o;
-                if (idToObjects.TryGetValue(index, out o))
+                if (idToObjects.TryGetValue(ID, out o))
                     return o;
                 throw new ArgumentOutOfRangeException();
             }
@@ -172,6 +187,13 @@ namespace Galador.Reflection.Serialization
             foreach (var item in type.Members)
                 RecursizeAdd(item.Type);
         }
+
+        /// <summary>
+        /// Generates the C# class that can be used to deserialize all given types.
+        /// </summary>
+        /// <param name="namespace">The namespace of the generated class.</param>
+        /// <param name="types">The types that will be rewritten with only the serialization information.</param>
+        /// <returns>A generated C# code file as string.</returns>
         public static string GenerateCSharpCode(string @namespace, params Type[] types)
         {
             var ctxt = new ObjectContext();
@@ -184,6 +206,13 @@ namespace Galador.Reflection.Serialization
             ctxt.GenerateCSharpCode(new StringWriter(sb), @namespace);
             return sb.ToString();
         }
+
+        /// <summary>
+        /// Generates the C# class that can be used to deserialize all given types.
+        /// </summary>
+        /// <param name="namespace">The namespace of the generated class.</param>
+        /// <param name="types">The types that will be rewritten with only the serialization information.</param>
+        /// <returns>A generated C# code file as string.</returns>
         public static string GenerateCSharpCode(string @namespace, params ReflectType[] types)
         {
             var ctxt = new ObjectContext();
@@ -196,6 +225,11 @@ namespace Galador.Reflection.Serialization
             return sb.ToString();
         }
 
+        /// <summary>
+        /// Generates the C# class that can be used to deserialize all types registered in this context.
+        /// </summary>
+        /// <param name="namespace">The namespace of the generated class.</param>
+        /// <returns>A generated C# code file as string.</returns>
         public string GenerateCSharpCode(string @namespace)
         {
             var sb = new StringBuilder();
@@ -204,8 +238,10 @@ namespace Galador.Reflection.Serialization
         }
 
         /// <summary>
-        /// Go through all registered ReflectType and generate a C# class for it
+        /// Generates the C# class that can be used to deserialize all types registered in this context.
         /// </summary>
+        /// <param name="w">The writer to which the generated C# code will be written to.</param>
+        /// <param name="namespace">The namespace of the generated class.</param>
         public void GenerateCSharpCode(TextWriter w, string @namespace)
         {
 #if !__PCL__

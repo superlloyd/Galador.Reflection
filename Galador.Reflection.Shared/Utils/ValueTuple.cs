@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Text;
 
+#pragma warning disable 1591 // XML Comments
+
 namespace Galador.Reflection.Utils
 {
     public static class ValueTuple
@@ -14,6 +16,9 @@ namespace Galador.Reflection.Utils
 
     public struct ValueTuple<T1, T2>
     {
+        /// <summary>
+        /// The item1
+        /// </summary>
         public T1 Item1;
         public T2 Item2;
         public override string ToString() { return $"({Item1}, {Item2})"; }
@@ -43,3 +48,4 @@ namespace Galador.Reflection.Utils
         public override string ToString() { return $"({Item1}, {Item2}, {Item3}, {Item4}, {Item5})"; }
     }
 }
+#pragma warning restore 1591 // XML Comments

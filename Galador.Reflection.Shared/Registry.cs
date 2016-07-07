@@ -603,6 +603,7 @@ namespace Galador.Reflection
 
         #region static utils: IsResolvable() ForEach() IsBaseClass() IsInstance() GetInheritanceTree()
 
+        public static bool IsResolvable<T>() { return IsResolvable(typeof(T)); }
         public static bool IsResolvable(Type type)
         {
             var t = type.GetTypeInfo();

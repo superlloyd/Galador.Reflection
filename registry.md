@@ -9,3 +9,27 @@ Hence this library which is (hopefully) as easy to use as MEF but with almost no
 Enter `Galador.Reflection.Registry`
 
 ## Basic Usage
+
+
+## Functionality
+If one ignore the multiple polymorphic version the registry basically implement the following methods:
+
+    class Registry
+    {
+        // register services
+        void Register(types);
+        bool IsRegistered(type);
+
+        // resolve (i.e. create only once in a call) any object
+        T Resolve<T>();
+        IEnumerable<T> ResolveAll<T>();
+        bool IsResolvable<T>();
+
+        // create: make a new one every time
+        T Create<T>();
+        bool CanCreate<T>();
+
+        // bonus method: resolve property of existing instance
+        void ResolveProperties(instance);
+    }
+

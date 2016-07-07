@@ -11,20 +11,32 @@ namespace Galador.Reflection
 {
     #region ExportAttribute, ImportAttribute
 
+    /// <summary>
+    /// Type marked with this attribute are the one that will be registered when one register their assembly with <see cref="Registry.RegisterAssemblies(Assembly[])"/>
+    /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
     public class ExportAttribute : Attribute
     {
     }
 
+    /// <summary>
+    /// When one resolve a type (i.e. create an instance with <see cref="Registry.Resolve(Type, Registry[])"/> or <see cref="Registry.Create{T}(Registry)"/>), 
+    /// all their property marked with this attribute will also be set using <see cref="Registry.Resolve{T}(Registry[])"/>
+    /// Can also be used on constructor parameter to specify a particular type to use.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Parameter, AllowMultiple = false)]
     public class ImportAttribute : Attribute
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ImportAttribute"/> class.
+        /// </summary>
+        /// <param name="eType">(Optional) type that is imported. Will set <see cref="ImportedType"/></param>
         public ImportAttribute(Type eType = null)
         {
             ImportedType = eType;
         }
         /// <summary>
-        /// The required type
+        /// The required type to be imported. If null the type of the member or constructor parameter will be used.
         /// </summary>
         public Type ImportedType { get; set; }
     }
@@ -36,6 +48,9 @@ namespace Galador.Reflection
     /// </summary>
     public interface IRegistryDelegate
     {
+        /// <summary>
+        /// Called when the full object tree (i.e. with all dependency) has been created.
+        /// </summary>
         void OnRegistryCreated();
     }
 
@@ -44,11 +59,17 @@ namespace Galador.Reflection
     /// <summary>
     /// All unregistered instances created during a request are stored here.
     /// It can be reused for later queries, creating some sort of session lifespan for temporary object.
+    /// <br/>
+    /// Instances are indexed by type since the registry will only create one instance of each type (for a given cache),
+    /// reusing this instance for all subsequent query.
     /// </summary>
     public class RequestCache : IDisposable
     {
         Dictionary<Type, Registry.TypeVault> values = new Dictionary<Type, Registry.TypeVault>();
 
+        /// <summary>
+        /// Will dispose of all <see cref="IDisposable"/> that it contains
+        /// </summary>
         public void Dispose()
         {
             foreach (var item in values.Values.Select(x => x.Instance).OfType<IDisposable>())
@@ -56,6 +77,11 @@ namespace Galador.Reflection
             values.Clear();
         }
 
+        /// <summary>
+        /// Gets the instance of given type that has been created, or null.
+        /// </summary>
+        /// <param name="index">The type of the instance.</param>
+        /// <returns>An already created and cached instance, or null</returns>
         public object this[Type index]
         {
             get
@@ -83,8 +109,19 @@ namespace Galador.Reflection
             return result;
         }
 
+        /// <summary>
+        /// The number of cached instance.
+        /// </summary>
         public int Count { get { return values.Count; } }
+
+        /// <summary>
+        /// All the type for which an instance has been created and cached.
+        /// </summary>
         public IEnumerable<Type> Keys { get { return values.Keys; } }
+
+        /// <summary>
+        /// Whether an instance of this exact type has been created.
+        /// </summary>
         public bool Contains(Type key) { return values.ContainsKey(key); }
     }
 
@@ -112,16 +149,30 @@ namespace Galador.Reflection
 
         #region ctor() Dispose()
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Registry"/> class.
+        /// And register itself has an exported type.
+        /// </summary>
         public Registry()
+            : this(true)
         {
         }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Registry"/> class.
+        /// </summary>
+        /// <param name="registerSelf">if set to <c>true</c> the registry will register itself and can be injected as a dependency.</param>
         public Registry(bool registerSelf)
-            : this()
         {
             if (registerSelf)
                 Register(this);
         }
+#pragma warning disable 1591 // XML Comments
         ~Registry() { Dispose(false); }
+#pragma warning restore 1591 // XML Comments
+
+        /// <summary>
+        /// Dispose of all <see cref="IDisposable"/> object registered with the registry and make it unusable.
+        /// </summary>
         public void Dispose()
         {
             GC.SuppressFinalize(this);
@@ -150,6 +201,10 @@ namespace Galador.Reflection
         }
         bool disposed;
         void EnsureAlive() { if (disposed) throw new ObjectDisposedException(GetType().Name); }
+
+        /// <summary>
+        /// Whether this registry has been disposed or not.
+        /// </summary>
         public bool IsDisposed { get { return disposed; } }
 
         #endregion
@@ -157,9 +212,13 @@ namespace Galador.Reflection
         #region RegisterAssemblies()
 
         /// <summary>
-        /// Register an assembly, both Export service and DataView views.
+        /// Register some assembly, by registering all type they export that are marked with <see cref="ExportAttribute"/>.
         /// </summary>
         public void RegisterAssemblies(params Assembly[] ass) { RegisterAssemblies((IEnumerable<Assembly>)ass); }
+
+        /// <summary>
+        /// Register some assembly, by registering all type they export that are marked with <see cref="ExportAttribute"/>.
+        /// </summary>
         public void RegisterAssemblies(IEnumerable<Assembly> assemblies)
         {
             ForEach(assemblies.Where(x => x != null).SelectMany(x => x.DefinedTypes),
@@ -183,8 +242,24 @@ namespace Galador.Reflection
 
         #region Register() IsRegistered()
 
+        /// <summary>
+        /// Register <typeparamref name="T"/> as an exported type. 
+        /// <br/><see cref="Register(Type, object)"/>.
+        /// </summary>
+        /// <typeparam name="T">The type that is registered.</typeparam>
         public void Register<T>() where T : class { Register(typeof(T), null); }
+        /// <summary>
+        /// Register <typeparamref name="T"/> as an exported type. 
+        /// <br/><see cref="Register(Type, object)"/>.
+        /// </summary>
+        /// <typeparam name="T">The type that is registered.</typeparam>
+        /// <param name="instance">The instance that is set against this type.</param>
         public void Register<T>(T instance) where T : class { Register(typeof(T), instance); }
+        /// <summary>
+        /// Register <paramref name="facade"/> as an exported type. 
+        /// <br/><see cref="Register(Type, object)"/>.
+        /// </summary>
+        /// <param name="facade">The type that is registered as a service.</param>
         public void Register(Type facade) { Register(facade, null); }
         public void Register(Type facade, object instance)
         {
@@ -215,7 +290,17 @@ namespace Galador.Reflection
             vault.Instance = instance;
         }
 
+        /// <summary>
+        /// Return whether there is an object that is registered for the requested type.
+        /// </summary>
+        /// <typeparam name="T">The type to check for registration.</typeparam>
+        /// <returns>Whether the given type is registered</returns>
         public bool IsRegistered<T>() { return IsRegistered(typeof(T)); }
+        /// <summary>
+        /// Return whether there is an object that is registered for the requested type.
+        /// </summary>
+        /// <param name="type">The type to check for registration.</param>
+        /// <returns>Whether the given type is registered</returns>
         public bool IsRegistered(Type type) { return reverseInheritance.ContainsKey(type); }
 
         #endregion

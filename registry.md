@@ -7,3 +7,5 @@ Except every time I wanted to use it again I completely forget how to set it up 
 Hence this library which is (hopefully) as easy to use as MEF but with almost no setup required.
 
 Enter `Galador.Reflection.Registry`
+
+## Basic Usage

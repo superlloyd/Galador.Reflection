@@ -5,14 +5,22 @@ using System.Text;
 namespace Galador.Reflection.Serialization
 {
     /// <summary>
-    /// Control class serialization behavior
+    /// Attribute that control serialization behavior for a particular type.
     /// </summary>
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false, Inherited = false)]
     public class SerializationSettingsAttribute : Attribute
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SerializationSettingsAttribute"/> class.
+        /// </summary>
         public SerializationSettingsAttribute()
         {
         }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SerializationSettingsAttribute"/> class.
+        /// </summary>
+        /// <param name="default">Set all properties to <paramref name="default"/>.</param>
         public SerializationSettingsAttribute(bool @default)
         {
             IncludePublicProperties = @default;
@@ -20,11 +28,27 @@ namespace Galador.Reflection.Serialization
             IncludePublicFields = @default;
             IncludePrivateFields = @default;
         }
+
+        /// <summary>
+        /// Whether public properties of this type should be serialized or not. Default value is <c>true</c>.
+        /// </summary>
         public bool IncludePublicProperties { get; set; } = true;
+        /// <summary>
+        /// Whether private properties of this type should be serialized or not. Default value is <c>false</c>.
+        /// </summary>
         public bool IncludePrivateProperties { get; set; } = false;
+        /// <summary>
+        /// Whether public fields of this type should be serialized or not. Default value is <c>true</c>.
+        /// </summary>
         public bool IncludePublicFields { get; set; } = true;
+        /// <summary>
+        /// Whether private fields of this type should be serialized or not. Default value is <c>false</c>.
+        /// </summary>
         public bool IncludePrivateFields { get; set; } = false;
 
+        /// <summary>
+        /// Will get or set whether public properties AND public fields of this type must be serialized.
+        /// </summary>
         public bool IncludePublics
         {
             get { return IncludePublicFields && IncludePublicProperties; }
@@ -34,6 +58,10 @@ namespace Galador.Reflection.Serialization
                 IncludePublicFields = value;
             }
         }
+
+        /// <summary>
+        /// Will get or set whether private properties AND private fields of this type must be serialized.
+        /// </summary>
         public bool IncludePrivates
         {
             get { return IncludePrivateFields && IncludePrivateProperties; }
@@ -43,6 +71,10 @@ namespace Galador.Reflection.Serialization
                 IncludePrivateProperties = value;
             }
         }
+
+        /// <summary>
+        /// Will get or set whether all properties of this type (whether public or private) must be serialized.
+        /// </summary>
         public bool IncludeProperties
         {
             get { return IncludePublicProperties && IncludePrivateProperties; }
@@ -52,6 +84,10 @@ namespace Galador.Reflection.Serialization
                 IncludePrivateProperties = value;
             }
         }
+
+        /// <summary>
+        /// Will get or set whether all fields of this type (whether public or private) must be serialized.
+        /// </summary>
         public bool IncludeFields
         {
             get { return IncludePrivateFields && IncludePublicFields; }
@@ -63,21 +99,45 @@ namespace Galador.Reflection.Serialization
         }
     }
 
+    /// <summary>
+    /// This attribute will override default type name and assembly name used to identify the type they decorate.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Enum, AllowMultiple = false, Inherited = false)]
     public class SerializationNameAttribute : Attribute
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SerializationNameAttribute"/> class.
+        /// </summary>
         public SerializationNameAttribute()
         {
         }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SerializationNameAttribute"/> class.
+        /// </summary>
+        /// <param name="type">The <see cref="TypeName"/> to use.</param>
+        /// <param name="assembly">The <see cref="AssemblyName"/> to use.</param>
         public SerializationNameAttribute(string type, string assembly = null)
         {
             TypeName = type;
             AssemblyName = assembly;
         }
 
+        /// <summary>
+        /// Value to use in lieu of the <see cref="Type.FullName"/>
+        /// </summary>
         public string TypeName { get; set; }
+        /// <summary>
+        /// Value to use in lieu of the <see cref="System.Reflection.AssemblyName.Name"/>.
+        /// </summary>
         public string AssemblyName { get; set; }
 
+        /// <summary>
+        /// Determines <paramref name="obj"/> is another <see cref="SerializationNameAttribute"/> with the same property values.
+        /// </summary>
+        /// <param name="obj">The <see cref="System.Object" /> to compare with this instance.</param>
+        /// <returns>
+        ///   <c>true</c> if the specified <see cref="System.Object" /> is equal to this instance; otherwise, <c>false</c>.
+        /// </returns>
         public override bool Equals(object obj)
         {
             var o = obj as SerializationNameAttribute;
@@ -85,6 +145,12 @@ namespace Galador.Reflection.Serialization
                 return false;
             return TypeName == o.TypeName && AssemblyName == o.AssemblyName;
         }
+        /// <summary>
+        /// Returns a hash code for this instance.
+        /// </summary>
+        /// <returns>
+        /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table. 
+        /// </returns>
         public override int GetHashCode()
         {
             var result = TypeName.GetHashCode();

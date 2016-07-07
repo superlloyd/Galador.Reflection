@@ -5,12 +5,31 @@ using System.Text;
 
 namespace Galador.Reflection.Serialization
 {
+    /// <summary>
+    /// Implement this interface to help the serializer read/write problematic types.
+    /// i.e. type that are not described by their public properties and fields (such as <c>Bitmap</c>
+    /// or <c>Stream</c>) and type which have readonly value type, such as <see cref="Tuple{T1}"/>.
+    /// Do that by exposing the data as public property and fields, or implement a known collection.
+    /// </summary>
+    /// <typeparam name="T">The type that this interface will help read and write.</typeparam>
     public interface ISurrogate<T>
     {
+        /// <summary>
+        /// Initializes the surrogate with the a value
+        /// </summary>
+        /// <param name="value">The value that must be saved.</param>
         void Initialize(T value);
+        /// <summary>
+        /// Return the value that was serialized.
+        /// </summary>
         T Instantiate();
     }
 
+#pragma warning disable 1591 // XML Comments
+
+    /// <summary>
+    /// Built in surrogate for <see cref="DBNull"/>.
+    /// </summary>
     public class DBNullSurrogate : ISurrogate<DBNull>
     {
         void ISurrogate<DBNull>.Initialize(DBNull value) { }
@@ -18,6 +37,9 @@ namespace Galador.Reflection.Serialization
         public DBNull Instantiate() { return DBNull.Value; }
     }
 
+    /// <summary>
+    /// Built in surrogate for <see cref="DateTime"/>.
+    /// </summary>
     public class DateTimeSurrogate : ISurrogate<DateTime>
     {
         void ISurrogate<DateTime>.Initialize(DateTime value)
@@ -35,6 +57,9 @@ namespace Galador.Reflection.Serialization
         public DateTimeKind Kind { get; set; }
     }
 
+    /// <summary>
+    /// Built in surrogate for <see cref="DateTimeOffset"/>.
+    /// </summary>
     public class DateTimeOffsetSurrogate : ISurrogate<DateTimeOffset>
     {
         void ISurrogate<DateTimeOffset>.Initialize(DateTimeOffset value)
@@ -52,6 +77,9 @@ namespace Galador.Reflection.Serialization
         public long Offset { get; set; }
     }
 
+    /// <summary>
+    /// Built in surrogate for <see cref="TimeSpan"/>.
+    /// </summary>
     public class TimeSpanSurrogate : ISurrogate<TimeSpan>
     {
         void ISurrogate<TimeSpan>.Initialize(TimeSpan value)
@@ -67,7 +95,10 @@ namespace Galador.Reflection.Serialization
         public long Ticks { get; set; }
     }
 
-    public class TuppleSurrogate<T1> : ISurrogate<Tuple<T1>>
+    /// <summary>
+    /// Built in surrogate for <see cref="Tuple{T1}"/>.
+    /// </summary>
+    public class TupleSurrogate<T1> : ISurrogate<Tuple<T1>>
     {
         void ISurrogate<Tuple<T1>>.Initialize(Tuple<T1> value)
         {
@@ -82,7 +113,11 @@ namespace Galador.Reflection.Serialization
         public T1 Item1 { get; set; }
     }
 
-    public class TuppleSurrogate<T1, T2> : ISurrogate<Tuple<T1, T2>>, ISurrogate<ValueTuple<T1, T2>>, ISurrogate<KeyValuePair<T1, T2>>
+    /// <summary>
+    /// Built in surrogate for <see cref="Tuple{T1, T2}"/>, 
+    /// <see cref="ValueTuple{T1, T2}"/>, <see cref="KeyValuePair{TKey, TValue}"/>.
+    /// </summary>
+    public class TupleSurrogate<T1, T2> : ISurrogate<Tuple<T1, T2>>, ISurrogate<ValueTuple<T1, T2>>, ISurrogate<KeyValuePair<T1, T2>>
     {
         void ISurrogate<Tuple<T1, T2>>.Initialize(Tuple<T1, T2> value)
         {
@@ -121,7 +156,10 @@ namespace Galador.Reflection.Serialization
         public T2 Item2 { get; set; }
     }
 
-    public class TuppleSurrogate<T1, T2, T3> : ISurrogate<Tuple<T1, T2, T3>>, ISurrogate<ValueTuple<T1, T2, T3>>
+    /// <summary>
+    /// Built in surrogate for <see cref="Tuple{T1, T2, T3}"/>, <see cref="ValueTuple{T1, T2, T3}"/>.
+    /// </summary>
+    public class TupleSurrogate<T1, T2, T3> : ISurrogate<Tuple<T1, T2, T3>>, ISurrogate<ValueTuple<T1, T2, T3>>
     {
         void ISurrogate<Tuple<T1, T2, T3>>.Initialize(Tuple<T1, T2, T3> value)
         {
@@ -152,7 +190,10 @@ namespace Galador.Reflection.Serialization
         public T3 Item3 { get; set; }
     }
 
-    public class TuppleSurrogate<T1, T2, T3, T4> : ISurrogate<Tuple<T1, T2, T3, T4>>, ISurrogate<ValueTuple<T1, T2, T3, T4>>
+    /// <summary>
+    /// Built in surrogate for <see cref="Tuple{T1, T2, T3, T4}"/>, <see cref="ValueTuple{T1, T2, T3, T4}"/>.
+    /// </summary>
+    public class TupleSurrogate<T1, T2, T3, T4> : ISurrogate<Tuple<T1, T2, T3, T4>>, ISurrogate<ValueTuple<T1, T2, T3, T4>>
     {
         void ISurrogate<Tuple<T1, T2, T3, T4>>.Initialize(Tuple<T1, T2, T3, T4> value)
         {
@@ -186,7 +227,10 @@ namespace Galador.Reflection.Serialization
         public T4 Item4 { get; set; }
     }
 
-    public class TuppleSurrogate<T1, T2, T3, T4, T5> : ISurrogate<Tuple<T1, T2, T3, T4, T5>>, ISurrogate<ValueTuple<T1, T2, T3, T4, T5>>
+    /// <summary>
+    /// Built in surrogate for <see cref="Tuple{T1, T2, T3, T4, T5}"/>,<see cref="ValueTuple{T1, T2, T3, T4, T5}"/>.
+    /// </summary>
+    public class TupleSurrogate<T1, T2, T3, T4, T5> : ISurrogate<Tuple<T1, T2, T3, T4, T5>>, ISurrogate<ValueTuple<T1, T2, T3, T4, T5>>
     {
         void ISurrogate<Tuple<T1, T2, T3, T4, T5>>.Initialize(Tuple<T1, T2, T3, T4, T5> value)
         {
@@ -222,4 +266,6 @@ namespace Galador.Reflection.Serialization
         public T4 Item4 { get; set; }
         public T5 Item5 { get; set; }
     }
+
+#pragma warning restore 1591 // XML Comments
 }

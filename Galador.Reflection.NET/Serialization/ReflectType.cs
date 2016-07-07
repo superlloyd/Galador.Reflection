@@ -15,6 +15,12 @@ namespace Galador.Reflection.Serialization
             // TODO use emit... (also watch out for default values)
             emtpy_constructor = ctor;
         }
+
+        /// <summary>
+        /// Will create and return a new instance of <see cref="Type"/> associated to this <see cref="ReflectType"/>
+        /// By using either the default constructor (i.e. constructor with no parameter or where all parameters have 
+        /// a default value) or creating a so called "uninitialized object". The later case "might" not work very well...
+        /// </summary>
         public object TryConstruct()
         {
             if (Type == null)
@@ -45,6 +51,11 @@ namespace Galador.Reflection.Serialization
                 setter = EmitHelper.CreateFieldSetterHandler(pi);
             }
 
+            /// <summary>
+            /// Gets the value of this member for the given instance.
+            /// </summary>
+            /// <param name="instance">The instance from which to take the value.</param>
+            /// <returns>The value of the member.</returns>
             public object GetValue(object instance)
             {
                 try
@@ -58,6 +69,12 @@ namespace Galador.Reflection.Serialization
                 }
                 return null;
             }
+
+            /// <summary>
+            /// Sets the value of this member (if possible) for the given instance.
+            /// </summary>
+            /// <param name="instance">The instance on which the member value will be set.</param>
+            /// <param name="value">The value that must be set.</param>
             public void SetValue(object instance, object value)
             {
                 try

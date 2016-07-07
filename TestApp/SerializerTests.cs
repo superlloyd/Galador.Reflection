@@ -79,6 +79,7 @@ namespace TestApp
             Assert.Equal(o.Me, o);
         }
 
+#if __NET__
         public void WinFormTest()
         {
             var d = new TestForm();
@@ -89,6 +90,7 @@ namespace TestApp
             d2.Show();
             System.Windows.Forms.Application.Run();
         }
+#endif
 
         class Annotation1
         {
@@ -538,7 +540,7 @@ namespace TestApp
                 () => new PrimitiveTextReader(new StringReader(sb.ToString()))
                 );
         }
-        public void CheckReaderWriter(Func<IPrimitiveWriter> getW, Func<IPrimitiveReader> getR)
+        void CheckReaderWriter(Func<IPrimitiveWriter> getW, Func<IPrimitiveReader> getR)
         {
             var w = getW();
             foreach (var rw in GetCheckers())

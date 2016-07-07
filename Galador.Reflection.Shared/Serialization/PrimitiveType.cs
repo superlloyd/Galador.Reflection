@@ -17,7 +17,7 @@ namespace Galador.Reflection.Serialization
         /// </summary>
         None = 0,
         /// <summary>
-        /// Anything else that the obvious other type.
+        /// Anything else that the obvious other values.
         /// </summary>
         Object,
 #pragma warning disable 1591 // XML Comments

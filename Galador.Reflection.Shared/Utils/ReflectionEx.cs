@@ -212,14 +212,12 @@ namespace Galador.Reflection.Utils
         }
 
 #if __PCL__
-#pragma warning disable 1591 // XML Comments
 
         internal static Type GetEnumUnderlyingType(this TypeInfo ti) { throw new PlatformNotSupportedException(); }
         internal static IEnumerable<PropertyInfo> GetRuntimeProperties(this TypeInfo ti) { throw new PlatformNotSupportedException(); }
         internal static IEnumerable<MethodInfo> GetRuntimeMethods(this TypeInfo ti) { throw new PlatformNotSupportedException(); }
         internal static IEnumerable<FieldInfo> GetRuntimeFields(this TypeInfo ti) { throw new PlatformNotSupportedException(); }
 
-#pragma warning restore 1591 // XML Comments
 #endif
         /// <summary>
         /// Return an uninitialized object (by passing constructor).

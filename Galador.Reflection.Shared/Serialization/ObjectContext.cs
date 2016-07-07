@@ -141,7 +141,9 @@ namespace Galador.Reflection.Serialization
         public IEnumerable<ulong> IDs { get { return idToObjects.Keys; } }
 
         /// <summary>
-        /// All the objects
+        /// All the objects. Note that the <see cref="ReflectType"/> found in the context are not the singletons
+        /// obtained with <see cref="ReflectType.GetType(Type)"/> method but are, instead, the type information
+        /// of the item in the stream as they were at the time of serialization.
         /// </summary>
         public IEnumerable<object> Objects { get { return idToObjects.Values; } }
 

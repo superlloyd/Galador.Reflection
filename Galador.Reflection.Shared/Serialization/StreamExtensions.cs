@@ -54,11 +54,21 @@ namespace Galador.Reflection.Serialization
         /// <summary>
         /// Read value stored by <see cref="WriteVInt(Stream, long)"/>
         /// </summary>
+        /// <param name="ins">The stream to read the value from.</param>
+        /// <returns>The <c>long</c> just read.</returns>
+        /// <exception cref="System.IO.IOException">EOF or Corrupted Data</exception>
         public static long ReadVInt(this Stream ins)
         {
             int count;
             return ReadVInt(ins, out count);
         }
+        /// <summary>
+        /// Read value stored by <see cref="WriteVInt(Stream, long)"/>
+        /// </summary>
+        /// <param name="ins">The stream to read the value from.</param>
+        /// <param name="count">How many bytes were used to store the value.</param>
+        /// <returns>The <c>long</c> just read.</returns>
+        /// <exception cref="System.IO.IOException">EOF or Corrupted Data</exception>
         public static long ReadVInt(this Stream ins, out int count)
         {
             count = 0;
@@ -143,13 +153,23 @@ namespace Galador.Reflection.Serialization
         }
 
         /// <summary>
-        /// Read value written with <see cref="WriteVNUInt(Stream, long?)"/>
+        /// Read value stored by <see cref="WriteVNInt(Stream, long?)"/>
         /// </summary>
+        /// <param name="ins">The stream to read the value from.</param>
+        /// <returns>The <c>long?</c> just read.</returns>
+        /// <exception cref="System.IO.IOException">EOF or Corrupted Data</exception>
         public static long? ReadVNInt(this Stream ins)
         {
             int count;
             return ReadVNInt(ins, out count);
         }
+        /// <summary>
+        /// Read value stored by <see cref="WriteVNInt(Stream, long?)"/>
+        /// </summary>
+        /// <param name="ins">The stream to read the value from.</param>
+        /// <param name="count">How many bytes were used to store the value.</param>
+        /// <returns>The <c>long?</c> just read.</returns>
+        /// <exception cref="System.IO.IOException">EOF or Corrupted Data</exception>
         public static long? ReadVNInt(this Stream ins, out int count)
         {
             count = 0;
@@ -190,7 +210,7 @@ namespace Galador.Reflection.Serialization
         }
 
         /// <summary>
-        /// Write long as variable size array. The smaller the value, the less byte will be needed.
+        /// Write ulong as variable size array. The smaller the value, the less byte will be needed.
         /// </summary>
         public static int WriteVUInt(this Stream ins, ulong ul)
         {
@@ -211,11 +231,21 @@ namespace Galador.Reflection.Serialization
         /// <summary>
         /// Read value stored by <see cref="WriteVUInt(Stream, ulong)"/>
         /// </summary>
+        /// <param name="ins">The stream to read the value from.</param>
+        /// <returns>The <c>ulong</c> just read.</returns>
+        /// <exception cref="System.IO.IOException">EOF or Corrupted Data</exception>
         public static ulong ReadVUInt(this Stream ins)
         {
             int count;
             return ReadVUInt(ins, out count);
         }
+        /// <summary>
+        /// Read value stored by <see cref="WriteVUInt(Stream, ulong)"/>
+        /// </summary>
+        /// <param name="ins">The stream to read the value from.</param>
+        /// <param name="count">How many bytes were used to store the value.</param>
+        /// <returns>The <c>ulong</c> just read.</returns>
+        /// <exception cref="System.IO.IOException">EOF or Corrupted Data</exception>
         public static ulong ReadVUInt(this Stream ins, out int count)
         {
             count = 0;
@@ -277,13 +307,23 @@ namespace Galador.Reflection.Serialization
         }
 
         /// <summary>
-        /// Read value written with <see cref="WriteVNUInt(Stream, ulong?)"/>
+        /// Read value stored by <see cref="WriteVNUInt(Stream, ulong?)"/>
         /// </summary>
+        /// <param name="ins">The stream to read the value from.</param>
+        /// <returns>The <c>ulong?</c> just read.</returns>
+        /// <exception cref="System.IO.IOException">EOF or Corrupted Data</exception>
         public static ulong? ReadVNUInt(this Stream ins)
         {
             int count;
             return ReadVNUInt(ins, out count);
         }
+        /// <summary>
+        /// Read value stored by <see cref="WriteVNUInt(Stream, ulong?)"/>
+        /// </summary>
+        /// <param name="ins">The stream to read the value from.</param>
+        /// <param name="count">How many bytes were used to store the value.</param>
+        /// <returns>The <c>ulong?</c> just read.</returns>
+        /// <exception cref="System.IO.IOException">EOF or Corrupted Data</exception>
         public static ulong? ReadVNUInt(this Stream ins, out int count)
         {
             count = 0;

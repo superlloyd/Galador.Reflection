@@ -11,19 +11,47 @@ using System.IO;
 
 namespace Galador.Reflection.Serialization
 {
+    /// <summary>
+    /// The well known collection type implemented by the type. It is not a flag enum. Only one at a time is supported
+    /// </summary>
     public enum ReflectCollectionType : byte
     {
+        /// <summary>
+        /// This type implement no interface
+        /// </summary>
         None,
+        /// <summary>
+        /// This type implement <see cref="IList"/>
+        /// </summary>
         IList,
+        /// <summary>
+        /// This type implement <see cref="ICollection{T}"/>
+        /// </summary>
         ICollectionT,
+        /// <summary>
+        /// This type implement <see cref="IDictionary"/>
+        /// </summary>
         IDictionary,
+        /// <summary>
+        /// This type implement <see cref="IDictionary{TKey, TValue}"/>
+        /// </summary>
         IDictionaryKV,
     }
+
     // TODO add support for DataContract, DataMember, IgnoreMember
+
+    /// <summary>
+    /// The type representing locally all relevant serialization info of a .NET type.
+    /// One can object local information with <see cref="ReflectType.GetType(Type)"/>.
+    /// This information will be serialized along with object data to exactly reproduce object format when deserializing.
+    /// </summary>
     public sealed partial class ReflectType
     {
         #region GetType()
 
+        /// <summary>
+        /// Gets the <see cref="ReflectType"/> information of an object
+        /// </summary>
         public static ReflectType GetType(object o)
         {
             if (o == null)
@@ -37,6 +65,9 @@ namespace Galador.Reflection.Serialization
             return GetType(o.GetType());
         }
 
+        /// <summary>
+        /// Gets the <see cref="ReflectType"/> information of a type
+        /// </summary>
         public static ReflectType GetType(Type type)
         {
             if (type == null)
@@ -63,47 +94,161 @@ namespace Galador.Reflection.Serialization
         internal static readonly Assembly MSCORLIB = typeof(object).GetTypeInfo().Assembly;
         internal bool IsMscorlib() { return Type != null && Type.GetTypeInfo().Assembly == MSCORLIB; }
 
+        /// <summary>
+        /// The serialization information about <see cref="System.Object"/> type. Preloaded for performance and implementation reason.
+        /// </summary>
         public static readonly ReflectType RObject = GetType(typeof(object));
+        /// <summary>
+        /// The serialization information about <see cref="ReflectType"/> type. Preloaded for performance and implementation reason.
+        /// </summary>
         public static readonly ReflectType RReflectType = GetType(typeof(ReflectType));
+        /// <summary>
+        /// The serialization information about <see cref="System.String"/> type. Preloaded for performance and implementation reason.
+        /// </summary>
         public static readonly ReflectType RString = GetType(typeof(string));
+        /// <summary>
+        /// The serialization information about <see cref="System.Type"/> type. Preloaded for performance and implementation reason.
+        /// </summary>
         public static readonly ReflectType RType = GetType(typeof(Type));
+        /// <summary>
+        /// The serialization information about <see cref="System.Nullable{T}"/> type. Preloaded for performance and implementation reason.
+        /// </summary>
         public static readonly ReflectType RNullable = GetType(typeof(Nullable<>));
 
-        // flags
+        // ==== FLAGS =====
+
+        /// <summary>
+        /// A quick way to categorize the item in either a well known primitive type (written directly to the <see cref="IPrimitiveWriter"/>)
+        /// or more elaborate object needing a description
+        /// </summary>
         public PrimitiveType Kind { get; private set; } = PrimitiveType.None;
+        /// <summary>
+        /// Which, if any, well known collection type is implemented by this class.
+        /// </summary>
         public ReflectCollectionType CollectionType { get; private set; } = ReflectCollectionType.None;
+        /// <summary>
+        /// Whether this represent a pointer type or not.
+        /// </summary>
         public bool IsPointer { get; private set; }
+        /// <summary>
+        /// Whether this represent a pointer type, or not.
+        /// </summary>
         public bool IsArray { get; private set; }
+        /// <summary>
+        /// Whether this represent a generic type, or not.
+        /// </summary>
         public bool IsGeneric { get; private set; }
+        /// <summary>
+        /// Whether this represent a generic type definition, or not.
+        /// </summary>
         public bool IsGenericTypeDefinition { get; private set; }
+        /// <summary>
+        /// Whether this represent a generic type parameter, or not.
+        /// </summary>
         public bool IsGenericParameter { get; private set; }
+        /// <summary>
+        /// Whether this represent an enum, or not.
+        /// </summary>
         public bool IsEnum { get; private set; }
+        /// <summary>
+        /// Whether this represent a nullable type, or not.
+        /// </summary>
         public bool IsNullable { get; private set; }
+        /// <summary>
+        /// Whether this type is supported, or not (i.e. <c>supported = Ignored == false</c>).
+        /// </summary>
         public bool IsIgnored { get; private set; }
+        /// <summary>
+        /// Whether this type can have subclass or not (i..e <c>canHaveSubclass = IsFinal == false</c>).
+        /// </summary>
         public bool IsFinal { get; private set; } = true;
+        /// <summary>
+        /// Whether there is an <see cref="ISurrogate{T}"/> type to use to serialize instances if that type, or not.
+        /// </summary>
         public bool HasSurrogate { get; private set; }
+        /// <summary>
+        /// Whether there is a <see cref="TypeConverter"/> to serialize instance of that type, or not.
+        /// </summary>
         public bool HasConverter { get; private set; }
+        /// <summary>
+        /// Whether this type is <see cref="ISerializable"/> or not.
+        /// </summary>
         public bool IsISerializable { get; private set; }
+        /// <summary>
+        /// Whether this is a reference type, or not.
+        /// </summary>
         public bool IsReference { get; private set; }
+        /// <summary>
+        /// Whether this type is using the default save (i.e. members + collection Type) or not. Only relevant for the serializer itself.
+        /// </summary>
         public bool IsDefaultSave { get; private set; }
+        /// <summary>
+        /// Whether this type is a surrogate for another type
+        /// </summary>
         public bool IsSurrogateType { get; set; }
 
-        // non flags
+        // ==== OBJECTS (not flags) ====
+
+        /// <summary>
+        /// Most .NET type (except generic type, array, generic parameter and primitive type) will be identified 
+        /// with their <see cref="TypeName"/> and <see cref="AssemblyName"/>
+        /// </summary>
         public string TypeName { get; private set; }
+        /// <summary>
+        /// Most .NET type (except generic type, array, generic parameter and primitive type) will be identified 
+        /// with their <see cref="TypeName"/> and <see cref="AssemblyName"/>
+        /// </summary>
         public string AssemblyName { get; private set; }
-        public ReflectType BaseType { get; private set; } // introduced in v2
+        /// <summary>
+        /// The base type serialization information.
+        /// </summary>
+        public ReflectType BaseType { get; private set; }
+        /// <summary>
+        /// For array type, this will be the array rank. Or <c>0</c> otherwise.
+        /// </summary>
         public int ArrayRank { get; private set; }
+        /// <summary>
+        /// For type that are generic parameter, the position / index. Otherwise 0.
+        /// </summary>
         public int GenericParameterIndex { get; private set; }
+        /// <summary>
+        /// The .NET <see cref="System.Type"/> that this <see cref="ReflectType"/> represent, if it can be found.
+        /// <see cref="ReflectType"/> created by the <see cref="ObjectReader"/> might have a null value there if the type
+        /// can't be found. In which case instance of this type will be deserialized as <see cref="Missing"/>.
+        /// </summary>
         public Type Type { get; private set; }
+        /// <summary>
+        /// Info about the <see cref="ISurrogate{T}"/> type to use to serialize instance of that type, if any.
+        /// </summary>
         public ReflectType Surrogate { get; private set; }
+        /// <summary>
+        /// Element type information for pointers, array, generic type and enum.
+        /// </summary>
         public ReflectType Element { get; private set; }
+        /// <summary>
+        /// If this type is an <see cref="ICollection{T}"/> or and <see cref="IDictionary{TKey, TValue}"/> 
+        /// this would be the info about <c>T</c>, or <c>TKey</c>, respectively
+        /// </summary>
         public ReflectType Collection1 { get; private set; }
+        /// <summary>
+        /// If this type is an <see cref="IDictionary{TKey, TValue}"/> this would be the info about <c>TValue</c>.
+        /// </summary>
         public ReflectType Collection2 { get; private set; }
+        /// <summary>
+        /// If this is a generic type, will contain either the type parameter or arguments.
+        /// </summary>
         public IReadOnlyList<ReflectType> GenericArguments { get; private set; } = Empty<ReflectType>.Array;
+        /// <summary>
+        /// For normal type (i.e. all but primitive type, array, pointer, enum) contains the list of known members.
+        /// i.e. property of field that are marked for serialization.
+        /// </summary>
         public MemberList Members { get; } = new MemberList();
 
         #region utilities: RuntimeMembers() ParentHierarchy() CollectionType() TryConstruct()
 
+        /// <summary>
+        /// Get all member by enumerating this type's <see cref="Members"/> and thos of all its <see cref="BaseType"/>.
+        /// </summary>
         public IEnumerable<Member> RuntimeMembers()
         {
             var p = this;
@@ -117,6 +262,9 @@ namespace Galador.Reflection.Serialization
 
         internal MethodInfo listWrite, listRead;
 
+        /// <summary>
+        /// Return the <see cref="BaseType"/>, all the BaseType's BaseType recursively.
+        /// </summary>
         public IEnumerable<ReflectType> ParentHierarchy()
         {
             var p = BaseType;
@@ -127,12 +275,20 @@ namespace Galador.Reflection.Serialization
             }
         }
 
+        /// <summary>
+        /// Return the collection type implemented by this type by examining this type
+        /// and its <see cref="BaseType"/>.
+        /// </summary>
         public ReflectType GetCollectionType()
         {
-            var result = ParentHierarchy().FirstOrDefault(x => x.CollectionType != ReflectCollectionType.None);
-            if (result == null)
-                return this;
-            return result;
+            var p = this;
+            while (p != null)
+            {
+                if (p.CollectionType != ReflectCollectionType.None)
+                    return p;
+                p = p.BaseType;
+            }
+            return this;
         }
 
 #if !__NET__
@@ -140,6 +296,12 @@ namespace Galador.Reflection.Serialization
         {
             emtpy_constructor = ctor;
         }
+
+        /// <summary>
+        /// Will create and return a new instance of <see cref="Type"/> associated to this <see cref="ReflectType"/>
+        /// By using either the default constructor (i.e. constructor with no parameter or where all parameters have 
+        /// a default value) or creating a so called "uninitialized object". The later case "might" not work very well...
+        /// </summary>
         public object TryConstruct()
         {
             if (Type == null)
@@ -385,6 +547,10 @@ namespace Galador.Reflection.Serialization
 
         #region GetHashCode() Equals() ToString()
 
+        /// <summary>
+        /// Determines whether <paramref name="obj"/> is another <see cref="ReflectType"/> representing 
+        /// the same .NET <see cref="Type"/>.
+        /// </summary>
         public override bool Equals(object obj)
         {
             if (ReferenceEquals(this, obj))
@@ -437,6 +603,9 @@ namespace Galador.Reflection.Serialization
             return true;
         }
 
+        /// <summary>
+        /// Returns a hash code for this instance.
+        /// </summary>
         public override int GetHashCode() { return hashcode; }
         int hashcode;
         void InitHashCode()
@@ -473,6 +642,10 @@ namespace Galador.Reflection.Serialization
             }
         }
 
+        /// <summary>
+        /// Returns a <see cref="System.String" /> that represents this instance. That can immediately recognisezed
+        /// by the astute reader as the Type description.
+        /// </summary>
         public override string ToString()
         {
             var sb = new StringBuilder();
@@ -602,9 +775,20 @@ namespace Galador.Reflection.Serialization
 
         #region class Member MemberList
 
+        /// <summary>
+        /// Represent a member of this type, i.e. a property or field that will be serialized.
+        /// </summary>
         public partial class Member
         {
+            /// <summary>
+            /// This is the member name for the member, i.e. <see cref="MemberInfo.Name"/>.
+            /// </summary>
             public string Name { get; internal set; }
+
+            /// <summary>
+            /// This is the info for the declared type of this member, i.e. either of
+            /// <see cref="PropertyInfo.PropertyType"/> or <see cref="FieldInfo.FieldType"/>.
+            /// </summary>
             public ReflectType Type { get; internal set; }
 
 #if !__NET__
@@ -619,6 +803,11 @@ namespace Galador.Reflection.Serialization
                 fInfo = pi;
             }
 
+            /// <summary>
+            /// Gets the value of this member for the given instance.
+            /// </summary>
+            /// <param name="instance">The instance from which to take the value.</param>
+            /// <returns>The value of the member.</returns>
             public object GetValue(object instance)
             {
                 try
@@ -634,6 +823,12 @@ namespace Galador.Reflection.Serialization
                 }
                 return null;
             }
+
+            /// <summary>
+            /// Sets the value of this member (if possible) for the given instance.
+            /// </summary>
+            /// <param name="instance">The instance on which the member value will be set.</param>
+            /// <param name="value">The value that must be set.</param>
             public void SetValue(object instance, object value)
             {
                 try
@@ -651,6 +846,9 @@ namespace Galador.Reflection.Serialization
 #endif
         }
 
+        /// <summary>
+        /// Specialized list of <see cref="Member"/>.
+        /// </summary>
         public class MemberList : IReadOnlyList<Member>, IReadOnlyDictionary<string, Member>
         {
             List<Member> list = new List<Member>();
@@ -667,21 +865,46 @@ namespace Galador.Reflection.Serialization
                 dict[m.Name] = m;
             }
 
-            public Member this[string key]
+            /// <summary>
+            /// Gets the <see cref="Member"/> with the given name.
+            /// </summary>
+            /// <param name="name">Name of the member.</param>
+            /// <returns>Return the member with name, or null.</returns>
+            public Member this[string name]
             {
                 get
                 {
                     Member m;
-                    dict.TryGetValue(key, out m);
+                    dict.TryGetValue(name, out m);
                     return m;
                 }
             }
+            /// <summary>
+            /// Gets the <see cref="Member"/> at the specified index.
+            /// </summary>
             public Member this[int index] { get { return list[index]; } }
+            /// <summary>
+            /// Number of <see cref="Member"/>.
+            /// </summary>
             public int Count { get { return list.Count; } }
+            /// <summary>
+            /// All the member's names.
+            /// </summary>
             public IEnumerable<string> Keys { get { return dict.Keys; } }
+            /// <summary>
+            /// All the members
+            /// </summary>
             public IEnumerable<Member> Values { get { return list; } }
 
-            public bool ContainsKey(string key) { return dict.ContainsKey(key); }
+            /// <summary>
+            /// Whether a member with such a name exists.
+            /// </summary>
+            /// <param name="name">The member's name.</param>
+            /// <returns>Whether there is such a member.</returns>
+            public bool ContainsKey(string name) { return dict.ContainsKey(name); }
+            /// <summary>
+            /// Enumerate the members.
+            /// </summary>
             public IEnumerator<Member> GetEnumerator() { return list.GetEnumerator(); }
             bool IReadOnlyDictionary<string, Member>.TryGetValue(string key, out Member value) { return dict.TryGetValue(key, out value); }
 
@@ -967,6 +1190,9 @@ namespace Galador.Reflection.Serialization
 
         #region GetTypeConverter()
 
+        /// <summary>
+        /// Gets the <see cref="TypeConverter"/> for this type, if any.
+        /// </summary>
         public TypeConverter GetTypeConverter()
         {
 #if __PCL__
@@ -991,12 +1217,21 @@ namespace Galador.Reflection.Serialization
             return null;
 #endif
         }
+#if !__PCL__
         TypeConverter converter;
+#endif
 
         #endregion
 
         #region surrogate helpers: TryGetSurrogate() TryGetOriginal()
 
+        /// <summary>
+        /// Will (try to) get a surrogate for that item. I.e. an appropriate instance of <see cref="ISurrogate{T}"/>
+        /// </summary>
+        /// <param name="o">The object for which a surrogate must be created.</param>
+        /// <param name="result">The resulting surrogate.</param>
+        /// <returns>Whether a surrogate has been found</returns>
+        /// <exception cref="System.ArgumentException">If the surrogate class exists but can't be made</exception>
         public bool TryGetSurrogate(object o, out object result)
         {
             result = null;
@@ -1013,8 +1248,12 @@ namespace Galador.Reflection.Serialization
         }
 
         /// <summary>
-        /// If 
+        /// If this object is a <see cref="ISurrogate{T}"/> instance for another type, try to get
+        /// the appropriate instance, by calling <see cref="ISurrogate{T}.Instantiate"/>.
         /// </summary>
+        /// <param name="o">The object that could be a surrogate.</param>
+        /// <param name="result">The result instance.</param>
+        /// <returns>Whether this object has been successfully identified as a surrogate, or not.</returns>
         public bool TryGetOriginal(object o, out object result)
         {
             result = null;
@@ -1050,6 +1289,6 @@ namespace Galador.Reflection.Serialization
             return false;
         }
 
-        #endregion
+#endregion
     }
 }

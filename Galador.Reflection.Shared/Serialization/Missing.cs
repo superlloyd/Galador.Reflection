@@ -43,7 +43,9 @@ namespace Galador.Reflection.Serialization
         public string ConverterString { get; internal set; }
 
         /// <summary>
-        /// Collection data that was serialized, if these type was serialized as a collection.
+        /// Collection data that was serialized, if these type was serialized as a collection. 
+        /// Also used for <see cref="System.Runtime.Serialization.ISerializable"/> type, saving the 
+        /// <see cref="System.Runtime.Serialization.SerializationInfo"/> data.
         /// </summary>
         public IReadOnlyList<Tuple<object, object>> Collection { get; internal set; } = Empty<Tuple<object, object>>.Array;
 
@@ -70,7 +72,7 @@ namespace Galador.Reflection.Serialization
         }
 
         /// <summary>
-        /// Specialized for <see cref="Member"/>.
+        /// Specialized list of <see cref="Member"/>.
         /// </summary>
         public class MemberList : IReadOnlyList<Member>, IReadOnlyDictionary<string, Member>
         {

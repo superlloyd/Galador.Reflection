@@ -15,11 +15,19 @@ namespace Galador.Reflection
 {
     #region PropertyPath<T>
 
+    /// <summary>
+    /// A strongly typed subclass of <see cref="PropertyPath"/> for easier use.
+    /// </summary>
+    /// <typeparam name="T">The type of the root of the path</typeparam>
+    /// <typeparam name="TProp">The type of the last property at the end of the path.</typeparam>
     public class PropertyPath<T, TProp> : PropertyPath
     {
         internal PropertyPath()
         {
         }
+        /// <summary>
+        /// The root or first object of the property path.
+        /// </summary>
         public new T Root
         {
             get
@@ -31,6 +39,9 @@ namespace Galador.Reflection
             }
             set { base.Root = value; }
         }
+        /// <summary>
+        /// The value of the last member of the property path.
+        /// </summary>
         public new TProp Value
         {
             get
@@ -46,10 +57,29 @@ namespace Galador.Reflection
 
     #endregion
 
+    /// <summary>
+    /// A class that make it ease to observe and change a property path, i.e. an expression such as <c>myObject.Property1.Property2.Property3</c>.
+    /// Only works with fields and properties.
+    /// </summary>
+    /// <remarks>
+    /// PropertyPaths register weak <see cref="INotifyPropertyChanged"/> on all part of the path to track for change. Change won't be detected if 
+    /// this interface is not fired. Very much like XAML UI. They are also weak event, keep a reference to the <see cref="PropertyPath"/>
+    /// or it will disappear and no event will be fired.
+    /// </remarks>
     public class PropertyPath : INotifyPropertyChanged
     {
         #region Watch()
 
+        /// <summary>
+        /// Create a property watch with a method to be called when it <see cref="Value"/> change, with the new value.
+        /// </summary>
+        /// <typeparam name="T">Type of the root, i.e. first object, of the path</typeparam>
+        /// <typeparam name="TP">The type of the last member of the property path.</typeparam>
+        /// <param name="root">The root of the path.</param>
+        /// <param name="e">The expression (i.e. <c>myObject.A.B.C</c>) that describe the path. Only properties and fields are supported.</param>
+        /// <param name="onValueChanged">Action called an time <see cref="Value"/> change.</param>
+        /// <returns>The property path instance. Keep it to avoid garbage collection (in which case <paramref name="onValueChanged"/>
+        /// will stop being called)</returns>
         public static PropertyPath<T, TP> Watch<T, TP>(T root, Expression<Func<T, TP>> e, Action<TP> onValueChanged)
         {
             var pv = new PropertyPath<T, TP>();
@@ -64,6 +94,14 @@ namespace Galador.Reflection
             pv.Root = root;
             return pv;
         }
+        /// <summary>
+        /// Create a property watch with a method to be called when it <see cref="Value"/> change, with the new value.
+        /// </summary>
+        /// <typeparam name="TP">The type of the last member of the property path.</typeparam>
+        /// <param name="e">The expression (i.e. <c>myObject.A.B.C</c>) that describe the path. Only properties and fields are supported.</param>
+        /// <param name="onValueChanged">Action called an time <see cref="Value"/> change.</param>
+        /// <returns>The property path instance. Keep it to avoid garbage collection (in which case <paramref name="onValueChanged"/>
+        /// will stop being called)</returns>
         public static PropertyPath<DBNull, TP> Watch<TP>(Expression<Func<TP>> e, Action<TP> onValueChanged)
         {
             var pv = new PropertyPath<DBNull, TP>();
@@ -82,6 +120,15 @@ namespace Galador.Reflection
 
         #region Create()
 
+        /// <summary>
+        /// Creates a string typed <see cref="PropertyPath"/> from a root and an <see cref="Expression{TDelegate}"/>.
+        /// Only member path is supported.
+        /// </summary>
+        /// <typeparam name="T">The type of <see cref="Root"/></typeparam>
+        /// <typeparam name="TP">The type of the last member of the path.</typeparam>
+        /// <param name="root">The root of the expression.</param>
+        /// <param name="e">The member expression to navigate from the root to the value.</param>
+        /// <returns>A newly create <see cref="PropertyPath"/></returns>
         public static PropertyPath<T, TP> Create<T, TP>(T root, Expression<Func<T, TP>> e)
         {
             var pv = new PropertyPath<T, TP>();
@@ -89,6 +136,14 @@ namespace Galador.Reflection
             pv.Root = root;
             return pv;
         }
+
+        /// <summary>
+        /// Creates a string typed <see cref="PropertyPath"/> from a no root (or a static property) and an <see cref="Expression{TDelegate}"/>.
+        /// Only member path is supported.
+        /// </summary>
+        /// <typeparam name="TP">The type of the last member of the path.</typeparam>
+        /// <param name="e">A member expression to navigate from to the value.</param>
+        /// <returns>A newly create <see cref="PropertyPath"/></returns>
         public static PropertyPath<DBNull, TP> Create<TP>(Expression<Func<TP>> e)
         {
             var pv = new PropertyPath<DBNull, TP>();
@@ -127,6 +182,10 @@ namespace Galador.Reflection
 
         #region Root
 
+        /// <summary>
+        /// The root of the path. i.e. if the property path is <c>myObject.A.B.C</c>, it will be the value of <c>myObject</c>.
+        /// </summary>
+        /// <exception cref="System.InvalidCastException">If one try to set a value that can't be fit in the expression path</exception>
         public object Root
         {
             get { return root; }
@@ -142,11 +201,14 @@ namespace Galador.Reflection
             }
         }
         object root;
-        /**/
+
         #endregion
 
         #region Value
 
+        /// <summary>
+        /// The value at the end of the path. i.e. if the property path is <c>myObject.A.B.C</c>, it will be the value of <c>C</c>.
+        /// </summary>
         public object Value
         {
             get { return pvalues[pvalues.Length - 1].Value; }
@@ -155,8 +217,15 @@ namespace Galador.Reflection
 
         #endregion
 
+        /// <summary>
+        /// Gets the elements of the path.
+        /// i.e. if the property path is <c>myObject.A.B.C</c>, it will be the values of <c>A, B, C</c>.
+        /// </summary>
         public ReadOnlyCollection<PropertyValue> Elements { get { return roValues; } }
 
+        /// <summary>
+        /// Occurs when either <see cref="Root"/> or <see cref="Value"/> change.
+        /// </summary>
         public event PropertyChangedEventHandler PropertyChanged;
 
         void OnPropertyChanged([CallerMemberName]string pName = null)
@@ -166,6 +235,11 @@ namespace Galador.Reflection
 
         #region class PropertyValue
 
+        /// <summary>
+        /// Represent each individual path of the property path. 
+        ///  i.e. if the property path is <c>myObject.A.B.C</c>, there will be one for <c>A</c>, <c>B</c> and <c>C</c>.
+        ///  Can either represent a path using a <see cref="PropertyInfo"/> or <see cref="FieldInfo"/>.
+        /// </summary>
         public class PropertyValue
         {
             internal PropertyValue(PropertyPath path, int index, MemberInfo member)
@@ -175,8 +249,18 @@ namespace Galador.Reflection
                 Member = member;
             }
             int index;
+
+            /// <summary>
+            /// The <see cref="PropertyPath"/> that owns this <see cref="PropertyValue"/>.
+            /// </summary>
             public PropertyPath Path { get; private set; }
+            /// <summary>
+            /// The <see cref="MemberInfo"/> that this object maps too.
+            /// </summary>
             public MemberInfo Member { get; private set; }
+            /// <summary>
+            /// <see cref="Member"/>'s name.
+            /// </summary>
             public string Name { get { return Member.Name; } }
 
             void SetMemberValue(object value)
@@ -202,6 +286,9 @@ namespace Galador.Reflection
                     throw new InvalidOperationException();
             }
 
+            /// <summary>
+            /// The instance to which this <see cref="Member"/> applies.
+            /// </summary>
             public object Object
             {
                 get { return mObject; }
@@ -239,6 +326,9 @@ namespace Galador.Reflection
                 OnValueChanged();
             }
 
+            /// <summary>
+            /// The value of the <see cref="Member"/> for <see cref="Object"/>.
+            /// </summary>
             public object Value
             {
                 get { return mValue; }
@@ -261,6 +351,10 @@ namespace Galador.Reflection
                     Path.Elements[index + 1].Object = Value;
                 ValueChanged?.Invoke(this, EventArgs.Empty);
             }
+
+            /// <summary>
+            /// Fired when <see cref="Value"/> changes.
+            /// </summary>
             public event EventHandler ValueChanged;
         }
 

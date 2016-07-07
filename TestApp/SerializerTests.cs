@@ -229,7 +229,7 @@ namespace TestApp
             for (int i = 0; i < list.Count; i++)
                 Assert.Equal(list[i], clone[i]);
 
-            int N2 = 100;
+            int N2 = 500;
             var jDT = new Stopwatch();
             jDT.Start();
             for (int i = 0; i < N2; i++)

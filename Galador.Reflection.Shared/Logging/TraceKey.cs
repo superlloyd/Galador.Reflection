@@ -43,11 +43,11 @@ namespace Galador.Reflection.Logging
 
         #region GlobalTraceSink
 
-        static AsyncQueue writeQueue = new AsyncQueue("TraceKey.LogQueue");
+        //static AsyncQueue writeQueue = new AsyncQueue("TraceKey.LogQueue");
 
         static void GlobalTraceSink(string s)
         {
-            writeQueue.Queue(() => 
+            //writeQueue.Queue(() => 
             {
                 try
                 {
@@ -60,11 +60,15 @@ namespace Galador.Reflection.Logging
                         global::System.Diagnostics.Debugger.Break();
 #endif
                 }
-            });
+            }
+            //);
         }
         static partial void WriteText(string s);
 
-        public static void Flush() { writeQueue.Flush(); }
+        public static void Flush()
+        {
+            //writeQueue.Flush();
+        }
 
         #endregion
 

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+   <metadata minClientVersion="2.8.1">
+       <id>Galador.Reflection</id>
+       <version>$version$</version>
+       <title>Compact and fast Serializer and Registry-IoC clas</title>
+       <authors>Lloyd Dupont</authors>
+       <owners>Lloyd Dupont</owners>
+       <licenseUrl>https://github.com/superlloyd/Galador.Reflection/LICENSE.txt</licenseUrl>
+       <projectUrl>https://github.com/superlloyd/Galador.Reflection</projectUrl>
+       <requireLicenseAcceptance>false</requireLicenseAcceptance>
+       <description>
+         Contains a fast, binary format, strongly typed, version and type mismatch tolerant .NET serializer.
+		 As well as a simple IoC (Registry) class.
+       </description>
+     <releaseNotes>
+       [0.9.4]
+       First Nuget release
+     </releaseNotes>
+       <tags>xamarin, android, ios, windows</tags>
+       <dependencies>
+			<group targetFramework="net">
+			</group>
+			<group targetFramework="MonoAndroid">
+			</group>
+			<group targetFramework="Xamarin.iOS10">
+			</group>
+			<group targetFramework="Xamarin.Mac20">
+			</group>
+			<group targetFramework="portable-net45+win+wpa81+wp80">
+			</group>
+			<group targetFramework="dotnet">
+			</group>
+		</dependencies>
+   </metadata>
+   <files>
+     <!--Core-->
+	 <!-- TODO... -->
+     
+     <!--PCL-->
+     <file src="Galador.Reflection.PCL\bin\Release\Galador.Reflection.dll" target="lib\portable-net45+MonoAndroid10+MonoTouch10+Xamarin.iOS10\Galador.Reflection.dll" />
+     <file src="Galador.Reflection.PCL\bin\Release\Galador.Reflection.XML" target="lib\portable-net45+MonoAndroid10+MonoTouch10+Xamarin.iOS10\Galador.Reflection.XML" />
+
+     <!--Xamarin.Android-->
+     <file src="Galador.Reflection.Android\bin\Release\Galador.Reflection.dll" target="lib\MonoAndroid10\Galador.Reflection.dll" />
+     <file src="Galador.Reflection.Android\bin\Release\Galador.Reflection.XML" target="lib\MonoAndroid10\Galador.Reflection.XML" />
+     
+     <!--Xamarin.iOS-->
+     <file src="Galador.Reflection.IOS\bin\Release\Galador.Reflection.dll" target="lib\MonoTouch10\Galador.Reflection.dll" />
+     <file src="Galador.Reflection.IOS\bin\Release\Galador.Reflection.XML" target="lib\MonoTouch10\Galador.Reflection.XML" />
+
+     <!--Xamarin.iOS Unified-->
+     <file src="Galador.Reflection.IOS\bin\Release\Galador.Reflection.dll" target="lib\Xamarin.iOS10\Galador.Reflection.dll" />
+     <file src="Galador.Reflection.IOS\bin\Release\Galador.Reflection.XML" target="lib\Xamarin.iOS10\Galador.Reflection.XML" />
+
+     <!--Net 4.5-->
+     <file src="Galador.Reflection.NET\bin\Release\Galador.Reflection.dll" target="lib\net45\Galador.Reflection.dll" />
+     <file src="Galador.Reflection.NET\bin\Release\Galador.Reflection.XML" target="lib\net45\Galador.Reflection.XML" />
+
+   </files>
+</package>

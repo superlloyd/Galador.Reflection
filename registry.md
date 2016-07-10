@@ -11,13 +11,13 @@ Enter `Galador.Reflection.Registry`
 ## Basic Usage
 First one can, optionally, register some service classes, either directly by name with `Register()`
 or all service marked with `ExportAttribute` in a given assembly.
-**Remark** one must register classes, not interfaces.
+Note that one must register classes, not interfaces.
 
     var reg = new Registry();
     reg.Register<MyService>();
     reg.RegisterAssemblies(typeof(OtherService).Assembly);
 
-Those service will be return when any super class or implemented interface os required.
+Those service will be return when any super class or implemented interface is required.
 
 Then one can use the registry as replacement for `Activator`, 
 which will also do property and constructor injection.
@@ -42,14 +42,28 @@ One can also gain access to registered instance service by calling `Resolve()`
 **Remark** If multiple service implement the same interface or are subclass of a common base class,
     `Resolve()` will return a `ResolveAll().First()` which is a random result in that case.
 
+Finally one can always do the property injection anytime with
+
+    var instance = ....
+    reg.ResoleProperties(instance);
+
 
 ## Functionality
-If one ignore the multiple polymorphic version the registry basically implement the following methods:
+If one ignore the multiple polymorphic version the registry (and related attributes) basically implement the following methods:
+
+    [AttributeUsage(AttributeTargets.Class)]
+    class ExportAttribute : Attribute {} // only use for RegisterAssemblies()
+
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Parameter)]
+    class ImportAttribute : Attribute // for property / constructor injection
+    {
+        public Type ImportedType { get; set; } // if null, use paramter / property type
+    }
 
     class Registry
     {
         // register services
-        void RegisterAssemblies(type with export attribute in assemblies)
+        void RegisterAssemblies(exported type in assemblies)
         void Register(types);
         bool IsRegistered(type);
 
@@ -71,7 +85,7 @@ The `Registry` maintains a keyed list of all registered service by type.
 Only one service can be registered against a particular class, however it will resolve for all base classes and 
 implemented interfaces.
 The service instance, if not provided at registration time, will be created the first time it is accessed 
-and will be cached by the registry and the same instance will returned for all later query on that type.
+and will be cached by the registry. Later request of that type will returned the same instance.
 
 **Resolving:**
 
@@ -86,3 +100,15 @@ If multiple dependencies refer to the same type, an instance, saved in the `Requ
 This will always create a **new** instance of the requested type. However all dependencies will be shared and reused as with `Resolve()`.
 `Create()` will always use the constructor with the most parameters that it can fill, creating them on demand if needed and possible.
 `ImportAttribute` can also be used on constructor parameter to specify a particular subclass or interface implementation.
+`ResolveProperties()`
+
+**Collections**
+
+If an imported property (with `ImportAttribute`) is an `array[]` or an `IList<T>`, then `ResolveAll()` will 
+be used to initialize this property as an appropriately typed collection.
+
+**Custom Initialization**
+
+Once an object and its properties have been initialization, if it implements `IRegistryDelegate`, its method 
+`OnRegistryCreated` will be called, for custom post creation initialization. All imported property will
+have been set when this method is called.

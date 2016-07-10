@@ -10,6 +10,8 @@ Not much documentation (for now), look in the **TestApp** project for the Unit t
 Most interesting classed exposed:
 
 ### Serializer
+[Details](serializer.md)
+
 A class which helps implement `File > Save` with very little setup. 
 By design it ignores pointers, `IntPtr`, `Delegate`. Also it is designed to work with object that can fully be describe by their public fields and/or properties and, optionally by `IList` or `IDictionary` interfaces (generic or not).
 And it will NOT restore private field / property, unless explicitly told to, with some attribute annotation on the class itself.
@@ -60,6 +62,8 @@ Here is a simple use case, of registering an event when a property changes:
 
 
 ### Registry
+[Details](registry.md)
+
 An IoC container, `IServiceProvider`, MEF clone all in one.
 
 First create an instance of a registry `var registry = new Registry()`

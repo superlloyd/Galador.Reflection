@@ -280,8 +280,8 @@ namespace Galador.Reflection
         /// base class or implemented interface.
         /// </summary>
         /// <param name="facade">The type that is registered.</param>
-        /// <param name="instance">The instance for this type. If null it will created on demand 
-        /// on the first access to <typeparamref name="T"/></param>
+        /// <param name="instance">The instance for this type. If null it will be created on demand 
+        /// on the first access to <paramref name="facade"/></param>
         public void Register(Type facade, object instance)
         {
             EnsureAlive();
@@ -331,19 +331,19 @@ namespace Galador.Reflection
         #region Resolve(All)()
 
         /// <summary>
-        /// This will resolve the first <typeparamref name="T"/> with <see cref="ResolveAll(Type, RequestCache, Registry[])"/>
+        /// This will resolve the first <typeparamref name="T"/> with <see cref="ResolveAll(Type, RequestCache)"/>
         /// </summary>
         /// <typeparam name="T">The requested type</typeparam>
         /// <param name="cache">A cache for all instance that need be create and are not a registered service. Can be null</param>
         /// <returns>An instance of <typeparamref name="T"/>, either a reused service if registered, or newly created instance otherwise.</returns>
         public T Resolve<T>(RequestCache cache = null) { return (T)ResolveAll(typeof(T), (RequestCache)null).First(); }
         /// <summary>
-        /// This will resolve the first <paramref name="t"/> with <see cref="ResolveAll(Type, RequestCache, Registry[])"/>
+        /// This will resolve the first <paramref name="type"/> with <see cref="ResolveAll(Type, RequestCache)"/>
         /// </summary>
-        /// <param name="t">The requested type</param>
+        /// <param name="type">The requested type</param>
         /// <param name="cache">A cache for all instance that need be create and are not a registered service. Can be null</param>
         /// <returns>An instance of type <paramref name="type"/>, either a reused service if registered, or newly created instance otherwise.</returns>
-        public object Resolve(Type t, RequestCache cache = null) { return ResolveAll(t, cache).First(); }
+        public object Resolve(Type type, RequestCache cache = null) { return ResolveAll(type, cache).First(); }
 
         /// <summary>
         /// Resolve all registered service that inherit from, or implement or are <typeparamref name="T"/>.

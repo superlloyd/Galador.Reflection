@@ -1,5 +1,5 @@
 ## Galador.Reflection
-[API Documentation](Galador.Reflection.chm)
+[API Documentation](Galador.Reflection.chm?raw=true)
 
 Here are a collection of reflection based multiplatform utilities.
 Using bait and switch trick there is only 1 DLL for each supported platforms. So far iOS, Android, Desktop .NET. 

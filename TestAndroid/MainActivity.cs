@@ -17,54 +17,20 @@ namespace TestAndroid
         {
             base.OnCreate(bundle);
 
+            var tadapter = new TestAdapter(this, typeof(RegistryTests), typeof(PathTests),typeof(SerializationTests));
+
             SetContentView(Resource.Layout.Main);
-            Button button = FindViewById<Button>(Resource.Id.MyButton);
+            var list = FindViewById<ListView>(Resource.Id.listView1);
+            list.Adapter = tadapter;
+            var button = FindViewById<Button>(Resource.Id.MyButton);
             button.Click += async delegate
             {
-                button.Text = "Running Test";
-                await DoTest();
-                button.Text = "Done";
+                if (tadapter.IsRunning)
+                    return;
+                button.Text = "Running Tests...";
+                await tadapter.Run();
+                button.Text = "Start Tests";
             };
-        }
-
-        // TODO improve that!
-        Task DoTest()
-        {
-            var t = new TaskCompletionSource<bool>();
-            new Java.Lang.Thread(() => 
-            {
-                try
-                {
-                    ThreadedRun();
-                }
-                finally { t.TrySetResult(true); }
-            }).Start();
-            return t.Task;
-        }
-        void ThreadedRun()
-        {
-            var path = new PathTests();
-            path.PathWorks();
-            //path.WeakRefWorks();
-
-            var reg = new RegistryTests();
-            reg.Create1();
-            reg.Create2();
-
-            var ser = new SerializationTests();
-            ser.CheckAnnotation();
-            ser.CheckComplexClass();
-            ser.CheckComplexClass2();
-            ser.CheckIsFastEnough();
-            ser.CheckIsSmall();
-            ser.CheckReaderWriter();
-            ser.CheckSerializationName();
-            ser.CheckSimpleTypes();
-            ser.CheckSubclass();
-            ser.CheckSubclass();
-            ser.CheckTypeRestored();
-            // dynamic should work!! https://developer.xamarin.com/samples/monodroid/DynamicTest/
-            //ser.ExoticTest();
         }
     }
 }

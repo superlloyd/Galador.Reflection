@@ -240,6 +240,8 @@ namespace TestApp
             for (int i = 0; i < N2; i++)
                 Serializer.ToSerializedString(list);
             mDT.Stop();
+            // REMARK: works **much** better (i.e. lower times) 
+            // if the Serializer is compiled in RELEASE mode
             Assert.True(mDT.Elapsed.Ticks < jDT.Elapsed.Ticks);
         }
 

@@ -17,13 +17,13 @@ If one ignore the multiple polymorphic version the registry basically implement 
     class Registry
     {
         // register services
+        void RegisterAssemblies(type with export attribute in assemblies)
         void Register(types);
         bool IsRegistered(type);
 
         // resolve (i.e. create only once in a call) any object
         T Resolve<T>();
         IEnumerable<T> ResolveAll<T>();
-        bool IsResolvable<T>();
 
         // create: make a new one every time
         T Create<T>();

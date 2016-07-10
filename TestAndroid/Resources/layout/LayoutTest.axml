@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <CheckBox
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/resultCheckBox"
+        android:layout_column="1"
+        android:layout_alignParentEnd="true"
+        android:clickable="false"
+        android:enabled="false" />
+    <TextView
+        android:text="Medium Text"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/resultMethod"
+        android:layout_column="0"
+        android:layout_marginLeft="5dip"
+        android:layout_marginEnd="30dip"
+        android:layout_marginTop="5dip" />
+</RelativeLayout>

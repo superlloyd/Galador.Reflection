@@ -20,8 +20,8 @@ namespace Galador.Reflection
     }
 
     /// <summary>
-    /// When one resolve a type (i.e. create an instance with <see cref="Registry.Resolve(Type, Registry[])"/> or <see cref="Registry.Create{T}(Registry)"/>), 
-    /// all their property marked with this attribute will also be set using <see cref="Registry.Resolve{T}(Registry[])"/>
+    /// When one resolve a type (i.e. create an instance with <see cref="Registry.Resolve(Type, RequestCache)"/> or <see cref="Registry.Create(Type, RequestCache)"/>), 
+    /// all their property marked with this attribute will also be set using <see cref="Registry.Resolve(Type, RequestCache)"/>
     /// Can also be used on constructor parameter to specify a particular type to use.
     /// </summary>
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Parameter, AllowMultiple = false)]
@@ -133,7 +133,7 @@ namespace Galador.Reflection
     /// Services are registered explicitly with <see cref="Register(Type, object)"/> or automatically with <see cref="RegisterAssemblies(Assembly[])"/> assembly.
     /// Then service can then be acquired / resolved, using constructor and property injection lazily with <see cref="Resolve(Type, RequestCache)"/>.
     /// Each registered service will be created only once. Imported object (with <see cref="ImportAttribute"/>) which are not registered as service will
-    /// be created, only once per request, with <see cref="Create(Type, Registry)"/> and stored in the <see cref="RequestCache"/> for reuse during the request
+    /// be created, only once per request, with <see cref="Create(Type, RequestCache)"/> and stored in the <see cref="RequestCache"/> for reuse during the request
     /// as it traverses the object dependencies tree.
     /// </summary>
     public class Registry : IDisposable, IServiceProvider
@@ -155,10 +155,9 @@ namespace Galador.Reflection
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Registry"/> class.
-        /// And register itself has an exported type.
         /// </summary>
         public Registry()
-            : this(true)
+            : this(false)
         {
         }
         /// <summary>
@@ -259,12 +258,22 @@ namespace Galador.Reflection
         /// <typeparam name="T">The type that is registered.</typeparam>
         /// <param name="instance">The instance that is set against this type.</param>
         public void Register<T>(T instance) where T : class { Register(typeof(T), instance); }
+
         /// <summary>
-        /// Register <paramref name="facade"/> as an exported type. 
-        /// <br/><see cref="Register(Type, object)"/>.
+        /// Register all arguments types with the registry
         /// </summary>
-        /// <param name="facade">The type that is registered as a service.</param>
-        public void Register(Type facade) { Register(facade, null); }
+        /// <param name="types">All type to register</param>
+        public void Register(params Type[] types)
+        {
+            if (types == null)
+                return;
+            foreach (var t in types)
+            {
+                if (t == null)
+                    continue;
+                Register(t, (object)null);
+            }
+        }
 
         /// <summary>
         /// Register an instance as an instance of a given type. It will returned when resolving any
@@ -325,70 +334,58 @@ namespace Galador.Reflection
         /// This will resolve the first <typeparamref name="T"/> with <see cref="ResolveAll(Type, RequestCache, Registry[])"/>
         /// </summary>
         /// <typeparam name="T">The requested type</typeparam>
-        /// <param name="requestCache">A cache for all instance that need be create and are not a registered service. Can be null</param>
+        /// <param name="cache">A cache for all instance that need be create and are not a registered service. Can be null</param>
         /// <returns>An instance of <typeparamref name="T"/>, either a reused service if registered, or newly created instance otherwise.</returns>
-        public T Resolve<T>(RequestCache requestCache = null) { return ResolveAll(typeof(T), (RequestCache)null, this).Cast<T>().First(); }
+        public T Resolve<T>(RequestCache cache = null) { return (T)ResolveAll(typeof(T), (RequestCache)null).First(); }
         /// <summary>
         /// This will resolve the first <paramref name="t"/> with <see cref="ResolveAll(Type, RequestCache, Registry[])"/>
         /// </summary>
         /// <param name="t">The requested type</param>
-        /// <param name="requestCache">A cache for all instance that need be create and are not a registered service. Can be null</param>
+        /// <param name="cache">A cache for all instance that need be create and are not a registered service. Can be null</param>
         /// <returns>An instance of type <paramref name="type"/>, either a reused service if registered, or newly created instance otherwise.</returns>
-        public object Resolve(Type t, RequestCache requestCache = null) { return ResolveAll(t, requestCache, this).Cast<object>().First(); }
+        public object Resolve(Type t, RequestCache cache = null) { return ResolveAll(t, cache).First(); }
 
         /// <summary>
         /// Resolve all registered service that inherit from, or implement or are <typeparamref name="T"/>.
         /// If none are registered, it will create and return newly create instance of <typeparamref name="T"/>
-        /// , that will be saved in the <paramref name="requestCache"/>.
+        /// , that will be saved in the <paramref name="cache"/>.
         /// </summary>
         /// <typeparam name="T">The requested type</typeparam>
-        /// <param name="requestCache">Where newly create instance that are not service are cached for reuse.</param>
+        /// <param name="cache">Where newly create instance that are not service are cached for reuse.</param>
         /// <returns>Al registered service which implement or are subclass of <typeparamref name="T"/> or a newly create one.</returns>
-        public IEnumerable<T> ResolveAll<T>(RequestCache requestCache = null) { return ResolveAll(typeof(T), requestCache, this).Cast<T>(); }
+        public IEnumerable<T> ResolveAll<T>(RequestCache cache = null) { return ResolveAll(typeof(T), cache).Cast<T>(); }
 
         /// <summary>
         /// Resolve all registered service that inherit from, or implement or are <paramref name="type"/>.
         /// If none are registered, it will create and return newly create instance of <paramref name="type"/>
-        /// , that will be saved in the <paramref name="requestCache"/>.
+        /// , that will be saved in the <paramref name="cache"/>.
         /// </summary>
-        /// <param name="type">>The requested type</param>
-        /// <param name="requestCache">Where newly create instance that are not service are cached for reuse.</param>
-        /// <returns>Al registered service which implement or are subclass of <paramref name="type"/> or a newly create one.</returns>
-        public IEnumerable<object> ResolveAll(Type type, RequestCache requestCache = null) { return ResolveAll(type, requestCache, this); }
-
-        /// <summary>
-        /// Resolve all registered service that inherit from, or implement or are <paramref name="type"/>
-        /// in all argument <paramref name="registries"/>.
-        /// If none are registered, it will create and return newly create instance of <paramref name="type"/>
-        /// , that will be saved in the <paramref name="requestCache"/>.
-        /// </summary>
-        /// <param name="type">>The requested type</param>
+        /// <param name="type">The requested type</param>
         /// <param name="cache">Where newly create instance that are not service are cached for reuse.</param>
-        /// <param name="registries">All registries that will be looked up for service registration</param>
-        /// <returns></returns>
-        public static IEnumerable<object> ResolveAll(Type type, RequestCache cache, params Registry[] registries)
+        /// <returns>Al registered service which implement or are subclass of <paramref name="type"/> or a newly create one.</returns>
+        public IEnumerable<object> ResolveAll(Type type, RequestCache cache = null)
         {
             if (cache == null)
                 cache = new RequestCache();
             var none = true;
-            foreach (var vault in FindRegistrations(type, cache, registries))
+            foreach (var vault in FindRegistrations(type, cache))
             {
                 none = false;
-                Resolve(vault, cache, registries);
+                Resolve(vault, cache);
                 yield return vault.Instance;
             }
             if (none)
             {
-                if (!CanCreate(type, cache, registries))
+                if (!CanCreate(type, cache))
                     throw new InvalidOperationException($"Can't create {type.FullName}");
-                var instance = Create(type, cache, registries);
+                var instance = Create(type, cache);
                 yield return instance;
             }
         }
-        static object Resolve(TypeVault vault, RequestCache cache, params Registry[] registries)
+        object Resolve(TypeVault vault, RequestCache cache)
         {
             if (vault.Instance == null)
-                vault.Instance = Create(vault.Type, cache, registries);
+                vault.Instance = Create(vault.Type, cache);
             return vault.Instance;
         }
 
@@ -396,17 +393,21 @@ namespace Galador.Reflection
 
         #region ResolveProperties()
 
-        public void ResolveProperties(object result, RequestCache cache = null) { ResolveProperties(result, cache, this); }
-        public static void ResolveProperties(object result, params Registry[] registries) { ResolveProperties(result, (RequestCache)null, registries); }
-        public static void ResolveProperties(object result, RequestCache cache, params Registry[] registries)
+        /// <summary>
+        /// Will set all properties marked with <see cref="ImportAttribute"/>. If property is an array or a <see cref="List{T}"/>
+        /// It will <see cref="ResolveAll(Type, RequestCache)"/> and set up the array / collection with the result.
+        /// </summary>
+        /// <param name="instance">The object which property must be resolved.</param>
+        /// <param name="cache">A cache for the request so that each instance which are not service is created only once.</param>
+        public void ResolveProperties(object instance, RequestCache cache = null)
         {
-            if (result == null)
-                throw new ArgumentNullException(nameof(result));
+            if (instance == null)
+                throw new ArgumentNullException(nameof(instance));
             if (cache == null)
                 cache = new RequestCache();
 
             var props = (
-                from p in result.GetType().GetRuntimeProperties()
+                from p in instance.GetType().GetRuntimeProperties()
                 let pi = p.GetCustomAttributes<ImportAttribute>().FirstOrDefault()
                 where pi != null
                 select new { p, pi }
@@ -424,43 +425,43 @@ namespace Galador.Reflection
                         if (t == null)
                             t = p.PropertyType.GetElementType();
                         if (!IsBaseClass(p.PropertyType.GetElementType(), t))
-                            throw new NotSupportedException($"Property {result.GetType().Name}.{p.Name}, can't import {t.Name}");
-                        var objs = FindRegistrations(t, cache, registries).Select(x => Resolve(x, cache, registries)).ToList();
+                            throw new NotSupportedException($"Property {instance.GetType().Name}.{p.Name}, can't import {t.Name}");
+                        var objs = FindRegistrations(t, cache).Select(x => Resolve(x, cache)).ToList();
                         var prop = Array.CreateInstance(t, objs.Count);
                         for (int i = 0; i < objs.Count; i++)
                             prop.SetValue(objs[i], i);
-                        item.p.SetValue(result, prop);
+                        item.p.SetValue(instance, prop);
                     }
                     // List<T>
                     else
                     {
                         if (!IsBaseClass(typeof(IList), p.PropertyType))
-                            throw new InvalidOperationException($"[Import] property {result.GetType().Name}.{p.Name} must be an array or an IList");
+                            throw new InvalidOperationException($"[Import] property {instance.GetType().Name}.{p.Name} must be an array or an IList");
 
                         if (t == null)
                         {
                             var ga = p.PropertyType.GenericTypeArguments;
                             if (ga.Length != 1)
-                                throw new NotSupportedException($"[Import] property {result.GetType().Name}.{p.Name} must be generic or the Import type must be defined");
+                                throw new NotSupportedException($"[Import] property {instance.GetType().Name}.{p.Name} must be generic or the Import type must be defined");
                             t = ga[0];
                         }
-                        var value = p.GetValue(result);
+                        var value = p.GetValue(instance);
                         if (value == null)
                         {
                             if (!CanBeInstantiated(p.PropertyType))
-                                throw new InvalidOperationException($"Can't [Import]{p.PropertyType.Name} for {result.GetType().Name}.{p.Name}");
-                            value = Create(p.PropertyType, cache, registries);
-                            p.SetValue(result, value);
+                                throw new InvalidOperationException($"Can't [Import]{p.PropertyType.Name} for {instance.GetType().Name}.{p.Name}");
+                            value = Create(p.PropertyType, cache);
+                            p.SetValue(instance, value);
                         }
                         var list = (IList)value;
-                        ForEach(FindRegistrations(t, cache, registries).Select(x => Resolve(x, cache, registries)), x => list.Add(x));
+                        ForEach(FindRegistrations(t, cache).Select(x => Resolve(x, cache)), x => list.Add(x));
                     }
                 }
                 else
                 {
                     // simple property
-                    var o = ResolveAll(pi.ImportedType ?? p.PropertyType, cache, registries).First();
-                    item.p.SetValue(result, o);
+                    var o = ResolveAll(pi.ImportedType ?? p.PropertyType, cache).First();
+                    item.p.SetValue(instance, o);
                 }
             }
         }
@@ -469,22 +470,45 @@ namespace Galador.Reflection
 
         #region CanCreate() Create() FindConstructors()
 
-        public bool CanCreate<T>(RequestCache cache = null) { return CanCreate(typeof(T), cache, this); }
-        public bool CanCreate(Type type, RequestCache cache = null) { return CanCreate(type, cache, this); }
+        /// <summary>
+        /// Whether given type can be created. Basically it must be a concrete class with some constructors
+        /// with arguments that can also be created (or resolved).
+        /// </summary>
+        /// <typeparam name="T">The type to check for creation.</typeparam>
+        /// <param name="cache">A cache of instance to possibly use for construction.</param>
+        /// <returns>Whether the type can be instantiated</returns>
+        public bool CanCreate<T>(RequestCache cache = null) { return CanCreate(typeof(T), cache); }
 
-        public static bool CanCreate(Type type, RequestCache cache, params Registry[] registries)
+        /// <summary>
+        /// Whether given type can be created. Basically it must be a concrete class with some constructors
+        /// with arguments that can also be created (or resolved).
+        /// </summary>
+        /// <param name="type">The type to check for creation.</param>
+        /// <param name="cache">A cache of instance to possibly use for construction.</param>
+        /// <returns>Whether the type can be instantiated</returns>
+        public bool CanCreate(Type type, RequestCache cache = null) 
         {
-            return FindConstructors(type, cache, registries).Any();
+            return FindConstructors(type, cache).Any();
         }
 
-        public T Create<T>(RequestCache cache = null) { return (T)Create(typeof(T), cache, this); }
-        public object Create(Type type, RequestCache cache = null) { return Create(type, cache, this); }
+        /// <summary>
+        /// Create that object from scratch regardless of registration
+        /// </summary>
+        /// <typeparam name="T">The type to instantiate.</typeparam>
+        /// <param name="cache">A cache of possible instance to use as property, constructor argument and the like, on top of registered services.</param>
+        /// <returns>A newly created instance</returns>
+        /// <exception cref="InvalidOperationException">If no appropriate constructor can be found.</exception>
+        public T Create<T>(RequestCache cache = null) { return (T)Create(typeof(T), cache); }
 
 
         /// <summary>
-        /// Create that object from scratch regardless of lifetime or registration
+        /// Create that object from scratch regardless of registration
         /// </summary>
-        public static object Create(Type type, RequestCache cache, params Registry[] registries)
+        /// <param name="type">The type to instantiate.</param>
+        /// <param name="cache">A cache of possible instance to use as property, constructor argument and the like, on top of registered services.</param>
+        /// <returns>A newly created instance</returns>
+        /// <exception cref="InvalidOperationException">If no appropriate constructor can be found.</exception>
+        public object Create(Type type, RequestCache cache = null)
         {
             bool first = createSession == null;
             if (first)
@@ -493,7 +517,7 @@ namespace Galador.Reflection
                 cache = new RequestCache();
             try
             {
-                var ctors = FindConstructors(type, cache, registries);
+                var ctors = FindConstructors(type, cache);
                 var qc = (
                     from c in ctors
                     where c.IsPublic // private constructor are private for a reason, don't use them!
@@ -511,10 +535,10 @@ namespace Galador.Reflection
                     var p = qc.ppp[i];
                     var impa = p.GetCustomAttribute<ImportAttribute>();
                     var t = (impa != null ? impa.ImportedType : null) ?? p.ParameterType;
-                    var vault = FindRegistrations(t, cache, registries).FirstOrDefault(x => x.Instance != null || x.Type != type);
+                    var vault = FindRegistrations(t, cache).FirstOrDefault(x => x.Instance != null || x.Type != type);
                     if (vault != null)
                     {
-                        Resolve(vault, cache, registries);
+                        Resolve(vault, cache);
                         cargs[i] = vault.Instance;
                     }
                     else if (p.DefaultValue != DBNull.Value)
@@ -523,7 +547,7 @@ namespace Galador.Reflection
                     }
                     else
                     {
-                        var instance = Create(p.ParameterType, cache, registries);
+                        var instance = Create(p.ParameterType, cache);
                         cargs[i] = instance;
                     }
                 }
@@ -531,7 +555,7 @@ namespace Galador.Reflection
                 cache[type] = result;
                 if (result is IRegistryDelegate)
                     createSession.Add((IRegistryDelegate)result);
-                ResolveProperties(result, cache, registries);
+                ResolveProperties(result, cache);
                 return result;
             }
             finally
@@ -550,7 +574,7 @@ namespace Galador.Reflection
         /// Return the list of constructor for a type that can be instantiated with the Registry, 
         /// i.e. whose parameters are registered or instantiable.
         /// </summary>
-        static IEnumerable<ConstructorInfo> FindConstructors(Type type, RequestCache cache, params Registry[] registries)
+        IEnumerable<ConstructorInfo> FindConstructors(Type type, RequestCache cache)
         {
             if (FindSession == null)
                 FindSession = new Stack<Type>();
@@ -569,12 +593,12 @@ namespace Galador.Reflection
                     {
                         var impa = p.GetCustomAttribute<ImportAttribute>();
                         var t = (impa != null ? impa.ImportedType : null) ?? p.ParameterType;
-                        var vault = FindRegistrations(t, cache, registries).FirstOrDefault(x => x.Instance != null || x.Type != type);
+                        var vault = FindRegistrations(t, cache).FirstOrDefault(x => x.Instance != null || x.Type != type);
                         if (vault != null)
                             continue;
                         if (p.DefaultValue != DBNull.Value)
                             continue;
-                        if (CanCreate(p.ParameterType, cache, registries))
+                        if (CanCreate(p.ParameterType, cache))
                             continue;
                         ok = false;
                         break;
@@ -595,7 +619,7 @@ namespace Galador.Reflection
 
         #region FindRegistrations()
 
-        static IEnumerable<TypeVault> FindRegistrations(Type type, RequestCache cache, params Registry[] registries)
+        IEnumerable<TypeVault> FindRegistrations(Type type, RequestCache cache)
         {
             if (cache != null)
             {
@@ -604,33 +628,12 @@ namespace Galador.Reflection
                     yield return cvault;
             }
 
-            if (registries == null)
+            EnsureAlive();
+            List<TypeVault> list;
+            if (!reverseInheritance.TryGetValue(type, out list))
                 yield break;
-
-            for (int i = 0; i < registries.Length; i++)
-            {
-                var reg = registries[i];
-                if (reg == null)
-                    continue;
-
-                // don't duplicate
-                var isNew = true;
-                for (int j = 0; j < i; j++)
-                    if (registries[j] == reg)
-                    {
-                        isNew = false;
-                        break;
-                    }
-                if (!isNew)
-                    continue;
-
-                reg.EnsureAlive();
-                List<TypeVault> list;
-                if (!reg.reverseInheritance.TryGetValue(type, out list))
-                    continue;
-                foreach (var vault in list)
-                    yield return vault;
-            }
+            foreach (var vault in list)
+                yield return vault;
         }
 
         #endregion

@@ -198,6 +198,24 @@ Also if I lose that code I can generate a reader class, here is the generated C#
 	    }
     }
 
+## Speed
+
+Speed is not a design goal but is a very desirable feature nonetheless.
+I did compare my code to NewtonSoft.Json. Serializing List of 100 points many time and discarding first run.
+
+
+| time (ms)     | Json | My Serializer (Text) | My Serializer (Binary) |
+| ------------ | ---- | -------------------- | ---------------------- |
+|Android Read  | 334 | 574 | 353 |
+|Android Write | 360 | 369 | 136 |
+|Desktop Read  | 67 | 382 | 311 |
+|Desktop Write | 64 | 54 | 18 |
+
+*Currently investigating those results ...*
+
+Lower is better. There seem to be an (yet) unidentified performance issue with my deserialization code for now...
+Though Android perform acceptably.
+
 ## Advanced Usage
 
 ### Serializer

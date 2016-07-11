@@ -238,6 +238,17 @@ namespace TestApp
                 Serializer.ToSerializedString(list);
             mDT.Stop();
 
+            var bDT = new Stopwatch();
+            bDT.Start();
+            for (int i = 0; i < N2; i++)
+            {
+                var ms = new MemoryStream(256);
+                Serializer.Serialize(list, ms);
+            }
+            bDT.Stop();
+
+            //Debug.WriteLine($"{jDT.ElapsedMilliseconds} {mDT.ElapsedMilliseconds} {bDT.ElapsedMilliseconds}");
+
             // REMARK: works **much** better (i.e. lower times) 
             // if the Serializer is compiled in RELEASE mode
             Assert.True(mDT.Elapsed.Ticks < jDT.Elapsed.Ticks);
@@ -255,31 +266,40 @@ namespace TestApp
 
             int N2 = 500;
 
+            //var json = JsonConvert.SerializeObject(list);
             //var jDT = new Stopwatch();
             //jDT.Start();
             //for (int i = 0; i < N2; i++)
             //{
-            //    var s = JsonConvert.SerializeObject(list);
-            //    var o = JsonConvert.DeserializeObject(s, typeof(List<Point2D>));
+            //    var o = JsonConvert.DeserializeObject(json, typeof(List<Point2D>));
             //}
             //jDT.Stop();
 
+            //var mtext = Serializer.ToSerializedString(list);
             //var mDT = new Stopwatch();
             //mDT.Start();
             //for (int i = 0; i < N2; i++)
             //{
-            //    var s = Serializer.ToSerializedString(list);
-            //    var o = Serializer.Deserialize(s);
+            //    var o = Serializer.Deserialize(mtext);
             //}
             //mDT.Stop();
+
+            var mem = new MemoryStream(256);
+            Serializer.Serialize(list, mem);
+            mem.Position = 0;
+            Serializer.Deserialize(mem);
+            System.Threading.Thread.Sleep(700);
 
             var bDT = new Stopwatch();
             bDT.Start();
             for (int i = 0; i < N2; i++)
             {
-                var o = Serializer.Clone(list);
+                mem.Position = 0;
+                Serializer.Deserialize(mem);
             }
             bDT.Stop();
+
+            //Debug.WriteLine($"{jDT.ElapsedMilliseconds} {mDT.ElapsedMilliseconds} {bDT.ElapsedMilliseconds}");
 
             // REMARK: works **much** better (i.e. lower times) 
             // if the Serializer is compiled in RELEASE mode

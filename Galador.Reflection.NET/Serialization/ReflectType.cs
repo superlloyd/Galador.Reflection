@@ -33,22 +33,30 @@ namespace Galador.Reflection.Serialization
 
         partial class Member
         {
+            MemberInfo member;
             Type memberType;
             Action<object, object> setter;
             Func<object, object> getter;
 
-            internal void SetMember(PropertyInfo pi)
+            internal MemberInfo GetMember() { return member; }
+            internal void SetMember(MemberInfo mi)
             {
-                memberType = pi.PropertyType;
-                getter = EmitHelper.CreatePropertyGetterHandler(pi);
-                if (pi.GetSetMethod() != null)
-                    setter = EmitHelper.CreatePropertySetterHandler(pi);
-            }
-            internal void SetMember(FieldInfo pi)
-            {
-                memberType = pi.FieldType;
-                getter = EmitHelper.CreateFieldGetterHandler(pi);
-                setter = EmitHelper.CreateFieldSetterHandler(pi);
+                member = mi;
+                if (mi is PropertyInfo)
+                {
+                    var pi = (PropertyInfo)mi;
+                    memberType = pi.PropertyType;
+                    getter = EmitHelper.CreatePropertyGetterHandler(pi);
+                    if (pi.GetSetMethod() != null)
+                        setter = EmitHelper.CreatePropertySetterHandler(pi);
+                }
+                else
+                {
+                    var fi = (FieldInfo)mi;
+                    memberType = fi.FieldType;
+                    getter = EmitHelper.CreateFieldGetterHandler(fi);
+                    setter = EmitHelper.CreateFieldSetterHandler(fi);
+                }
             }
 
             /// <summary>

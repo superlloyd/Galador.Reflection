@@ -795,13 +795,16 @@ namespace Galador.Reflection.Serialization
 #if !__NET__
             PropertyInfo pInfo;
             FieldInfo fInfo;
-            internal void SetMember(PropertyInfo pi)
+            internal MemberInfo GetMember() 
             {
-                pInfo = pi;
+                if (pInfo != null)
+                    return pInfo;
+                return fInfo; 
             }
-            internal void SetMember(FieldInfo pi)
+            internal void SetMember(MemberInfo mi)
             {
-                fInfo = pi;
+                if (mi is PropertyInfo) pInfo = (PropertyInfo)mi;
+                else fInfo = (FieldInfo)mi;
             }
 
             /// <summary>
@@ -1031,24 +1034,18 @@ namespace Galador.Reflection.Serialization
                     {
                         BaseType = (ReflectType)reader.Read(RReflectType, null);
                     }
-                    var fields = Type == null ? new Dictionary<string, FieldInfo>(0) : Type.GetRuntimeFields().ToDictionary(x => x.Name);
-                    var properties = Type == null ? new Dictionary<string, PropertyInfo>(0) : Type.GetRuntimeProperties().ToDictionary(x => x.Name);
+                    var localType = Type != null ? ReflectType.GetType(Type) : null;
+                    //var fields = Type == null ? new Dictionary<string, FieldInfo>(0) : Type.GetRuntimeFields().ToDictionary(x => x.Name);
+                    //var properties = Type == null ? new Dictionary<string, PropertyInfo>(0) : Type.GetRuntimeProperties().ToDictionary(x => x.Name);
                     int NMembers = (int)reader.Reader.ReadVInt();
                     for (int i = 0; i < NMembers; i++)
                     {
                         var m = new Member();
                         m.Name = (string)reader.Read(RString, null);
                         m.Type = (ReflectType)reader.Read(RReflectType, null);
-                        FieldInfo fi;
-                        PropertyInfo pi;
-                        if (fields.TryGetValue(m.Name, out fi) && fi.FieldType == m.Type.Type)
-                        {
-                            m.SetMember(fi);
-                        }
-                        else if (properties.TryGetValue(m.Name, out pi) && pi.PropertyType == m.Type.Type)
-                        {
-                            m.SetMember(pi);
-                        }
+                        var localM = localType?.Members[m.Name];
+                        if (localM != null)
+                            m.SetMember(localM.GetMember());
                         Members.Add(m);
                     }
                     switch (CollectionType)

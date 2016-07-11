@@ -559,12 +559,14 @@ namespace Galador.Reflection.Serialization
             var o = obj as ReflectType;
             if (o == null)
                 return false;
-            if (Type != null && o.Type != null)
+            if (Type != null || o.Type != null)
                 return Type == o.Type;
-            if (FlagsToInt() != o.FlagsToInt())
+            if (Kind != o.Kind)
                 return false;
             if (IsArray)
             {
+                if (!o.IsArray)
+                    return false;
                 if (ArrayRank != o.ArrayRank)
                     return false;
                 if (!Element.Equals(o.Element))
@@ -572,11 +574,15 @@ namespace Galador.Reflection.Serialization
             }
             else if (IsPointer)
             {
+                if (!o.IsPointer)
+                    return false;
                 if (!Element.Equals(o.Element))
                     return false;
             }
             else if (IsGenericParameter)
             {
+                if (!o.IsGenericParameter)
+                    return false;
                 if (GenericParameterIndex != o.GenericParameterIndex)
                     return false;
             }
@@ -584,6 +590,8 @@ namespace Galador.Reflection.Serialization
             {
                 if (IsGeneric)
                 {
+                    if (!o.IsGeneric || IsGenericTypeDefinition != o.IsGenericTypeDefinition)
+                        return false;
                     if (!IsGenericTypeDefinition)
                         if (!Element.Equals(o.Element))
                             return false;
@@ -595,6 +603,8 @@ namespace Galador.Reflection.Serialization
                 }
                 if (!IsGeneric || IsGenericTypeDefinition)
                 {
+                    if (o.IsGeneric || !o.IsGenericTypeDefinition)
+                        return false;
                     if (TypeName != o.TypeName)
                         return false;
                     if (AssemblyName != o.AssemblyName)

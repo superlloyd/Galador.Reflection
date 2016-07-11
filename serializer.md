@@ -168,6 +168,8 @@ Json output is as follow, no type information and redundant "x", "y" "{}" "[]" r
 
 By contrast my serializer output start with a bulky MetaData Type header, followed by compact data part, i.e. only Xs and Ys:
 
+(i.e. it's more compact for collection of data, but maybe not if no collection is involved)
+
     2 7 8 805569025 9 806093313 10 "System.Collections.Generic.List`1" 0 1 2 11 "Capacity" 12 16777227 13 
     "Count" 12 14 17825792 0 1 15 553648129 16 "Galador.Core.Tests.SerializationTests+Point2D" 17 
     "Galador.Core.Tests" 2 18 "x" 19 16777232 20 "y" 19 8 5 5 

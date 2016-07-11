@@ -28,7 +28,7 @@ namespace Galador.Reflection.Serialization
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         string ReadNextToken()
         {
-            var sb = new StringBuilder();
+            var sb = new StringBuilder(32);
             var c = Reader.Peek();
 
             if (c == '"')

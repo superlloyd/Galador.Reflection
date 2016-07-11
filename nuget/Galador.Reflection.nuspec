@@ -2,15 +2,15 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
    <metadata minClientVersion="2.8.1">
        <id>Galador.Reflection</id>
-       <version>$version$</version>
-       <title>Compact and fast Serializer and Registry-IoC clas</title>
+       <version>0.9.4</version>
+       <title>Compact .NET Serializer and Registry-IoC clas</title>
        <authors>Lloyd Dupont</authors>
        <owners>Lloyd Dupont</owners>
-       <licenseUrl>https://github.com/superlloyd/Galador.Reflection/LICENSE.txt</licenseUrl>
+       <licenseUrl>https://github.com/superlloyd/Galador.Reflection/blob/master/LICENSE.txt</licenseUrl>
        <projectUrl>https://github.com/superlloyd/Galador.Reflection</projectUrl>
        <requireLicenseAcceptance>false</requireLicenseAcceptance>
        <description>
-         Contains a fast, binary format, strongly typed, version and type mismatch tolerant .NET serializer.
+         Contains a compact, binary format, strongly typed, version and type mismatch tolerant .NET serializer.
 		 As well as a simple IoC (Registry) class.
        </description>
      <releaseNotes>
@@ -38,24 +38,24 @@
 	 <!-- TODO... -->
      
      <!--PCL-->
-     <file src="Galador.Reflection.PCL\bin\Release\Galador.Reflection.dll" target="lib\portable-net45+MonoAndroid10+MonoTouch10+Xamarin.iOS10\Galador.Reflection.dll" />
-     <file src="Galador.Reflection.PCL\bin\Release\Galador.Reflection.XML" target="lib\portable-net45+MonoAndroid10+MonoTouch10+Xamarin.iOS10\Galador.Reflection.XML" />
+     <file src=".\..\Galador.Reflection.PCL\bin\Release\Galador.Reflection.dll" target="lib\portable-net45+MonoAndroid10+MonoTouch10+Xamarin.iOS10\Galador.Reflection.dll" />
+     <file src=".\..\Galador.Reflection.PCL\bin\Release\Galador.Reflection.XML" target="lib\portable-net45+MonoAndroid10+MonoTouch10+Xamarin.iOS10\Galador.Reflection.XML" />
 
      <!--Xamarin.Android-->
-     <file src="Galador.Reflection.Android\bin\Release\Galador.Reflection.dll" target="lib\MonoAndroid10\Galador.Reflection.dll" />
-     <file src="Galador.Reflection.Android\bin\Release\Galador.Reflection.XML" target="lib\MonoAndroid10\Galador.Reflection.XML" />
+     <file src=".\..\Galador.Reflection.Android\bin\Release\Galador.Reflection.dll" target="lib\MonoAndroid10\Galador.Reflection.dll" />
+     <file src=".\..\Galador.Reflection.Android\bin\Release\Galador.Reflection.XML" target="lib\MonoAndroid10\Galador.Reflection.XML" />
      
      <!--Xamarin.iOS-->
-     <file src="Galador.Reflection.IOS\bin\Release\Galador.Reflection.dll" target="lib\MonoTouch10\Galador.Reflection.dll" />
-     <file src="Galador.Reflection.IOS\bin\Release\Galador.Reflection.XML" target="lib\MonoTouch10\Galador.Reflection.XML" />
+     <file src=".\..\Galador.Reflection.IOS\bin\Release\Galador.Reflection.dll" target="lib\MonoTouch10\Galador.Reflection.dll" />
+     <file src=".\..\Galador.Reflection.IOS\bin\Release\Galador.Reflection.XML" target="lib\MonoTouch10\Galador.Reflection.XML" />
 
      <!--Xamarin.iOS Unified-->
-     <file src="Galador.Reflection.IOS\bin\Release\Galador.Reflection.dll" target="lib\Xamarin.iOS10\Galador.Reflection.dll" />
-     <file src="Galador.Reflection.IOS\bin\Release\Galador.Reflection.XML" target="lib\Xamarin.iOS10\Galador.Reflection.XML" />
+     <file src=".\..\Galador.Reflection.IOS\bin\Release\Galador.Reflection.dll" target="lib\Xamarin.iOS10\Galador.Reflection.dll" />
+     <file src=".\..\Galador.Reflection.IOS\bin\Release\Galador.Reflection.XML" target="lib\Xamarin.iOS10\Galador.Reflection.XML" />
 
      <!--Net 4.5-->
-     <file src="Galador.Reflection.NET\bin\Release\Galador.Reflection.dll" target="lib\net45\Galador.Reflection.dll" />
-     <file src="Galador.Reflection.NET\bin\Release\Galador.Reflection.XML" target="lib\net45\Galador.Reflection.XML" />
+     <file src=".\..\Galador.Reflection.NET\bin\Release\Galador.Reflection.dll" target="lib\net45\Galador.Reflection.dll" />
+     <file src=".\..\Galador.Reflection.NET\bin\Release\Galador.Reflection.XML" target="lib\net45\Galador.Reflection.XML" />
 
    </files>
 </package>

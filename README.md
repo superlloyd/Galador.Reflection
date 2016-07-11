@@ -4,17 +4,21 @@
 Here are a collection of reflection based multiplatform .NET utilities. The project is a VS2015 Community solution.
 
 Using bait and switch trick there is only 1 DLL for each supported platforms, however the PCL DLL is used only at compile time and **should** not be used at runtime.
-Use the iOS, Android, Desktop .NET or .NET Core DLL instead.
+Use the **iOS**, **Android**, **.NET4.5** or **.NET Core** DLL instead.
 
 Look in the test apps for additional usage sample.
 
 Still left todo:
-- improve and test .NET Core library
+- improve and test **.NET Core** library (might be working now, but need explicit assembly registration)
 - improve `Deserialize()` performance
-- publish Nuget packages
+
+### Getting Started
+
+    Install-Package Galador.Reflection
+
+The package for  *PCL (iOS, Android, .NET)*, **iOS**, **Android**, **.NET4.5** has been published.
 
 
-Most interesting classed exposed:
 
 ### Serializer
 [Details](serializer.md)

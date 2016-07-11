@@ -11,6 +11,7 @@ using System.IO;
 
 namespace Galador.Reflection.Serialization
 {
+
     /// <summary>
     /// The well known collection type implemented by the type. It is not a flag enum. Only one at a time is supported
     /// </summary>

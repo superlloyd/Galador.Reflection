@@ -224,22 +224,20 @@ namespace TestApp
             for (int i = 0; i < N; i++)
                 list.Add(create());
 
-            var clone = Serializer.Clone(list);
-            Assert.Equal(list.Count, clone.Count);
-            for (int i = 0; i < list.Count; i++)
-                Assert.Equal(list[i], clone[i]);
-
             int N2 = 500;
+
             var jDT = new Stopwatch();
             jDT.Start();
             for (int i = 0; i < N2; i++)
                 JsonConvert.SerializeObject(list);
             jDT.Stop();
+
             var mDT = new Stopwatch();
             mDT.Start();
             for (int i = 0; i < N2; i++)
                 Serializer.ToSerializedString(list);
             mDT.Stop();
+
             // REMARK: works **much** better (i.e. lower times) 
             // if the Serializer is compiled in RELEASE mode
             Assert.True(mDT.Elapsed.Ticks < jDT.Elapsed.Ticks);
@@ -255,31 +253,37 @@ namespace TestApp
             for (int i = 0; i < N; i++)
                 list.Add(create());
 
-            var clone = Serializer.Clone(list);
-            Assert.Equal(list.Count, clone.Count);
-            for (int i = 0; i < list.Count; i++)
-                Assert.Equal(list[i], clone[i]);
-
             int N2 = 500;
-            var jDT = new Stopwatch();
-            jDT.Start();
+
+            //var jDT = new Stopwatch();
+            //jDT.Start();
+            //for (int i = 0; i < N2; i++)
+            //{
+            //    var s = JsonConvert.SerializeObject(list);
+            //    var o = JsonConvert.DeserializeObject(s, typeof(List<Point2D>));
+            //}
+            //jDT.Stop();
+
+            //var mDT = new Stopwatch();
+            //mDT.Start();
+            //for (int i = 0; i < N2; i++)
+            //{
+            //    var s = Serializer.ToSerializedString(list);
+            //    var o = Serializer.Deserialize(s);
+            //}
+            //mDT.Stop();
+
+            var bDT = new Stopwatch();
+            bDT.Start();
             for (int i = 0; i < N2; i++)
             {
-                var s = JsonConvert.SerializeObject(list);
-                var o = JsonConvert.DeserializeObject(s, typeof(List<Point2D>));
+                var o = Serializer.Clone(list);
             }
-            jDT.Stop();
-            var mDT = new Stopwatch();
-            mDT.Start();
-            for (int i = 0; i < N2; i++)
-            {
-                var s = Serializer.ToSerializedString(list);
-                var o = Serializer.Deserialize(s);
-            }
-            mDT.Stop();
+            bDT.Stop();
+
             // REMARK: works **much** better (i.e. lower times) 
             // if the Serializer is compiled in RELEASE mode
-            Assert.True(mDT.Elapsed.Ticks < jDT.Elapsed.Ticks);
+            //Assert.True(mDT.Elapsed.Ticks < jDT.Elapsed.Ticks);
         }
 
         public class BList : List<string>

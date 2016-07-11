@@ -1,12 +1,18 @@
 ## Galador.Reflection
 [API Documentation](Galador.Reflection.chm?raw=true)
 
-Here are a collection of reflection based multiplatform utilities.
-Using bait and switch trick there is only 1 DLL for each supported platforms. So far iOS, Android, Desktop .NET. 
-.NET Core support will come later...
-UWP will NOT...
+Here are a collection of reflection based multiplatform .NET utilities. The project is a VS2015 Community solution.
 
-Not much documentation (for now), look in the **TestApp** project for the Unit test class for an idea on where to start.
+Using bait and switch trick there is only 1 DLL for each supported platforms, however the PCL DLL is used only at compile time and **should** not be used at runtime.
+Use the iOS, Android, Desktop .NET or .NET Core DLL instead.
+
+Look in the test apps for additional usage sample.
+
+Still left todo:
+- improve and test .NET Core library
+- improve `Deserialize()` performance
+- publish Nuget packages
+
 
 Most interesting classed exposed:
 

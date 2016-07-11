@@ -79,6 +79,11 @@ If one ignore the multiple polymorphic version the registry (and related attribu
         void ResolveProperties(instance);
     }
 
+**Service**
+
+Service are class registered with the `Registry` and would be singleton when created by that `Registry`.
+However Registry can resolve or create any class, not just service.
+
 **Registering:**
 
 The `Registry` maintains a keyed list of all registered service by type. 
@@ -102,10 +107,38 @@ This will always create a **new** instance of the requested type. However all de
 `ImportAttribute` can also be used on constructor parameter to specify a particular subclass or interface implementation.
 `ResolveProperties()`
 
+**ExportAttribute**
+
+This attribute is only used with `RegisterAssemblies()` to mark type that must be registered as service
+
+**ImportAttribute**
+
+This attribute is used to mark a dependency (that need not be a service). When an object is created all 
+its dependency are resolved and their dependencies and so on... One can use to specify a specific subclass to implement.
+
+    class MyClass
+    {
+        MyClass([Import(typeof(SpecificService))]IService svc) { .. }
+
+        [Import]
+        public LocationService Location { get; set; }
+
+        public B B { get; set; }
+    }
+    class B 
+    {
+        [Import]
+        public MyClass MyClass { get; set; }
+    }
+
 **Collections**
 
 If an imported property (with `ImportAttribute`) is an `array[]` or an `IList<T>`, then `ResolveAll()` will 
 be used to initialize this property as an appropriately typed collection.
+
+**Circular Reference**
+
+If you use property injection (as opposed to constructor injection) circular reference (i.e. circular dependencies) will work just fine.
 
 **Custom Initialization**
 

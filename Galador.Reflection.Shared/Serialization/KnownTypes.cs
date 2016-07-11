@@ -16,7 +16,29 @@ namespace Galador.Reflection.Serialization
     /// </summary>
     public static class KnownTypes
     {
-#if !__PCL__
+#if __PCL__
+#elif __NETCORE__
+        static KnownTypes()
+        {
+            // TODO: load assemblies automatically?!
+            //PlatformServices.Default.Application.RuntimeFramework.
+            //var assemblies = DependencyContext.Default.RuntimeLibraries.SelectMany(x => x.Assemblies).Select(x => x.Name).Distinct();
+            //Register(assemblies);
+        }
+
+        public static void RegisterAssemblies(params Assembly[] ass) { RegisterAssemblies((IEnumerable<Assembly>)ass); }
+        public static void RegisterAssemblies(IEnumerable<Assembly> assemblies)
+        {
+            if (assemblies == null)
+                return;
+            Register(assemblies);
+            lock (registeredAssemblies)
+                foreach (var ass in assemblies)
+                    if (ass != null && !registeredAssemblies.Contains(ass))
+                        registeredAssemblies.Add(ass);
+        }
+        static List<Assembly> registeredAssemblies = new List<Assembly>();
+#else
         static KnownTypes()
         {
             var domain = AppDomain.CurrentDomain;
@@ -57,7 +79,12 @@ namespace Galador.Reflection.Serialization
             if (t != null)
                 return t;
 
-#if !__PCL__
+#if __PCL__
+#elif __NETCORE__
+            var tass = registeredAssemblies.FirstOrDefault(x => x.GetName().Name == assemblyName);
+            if (tass != null)
+                return tass.GetType(typeName);
+#else
             var tass = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(x => x.GetName().Name == assemblyName);
             if (tass != null)
                 return tass.GetType(typeName);
@@ -91,9 +118,9 @@ namespace Galador.Reflection.Serialization
             }
         } 
 
-        #endregion
+#endregion
 
-        #region GetKind()
+#region GetKind()
 
         internal static PrimitiveType GetKind(Type type)
         {
@@ -118,12 +145,12 @@ namespace Galador.Reflection.Serialization
             return PrimitiveType.Object;
         }
 
-        #endregion
+#endregion
 
         static Dictionary<Type, Type> typeToSurrogate = new Dictionary<Type, Type>();
         static Dictionary<SerializationNameAttribute, Type> sReplacementTypes = new Dictionary<SerializationNameAttribute, Type>();
 
-        #region Register()
+#region Register()
 
         static void Register(params Assembly[] ass) { Register((IEnumerable<Assembly>)ass); }
         static void Register(IEnumerable<Assembly> assemblies)
@@ -194,9 +221,9 @@ namespace Galador.Reflection.Serialization
             }
         }
 
-        #endregion
+#endregion
 
-        #region TryGetSurrogate()
+#region TryGetSurrogate()
 
         /// <summary>
         /// Tries the get the surrogate for a given type.
@@ -226,6 +253,6 @@ namespace Galador.Reflection.Serialization
             return false;
         }
 
-        #endregion
+#endregion
     }
 }

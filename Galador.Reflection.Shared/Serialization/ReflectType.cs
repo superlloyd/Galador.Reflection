@@ -349,7 +349,7 @@ namespace Galador.Reflection.Serialization
                 throw new NotSupportedException("PCL");
 #else
                 IsGenericParameter = true;
-                var pargs = type.DeclaringType.GetGenericArguments();
+                var pargs = type.DeclaringType.GetTypeInfo().GetGenericArguments();
                 for (int i = 0; i < pargs.Length; i++)
                     if (pargs[i] == type)
                     {
@@ -422,7 +422,7 @@ namespace Galador.Reflection.Serialization
                             BaseType = GetType(ti.BaseType);
                         }
 #if !__PCL__
-                        IsSurrogateType = ti.GetTypeHierarchy().Any(x => x.IsInterface && x.IsGenericType && x.GetGenericTypeDefinition() == typeof(ISurrogate<>));
+                        IsSurrogateType = Type.GetTypeHierarchy().Any(x => x.GetTypeInfo().IsInterface && x.GetTypeInfo().IsGenericType && x.GetTypeInfo().GetGenericTypeDefinition() == typeof(ISurrogate<>));
 #endif
                         Type tSurrogate;
                         if (KnownTypes.TryGetSurrogate(type, out tSurrogate))
@@ -810,6 +810,8 @@ namespace Galador.Reflection.Serialization
             /// <returns>The value of the member.</returns>
             public object GetValue(object instance)
             {
+                if (instance == null)
+                    return null;
                 try
                 {
                     if (pInfo != null && pInfo.GetMethod != null)
@@ -831,6 +833,8 @@ namespace Galador.Reflection.Serialization
             /// <param name="value">The value that must be set.</param>
             public void SetValue(object instance, object value)
             {
+                if (instance == null)
+                    return;
                 try
                 { 
                     if (pInfo != null && pInfo.SetMethod != null && pInfo.PropertyType.IsInstanceOf(value))

@@ -58,7 +58,7 @@ namespace TestAndroid
                 return Task.FromResult(false);
             IsRunning = true;
             list.Clear();
-            OnUIRefresh();
+            base.NotifyDataSetChanged();
             var t = new TaskCompletionSource<bool>();
             new Java.Lang.Thread(() =>
             {

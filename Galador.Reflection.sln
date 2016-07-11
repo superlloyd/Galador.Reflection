@@ -26,6 +26,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestAndroid", "TestAndroid\TestAndroid.csproj", "{2FDE361C-3C2E-4FEB-B6E5-12EFFEB37F06}"
 EndProject
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Galador.Reflection.NETCore", "Galador.Reflection.Shared\Galador.Reflection.NETCore.xproj", "{F5DB1577-FAB6-4F40-B807-74DC448C8391}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		Galador.Reflection.Shared\Galador.Reflection.Shared.projitems*{419f3792-2cac-47ff-acd6-483d6bbfe846}*SharedItemsImports = 4
@@ -149,6 +151,22 @@ Global
 		{2FDE361C-3C2E-4FEB-B6E5-12EFFEB37F06}.Release|x86.ActiveCfg = Release|Any CPU
 		{2FDE361C-3C2E-4FEB-B6E5-12EFFEB37F06}.Release|x86.Build.0 = Release|Any CPU
 		{2FDE361C-3C2E-4FEB-B6E5-12EFFEB37F06}.Release|x86.Deploy.0 = Release|Any CPU
+		{F5DB1577-FAB6-4F40-B807-74DC448C8391}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F5DB1577-FAB6-4F40-B807-74DC448C8391}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F5DB1577-FAB6-4F40-B807-74DC448C8391}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{F5DB1577-FAB6-4F40-B807-74DC448C8391}.Debug|ARM.Build.0 = Debug|Any CPU
+		{F5DB1577-FAB6-4F40-B807-74DC448C8391}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{F5DB1577-FAB6-4F40-B807-74DC448C8391}.Debug|x64.Build.0 = Debug|Any CPU
+		{F5DB1577-FAB6-4F40-B807-74DC448C8391}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{F5DB1577-FAB6-4F40-B807-74DC448C8391}.Debug|x86.Build.0 = Debug|Any CPU
+		{F5DB1577-FAB6-4F40-B807-74DC448C8391}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F5DB1577-FAB6-4F40-B807-74DC448C8391}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F5DB1577-FAB6-4F40-B807-74DC448C8391}.Release|ARM.ActiveCfg = Release|Any CPU
+		{F5DB1577-FAB6-4F40-B807-74DC448C8391}.Release|ARM.Build.0 = Release|Any CPU
+		{F5DB1577-FAB6-4F40-B807-74DC448C8391}.Release|x64.ActiveCfg = Release|Any CPU
+		{F5DB1577-FAB6-4F40-B807-74DC448C8391}.Release|x64.Build.0 = Release|Any CPU
+		{F5DB1577-FAB6-4F40-B807-74DC448C8391}.Release|x86.ActiveCfg = Release|Any CPU
+		{F5DB1577-FAB6-4F40-B807-74DC448C8391}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

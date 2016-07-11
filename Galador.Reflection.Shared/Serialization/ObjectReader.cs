@@ -83,7 +83,7 @@ namespace Galador.Reflection.Serialization
                 {
                     foreach (var item in Context.Objects.OfType<IDeserialized>())
                         item.Deserialized();
-#if !__PCL__
+#if !__PCL__ && !__NETCORE__
                     foreach (var item in Context.Objects.OfType<SRS.IDeserializationCallback>())
                         item.OnDeserialization(this.Context);
 #endif
@@ -157,7 +157,7 @@ namespace Galador.Reflection.Serialization
             {
                 if (o is IDeserialized)
                     ((IDeserialized)o).Deserialized();
-#if !__PCL__
+#if !__PCL__ && !__NETCORE__
                 if (o is SRS.IDeserializationCallback)
                     ((SRS.IDeserializationCallback)o).OnDeserialization(null);
 #endif
@@ -169,6 +169,22 @@ namespace Galador.Reflection.Serialization
         {
 #if __PCL__
             throw new PlatformNotSupportedException("PCL");
+#elif __NETCORE__
+            var missing = new Missing(ts);
+            var list = new List<Tuple<object, object>>();
+            missing.Collection = list;
+            var N = Reader.ReadVInt();
+            for (int i = 0; i < N; i++)
+            {
+                var s = (string)Read(ReflectType.RString, null);
+                var o = Read(ReflectType.RObject, null);
+                list.Add(Tuple.Create<object, object>(s, o));
+            }
+            if (ts.Type != null)
+            {
+                return possibleValue;
+            }
+            return missing;
 #else
             var info = new SRS.SerializationInfo(typeof(object), new SRS.FormatterConverter());
             var ctx = new SRS.StreamingContext(SRS.StreamingContextStates.Persistence);
@@ -424,7 +440,8 @@ namespace Galador.Reflection.Serialization
             for (int i = 0; i < count; i++)
             {
                 var value = Read();
-                o.Add(value);
+                if (o != null)
+                    o.Add(value);
             }
         }
         void ReadDict(IDictionary o)
@@ -434,7 +451,8 @@ namespace Galador.Reflection.Serialization
             {
                 var key = Read();
                 var value = Read();
-                o.Add(key, value);
+                if (o != null)
+                    o.Add(key, value);
             }
         }
         void ReadCollectionT<T>(ICollection<T> col, ReflectType tT)
@@ -444,7 +462,7 @@ namespace Galador.Reflection.Serialization
             for (int i = 0; i < count; i++)
             {
                 var value = Read(tT, null);
-                if (value is T)
+                if (value is T && col != null)
                     col.Add((T)value);
             }
         }
@@ -455,7 +473,7 @@ namespace Galador.Reflection.Serialization
             {
                 var key = Read(tKey, null);
                 var value = Read(tVal, null);
-                if (key is K && value is V)
+                if (key is K && value is V && dict != null)
                     dict.Add((K)key, (V)value);
             }
         }

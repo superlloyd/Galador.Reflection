@@ -180,7 +180,9 @@ namespace Galador.Reflection.Serialization
             }
             else
             {
-#if !__PCL__
+#if __NETCORE__
+                throw new PlatformNotSupportedException(".NETCore + ISerializable");
+#elif !__PCL__
                 var serial = (SRS.ISerializable)o;
                 var info = new SRS.SerializationInfo(typeof(object), new SRS.FormatterConverter());
                 var ctx = new SRS.StreamingContext(SRS.StreamingContextStates.Persistence);

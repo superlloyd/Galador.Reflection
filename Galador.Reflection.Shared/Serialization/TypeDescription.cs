@@ -154,9 +154,9 @@ namespace Galador.Reflection.Serialization
                 PointerCount++;
                 type = type.GetElementType();
             }
-            if (type.IsGenericType && !type.IsGenericTypeDefinition)
+            if (type.GetTypeInfo().IsGenericType && !type.GetTypeInfo().IsGenericTypeDefinition)
             {
-                foreach (var arg in type.GetGenericArguments())
+                foreach (var arg in type.GetTypeInfo().GetGenericArguments())
                 {
                     var sub = new TypeDescription(arg);
                     mTypeArguments.Add(sub);
@@ -164,7 +164,7 @@ namespace Galador.Reflection.Serialization
                 type = type.GetGenericTypeDefinition();
             }
             Fullname = type.FullName;
-            var ass = type.Assembly;
+            var ass = type.GetTypeInfo().Assembly;
             if (ass != ReflectType.MSCORLIB)
             {
                 AssemblyName = ass.GetName().Name;
@@ -266,7 +266,7 @@ namespace Galador.Reflection.Serialization
                 return null;
             if (TypeArguments.Count > 0)
             {
-                if (!type.GetTypeInfo().IsGenericTypeDefinition || type.GetGenericArguments().Length != TypeArguments.Count)
+                if (!type.GetTypeInfo().IsGenericTypeDefinition || type.GetTypeInfo().GetGenericArguments().Length != TypeArguments.Count)
                     return null;
                 var args = TypeArguments.Select(x => x.Resolve()).ToArray();
                 if (args.Any(x => x == null))

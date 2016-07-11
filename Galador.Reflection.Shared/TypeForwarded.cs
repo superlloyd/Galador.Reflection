@@ -1,22 +1,31 @@
 ﻿#pragma warning disable 1591 // XML Comments
-#if !__PCL__
+
+#if !__PCL__ && !__NETCORE__
+
+using System;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
-#endif
+using System.Runtime.Serialization;
 
-#if __PCL__
-namespace System
-{
-    public sealed class DBNull
-    {
-        public static readonly DBNull Value = new DBNull();
-        private DBNull() { }
-    }
-}
-#else
 [assembly: TypeForwardedTo(typeof(System.DBNull))]
+[assembly: TypeForwardedTo(typeof(System.Runtime.Serialization.ISerializable))]
+[assembly: TypeForwardedTo(typeof(System.Runtime.Serialization.SerializationInfo))]
+[assembly: TypeForwardedTo(typeof(System.ComponentModel.TypeConverterAttribute))]
+[assembly: TypeForwardedTo(typeof(System.ComponentModel.TypeConverter))]
+
 #endif
 
-#if __PCL__
+#if __NETCORE__
+
+using System;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using System.Runtime.Serialization;
+
+[assembly: TypeForwardedTo(typeof(System.DBNull))]
+[assembly: TypeForwardedTo(typeof(System.ComponentModel.TypeConverterAttribute))]
+[assembly: TypeForwardedTo(typeof(System.ComponentModel.TypeConverter))]
+
 namespace System.Runtime.Serialization
 {
     public interface ISerializable
@@ -27,13 +36,19 @@ namespace System.Runtime.Serialization
     {
     }
 }
-#else
-[assembly: TypeForwardedTo(typeof(System.Runtime.Serialization.ISerializable))]
-[assembly: TypeForwardedTo(typeof(System.Runtime.Serialization.SerializationInfo))]
+
 #endif
 
-
 #if __PCL__
+
+namespace System
+{
+    public sealed class DBNull
+    {
+        public static readonly DBNull Value = new DBNull();
+        private DBNull() { }
+    }
+}
 namespace System.ComponentModel
 {
     public sealed class TypeConverterAttribute : System.Attribute
@@ -47,8 +62,18 @@ namespace System.ComponentModel
     {
     }
 }
-#else
-[assembly: TypeForwardedTo(typeof(System.ComponentModel.TypeConverterAttribute))]
-[assembly: TypeForwardedTo(typeof(System.ComponentModel.TypeConverter))]
+
+namespace System.Runtime.Serialization
+{
+    public interface ISerializable
+    {
+        void GetObjectData(SerializationInfo info, StreamingContext context);
+    }
+    public sealed class SerializationInfo
+    {
+    }
+}
+
 #endif
+
 #pragma warning restore 1591

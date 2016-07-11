@@ -58,6 +58,8 @@ namespace Galador.Reflection.Serialization
             /// <returns>The value of the member.</returns>
             public object GetValue(object instance)
             {
+                if (instance == null)
+                    return null;
                 try
                 {
                     if (getter != null)
@@ -77,6 +79,8 @@ namespace Galador.Reflection.Serialization
             /// <param name="value">The value that must be set.</param>
             public void SetValue(object instance, object value)
             {
+                if (instance == null)
+                    return;
                 try
                 {
                     if (setter != null && memberType.IsInstanceOf(value))

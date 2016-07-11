@@ -219,22 +219,51 @@ namespace Galador.Reflection.Utils
         internal static IEnumerable<FieldInfo> GetRuntimeFields(this TypeInfo ti) { throw new PlatformNotSupportedException(); }
 
 #endif
-        /// <summary>
-        /// Return an uninitialized object (by passing constructor).
-        /// </summary>
-        /// <typeparam name="T">The type to construct.</typeparam>
-        /// <returns>An uninitialized object</returns>
-        public static T GetUninitializedObject<T>() { return (T)GetUninitializedObject(typeof(T)); }
+
+#if __NETCORE__
+        internal static IEnumerable<MethodInfo> GetRuntimeMethods(this TypeInfo ti)
+        {
+            var aTi = ti;
+            while (aTi != null)
+            {
+                foreach (var m in ti.DeclaredMethods)
+                    yield return m;
+                aTi = ti.BaseType?.GetTypeInfo();
+            }
+        }
+        internal static IEnumerable<PropertyInfo> GetRuntimeProperties(this TypeInfo ti) 
+        {
+            var aTi = ti;
+            while (aTi != null)
+            {
+                foreach (var pi in ti.DeclaredProperties)
+                    yield return pi;
+                aTi = ti.BaseType?.GetTypeInfo();
+            }
+        }
+        internal static IEnumerable<FieldInfo> GetRuntimeFields(this TypeInfo ti)
+        {
+            var aTi = ti;
+            while (aTi != null)
+            {
+                foreach (var pi in ti.DeclaredFields)
+                    yield return pi;
+                aTi = ti.BaseType?.GetTypeInfo();
+            }
+        }
+#endif
 
         /// <summary>
         /// Return an uninitialized object (by passing constructor).
         /// </summary>
         /// <param name="type">The type to construct.</param>
         /// <returns>An uninitialized object</returns>
-        public static object GetUninitializedObject(this Type type)
+        internal static object GetUninitializedObject(this Type type)
         {
 #if __PCL__
             throw new PlatformNotSupportedException(); 
+#elif __NETCORE__
+            return null;
 #else
             return System.Runtime.Serialization.FormatterServices.GetUninitializedObject(type);
 #endif

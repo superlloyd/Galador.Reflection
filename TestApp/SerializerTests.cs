@@ -215,7 +215,7 @@ namespace TestApp
         }
 
         [Fact]
-        public void CheckIsFastEnough()
+        public void CheckWriteIsFastEnough()
         {
             var RAND = new Random();
             Func<Point2D> create = () => new Point2D(RAND.NextDouble(), RAND.NextDouble());
@@ -239,6 +239,43 @@ namespace TestApp
             mDT.Start();
             for (int i = 0; i < N2; i++)
                 Serializer.ToSerializedString(list);
+            mDT.Stop();
+            // REMARK: works **much** better (i.e. lower times) 
+            // if the Serializer is compiled in RELEASE mode
+            Assert.True(mDT.Elapsed.Ticks < jDT.Elapsed.Ticks);
+        }
+
+        [Fact]
+        public void CheckReadIsFastEnough()
+        {
+            var RAND = new Random();
+            Func<Point2D> create = () => new Point2D(RAND.NextDouble(), RAND.NextDouble());
+            int N = 100;
+            var list = new List<Point2D>();
+            for (int i = 0; i < N; i++)
+                list.Add(create());
+
+            var clone = Serializer.Clone(list);
+            Assert.Equal(list.Count, clone.Count);
+            for (int i = 0; i < list.Count; i++)
+                Assert.Equal(list[i], clone[i]);
+
+            int N2 = 500;
+            var jDT = new Stopwatch();
+            jDT.Start();
+            for (int i = 0; i < N2; i++)
+            {
+                var s = JsonConvert.SerializeObject(list);
+                var o = JsonConvert.DeserializeObject(s, typeof(List<Point2D>));
+            }
+            jDT.Stop();
+            var mDT = new Stopwatch();
+            mDT.Start();
+            for (int i = 0; i < N2; i++)
+            {
+                var s = Serializer.ToSerializedString(list);
+                var o = Serializer.Deserialize(s);
+            }
             mDT.Stop();
             // REMARK: works **much** better (i.e. lower times) 
             // if the Serializer is compiled in RELEASE mode

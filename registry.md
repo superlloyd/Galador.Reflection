@@ -60,7 +60,7 @@ If one ignore the multiple polymorphic version the registry (and related attribu
         public Type ImportedType { get; set; } // if null, use paramter / property type
     }
 
-    class Registry
+    class Registry : IServiceProvider
     {
         // register services
         void RegisterAssemblies(exported type in assemblies)
@@ -110,5 +110,5 @@ be used to initialize this property as an appropriately typed collection.
 **Custom Initialization**
 
 Once an object and its properties have been initialization, if it implements `IRegistryDelegate`, its method 
-`OnRegistryCreated` will be called, for custom post creation initialization. All imported property will
+`OnRegistryCreated()` will be called, for custom post creation initialization. All imported property will
 have been set when this method is called.

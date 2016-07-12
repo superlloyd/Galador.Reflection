@@ -87,7 +87,6 @@ namespace Galador.Reflection.Serialization
                     foreach (var item in Context.Objects.OfType<SRS.IDeserializationCallback>())
                         item.OnDeserialization(this.Context);
 #endif
-                    Context.UpdateObjectsToIDs();
                 }
             }
         }

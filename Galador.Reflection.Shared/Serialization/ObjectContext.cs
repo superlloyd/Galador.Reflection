@@ -122,41 +122,19 @@ namespace Galador.Reflection.Serialization
                 throw new InvalidOperationException($"ID({id}) already in use");
             if (id == 0)
                 throw new InvalidOperationException($"null(0) already registered");
-            if (objectsToIds.ContainsKey(o))
-                throw new InvalidOperationException($"Object({o}) already registered");
             idToObjects[id] = o;
             if (o != null)
                 objectsToIds[o] = id;
         }
 
-        /// <summary>
-        /// Due to its recursive nature, some hashcode might have been incorrect at registration
-        /// data, redo that table
-        /// </summary>
-        internal void UpdateObjectsToIDs()
-        {
-            objectsToIds.Clear();
-            foreach (var kv in idToObjects)
-            {
-                if (kv.Value == null)
-                    continue;
-                objectsToIds[kv.Value] = kv.Key;
-            }
-        }
-
         #endregion
 
-        #region info: Count, IDs, Objects this[]
+        #region info: Count, Objects
 
         /// <summary>
         /// Number of object that have been register with this context.
         /// </summary>
         public int Count { get { return idToObjects.Count; } }
-
-        /// <summary>
-        /// All the IDs.
-        /// </summary>
-        public IEnumerable<ulong> IDs { get { return idToObjects.Keys; } }
 
         /// <summary>
         /// All the objects. Note that the <see cref="ReflectType"/> found in the context are not the singletons
@@ -165,26 +143,6 @@ namespace Galador.Reflection.Serialization
         /// </summary>
         public IEnumerable<object> Objects { get { return idToObjects.Values; } }
 
-        /// <summary>
-        /// Gets the <see cref="System.Object"/> with the specified ID.
-        /// </summary>
-        /// <param name="ID">The ID of the object.</param>
-        /// <returns></returns>
-        /// <exception cref="System.ArgumentOutOfRangeException">If no object was registered for that ID.</exception>
-        public object this[ulong ID]
-        {
-            get
-            {
-                object o;
-                if (ID == 0ul)
-                    return null;
-                if (this != WellKnownContext && WellKnownContext.idToObjects.TryGetValue(ID, out o))
-                    return o;
-                if (idToObjects.TryGetValue(ID, out o))
-                    return o;
-                throw new ArgumentOutOfRangeException();
-            }
-        }
 
         #endregion
 

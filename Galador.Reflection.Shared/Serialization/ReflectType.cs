@@ -326,7 +326,36 @@ namespace Galador.Reflection.Serialization
 
         void SetConstructor(ConstructorInfo ctor)
         {
+            if (ctor == null)
+                return;
+
+            var ps = ctor.GetParameters();
+#if __NET__ || __NETCORE__
+            if (ps.Length == 0)
+            {
+                fastCtor = EmitHelper.CreateParameterlessConstructorHandler(ctor);
+                return;
+            }
+#endif
+            var cargs = new object[ps.Length];
+            for (int i = 0; i < ps.Length; i++)
+            {
+                var p = ps[i];
+                if (p.DefaultValue == DBNull.Value)
+                    return;
+                cargs[i] = p.DefaultValue;
+            }
             emtpy_constructor = ctor;
+            empty_params = cargs;
+
+        }
+        void SetConstructor(ReflectType local)
+        {
+#if __NET__ || __NETCORE__
+            fastCtor = local.fastCtor;
+#endif
+            emtpy_constructor = local.emtpy_constructor;
+            empty_params = local.empty_params;
         }
 
         /// <summary>
@@ -338,13 +367,21 @@ namespace Galador.Reflection.Serialization
         {
             if (Type == null)
                 return null;
+#if __NET__ || __NETCORE__
+            if (fastCtor != null)
+                return fastCtor();
+#endif
             if (emtpy_constructor != null)
-                return emtpy_constructor.TryConstruct();
+                return emtpy_constructor.Invoke(empty_params);
             return Type.GetUninitializedObject();
         }
         ConstructorInfo emtpy_constructor;
+        object[] empty_params;
+#if __NET__ || __NETCORE__
+        Func<object> fastCtor;
+#endif
 
-#endregion
+        #endregion
 
         #region ctors() Initialize()
 
@@ -398,7 +435,7 @@ namespace Galador.Reflection.Serialization
                 }
                 else if (Kind == PrimitiveType.Object)
                 {
-                    SetConstructor(Type.TryGetConstructors().FirstOrDefault());
+                    SetConstructor(Type.TryGetConstructors().OrderBy(x => x.GetParameters().Length).FirstOrDefault());
                     if (ti.IsGenericType)
                     {
                         IsGeneric = true;
@@ -1012,6 +1049,64 @@ namespace Galador.Reflection.Serialization
 #endif
                 }
             }
+            internal void SetMember(Member other)
+            {
+                if (other.Type.Type == null || other.Type.Type != Type.Type)
+                    return;
+                member = other.member;
+                pInfo = other.pInfo;
+                fInfo = other.fInfo;
+#if __NET__ || __NETCORE__
+                setter = other.setter;
+                getter = other.getter;
+                hasFastSetter = other.hasFastSetter;
+                switch (Type.Kind)
+                {
+                    case PrimitiveType.Guid:
+                        setterGuid = other.setterGuid;
+                        break;
+                    case PrimitiveType.Bool:
+                        setterBool = other.setterBool;
+                        break;
+                    case PrimitiveType.Char:
+                        setterChar = other.setterChar;
+                        break;
+                    case PrimitiveType.Byte:
+                        setterByte = other.setterByte;
+                        break;
+                    case PrimitiveType.SByte:
+                        setterSByte = other.setterSByte;
+                        break;
+                    case PrimitiveType.Int16:
+                        setterInt16 = other.setterInt16;
+                        break;
+                    case PrimitiveType.UInt16:
+                        setterUInt16 = other.setterUInt16;
+                        break;
+                    case PrimitiveType.Int32:
+                        setterInt32 = other.setterInt32;
+                        break;
+                    case PrimitiveType.UInt32:
+                        setterUInt32 = other.setterUInt32;
+                        break;
+                    case PrimitiveType.Int64:
+                        setterInt64 = other.setterInt64;
+                        break;
+                    case PrimitiveType.UInt64:
+                        setterUInt64 = other.setterUInt64;
+                        break;
+                    case PrimitiveType.Single:
+                        setterSingle = other.setterSingle;
+                        break;
+                    case PrimitiveType.Double:
+                        setterDouble = other.setterDouble;
+                        break;
+                    case PrimitiveType.Decimal:
+                        setterDecimal = other.setterDecimal;
+                        break;
+                }
+#endif
+            }
 
 
             /// <summary>
@@ -1308,7 +1403,7 @@ namespace Galador.Reflection.Serialization
                         m.Type = (ReflectType)reader.Read(RReflectType, null);
                         var localM = localType?.Members[m.Name];
                         if (localM != null)
-                            m.SetMember(localM.GetMember());
+                            m.SetMember(localM);
                         Members.Add(m);
                     }
                     switch (CollectionType)
@@ -1349,7 +1444,7 @@ namespace Galador.Reflection.Serialization
                         }
                         var localM = localType?.Members[m.Name];
                         if (localM != null)
-                            m.SetMember(localM.GetMember());
+                            m.SetMember(localM);
                         Members.Add(m);
                     }
                     switch (CollectionType)
@@ -1371,7 +1466,7 @@ namespace Galador.Reflection.Serialization
                 }
             }
             if (Kind == PrimitiveType.Object && Type != null)
-                SetConstructor(Type.TryGetConstructors().FirstOrDefault());
+                SetConstructor(ReflectType.GetType(Type));
         }
         internal void Write(ObjectWriter writer)
         {

@@ -303,7 +303,7 @@ namespace TestApp
 
             // REMARK: works **much** better (i.e. lower times) 
             // if the Serializer is compiled in RELEASE mode
-            //Assert.True(mDT.Elapsed.Ticks < jDT.Elapsed.Ticks);
+            Assert.True(mDT.Elapsed.Ticks < jDT.Elapsed.Ticks);
         }
 
         public class BList : List<string>

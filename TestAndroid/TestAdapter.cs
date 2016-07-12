@@ -96,13 +96,9 @@ namespace TestAndroid
                         item.Success = false;
                     }
                 }
-                list.Add(item);
-                OnUIRefresh();
+                lock (list) list.Add(item);
+                activity.RunOnUiThread(() => base.NotifyDataSetChanged());
             }
-        }
-        void OnUIRefresh()
-        {
-            activity.RunOnUiThread(() => base.NotifyDataSetChanged());
         }
 
         public class JavaJobObject : Java.Lang.Object
@@ -110,13 +106,16 @@ namespace TestAndroid
             internal TestRow Item;
         }
 
-        public override int Count { get { return list != null ? list.Count : 0; } }
+        public override int Count { get { lock (list) return list != null ? list.Count : 0; } }
 
         public override Java.Lang.Object GetItem(int position)
         {
-            if (list == null || position < 0 || position >= list.Count)
-                return null;
-            return new JavaJobObject { Item = list[position] };
+            lock (list)
+            {
+                if (list == null || position < 0 || position >= list.Count)
+                    return null;
+                return new JavaJobObject { Item = list[position] };
+            }
         }
 
         public override long GetItemId(int position)
@@ -126,7 +125,8 @@ namespace TestAndroid
 
         public override Android.Views.View GetView(int position, Android.Views.View convertView, ViewGroup parent)
         {
-            var row = list[position];
+            TestRow row;
+            lock (list) { row = list[position]; }
 
             if (row.IsHeader)
             {

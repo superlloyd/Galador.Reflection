@@ -90,6 +90,25 @@ namespace Galador.Reflection.Serialization
 
             return (Func<object>)dynam.CreateDelegate(typeof(Func<object>));
         }
+        public static Func<object> CreateParameterlessConstructorHandler(ConstructorInfo ctor)
+        {
+            var dynam = new DynamicMethod(string.Empty, typeof(object), Type.EmptyTypes, Module, true);
+            ILGenerator il = dynam.GetILGenerator();
+
+            var type = ctor.DeclaringType;
+            if (type.GetTypeInfo().IsValueType)
+            {
+                il.DeclareLocal(type);
+                il.Emit(OpCodes.Ldloc_0);
+                il.Emit(OpCodes.Box, type);
+            }
+            else
+                il.Emit(OpCodes.Newobj, ctor);
+
+            il.Emit(OpCodes.Ret);
+
+            return (Func<object>)dynam.CreateDelegate(typeof(Func<object>));
+        }
 
         #endregion
 

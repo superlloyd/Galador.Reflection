@@ -206,14 +206,13 @@ I did compare my code to NewtonSoft.Json. Serializing List of 100 points many ti
 
 | time (ms)     | Json | My Serializer (Text) | My Serializer (Binary) |
 | ------------ | ---- | -------------------- | ---------------------- |
-|Android Read  | 263 | 495 | 263 |
-|Android Write | 305 | 337 | 110 |
-|Desktop Read  | 73 | 238 | 189 |
-|Desktop Write | 64 | 54 | 18 |
+|Android Read  | 283 | 455 | 228 |
+|Android Write | 347 | 337 | 98 |
+|Desktop Read  | 65 | 73 | 28 |
+|Desktop Write | 64 | 54 | 16 |
 
-*Currently investigating those results ...*
-
-Big loss compare to JSON read on desktop. Doing well elsewhere (since binary format is the default format).
+There is some variation and result are not consistent. However, overall, my *Binary* serializer 
+performs similarly or better
 
 ## Advanced Usage
 

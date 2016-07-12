@@ -368,11 +368,8 @@ namespace Galador.Reflection.Serialization
                                 if (oid != 0)
                                     Context.Register(oid, o);
                                 foreach (var p in ts.RuntimeMembers())
-                                {
-                                    var org = p.GetValue(o);
-                                    var value = Read(p.Type, org);
-                                    p.SetValue(o, value);
-                                }
+                                    p.ReadValue(this, o);
+
                                 var colt = ts.GetCollectionType();
                                 switch (colt.CollectionType)
                                 {

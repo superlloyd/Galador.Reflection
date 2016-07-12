@@ -281,10 +281,7 @@ namespace Galador.Reflection.Serialization
                         else
                         {
                             foreach (var f in ts.RuntimeMembers())
-                            {
-                                var p = f.GetValue(o);
-                                Write(f.Type, p);
-                            }
+                                f.WriteValue(this, o);
                             var colt = ts.GetCollectionType();
                             switch (colt.CollectionType)
                             {

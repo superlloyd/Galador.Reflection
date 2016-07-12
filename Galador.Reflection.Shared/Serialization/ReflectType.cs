@@ -804,10 +804,11 @@ namespace Galador.Reflection.Serialization
             PropertyInfo pInfo;
             FieldInfo fInfo;
 
-#if __NET__ || __NETCORE__
+            // performance fields, depends on platform
+#pragma warning disable 169 // field not used
             Action<object, object> setter;
             Func<object, object> getter;
-#endif
+#pragma warning restore 169 // field not used
 
             internal MemberInfo GetMember() { return member; }
             internal void SetMember(MemberInfo mi)
@@ -872,6 +873,18 @@ namespace Galador.Reflection.Serialization
                     else if (fInfo != null && fInfo.FieldType.IsInstanceOf(value))
                         fInfo.SetValue(instance, value);
 #endif
+            }
+
+            internal void ReadValue(ObjectReader reader, object instance)
+            {
+                var org = GetValue(instance);
+                var value = reader.Read(Type, org);
+                SetValue(instance, value);
+            }
+            internal void WriteValue(ObjectWriter writer, object instance)
+            {
+                var p = GetValue(instance);
+                writer.Write(Type, p);
             }
         }
 

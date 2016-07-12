@@ -18,11 +18,29 @@ namespace Galador.Reflection.Serialization
         {
             WellKnownContext = new ObjectContext();
             // 0 <==> null
-            WellKnownContext.Register(1, ReflectType.RObject);
-            WellKnownContext.Register(2, ReflectType.RString);
-            WellKnownContext.Register(3, ReflectType.RType);
-            WellKnownContext.Register(4, ReflectType.RReflectType);
-            WellKnownContext.Register(5, "");
+            ulong index = 1;
+            // essential type that must be shared by all serialized stream
+            WellKnownContext.Register(index++, ReflectType.RObject);
+            WellKnownContext.Register(index++, ReflectType.RString);
+            WellKnownContext.Register(index++, ReflectType.RType);
+            WellKnownContext.Register(index++, ReflectType.RReflectType);
+            // other well known values, to speed up read-write and reduce stream size
+            WellKnownContext.Register(index++, "");
+            WellKnownContext.Register(index++, ReflectType.GetType(typeof(byte[])));
+            WellKnownContext.Register(index++, ReflectType.GetType(typeof(Guid)));
+            WellKnownContext.Register(index++, ReflectType.GetType(typeof(bool)));
+            WellKnownContext.Register(index++, ReflectType.GetType(typeof(char)));
+            WellKnownContext.Register(index++, ReflectType.GetType(typeof(byte)));
+            WellKnownContext.Register(index++, ReflectType.GetType(typeof(sbyte)));
+            WellKnownContext.Register(index++, ReflectType.GetType(typeof(short)));
+            WellKnownContext.Register(index++, ReflectType.GetType(typeof(ushort)));
+            WellKnownContext.Register(index++, ReflectType.GetType(typeof(int)));
+            WellKnownContext.Register(index++, ReflectType.GetType(typeof(uint)));
+            WellKnownContext.Register(index++, ReflectType.GetType(typeof(long)));
+            WellKnownContext.Register(index++, ReflectType.GetType(typeof(ulong)));
+            WellKnownContext.Register(index++, ReflectType.GetType(typeof(float)));
+            WellKnownContext.Register(index++, ReflectType.GetType(typeof(double)));
+            WellKnownContext.Register(index++, ReflectType.GetType(typeof(decimal)));
         }
 
         #region serialization methods: TryGetObject() Contains() TryGetId() NewId() Register()

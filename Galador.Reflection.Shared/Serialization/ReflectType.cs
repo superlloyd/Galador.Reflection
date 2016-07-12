@@ -471,8 +471,19 @@ namespace Galador.Reflection.Serialization
                         }
                         else
                         {
+                            Predicate<string> skip = s =>
+                            {
+                                var p = BaseType;
+                                while (p != null)
+                                {
+                                    if (p.Members.ContainsKey(s))
+                                        return true;
+                                    p = p.BaseType;
+                                }
+                                return false;
+                            };
                             var attr = ti.GetCustomAttribute<SerializationSettingsAttribute>() ?? DefaultSettings;
-                            foreach (var pi in ti.GetRuntimeFields())
+                            foreach (var pi in ti.DeclaredFields)
                             {
                                 var pType = GetType(pi.FieldType);
                                 if (pType.IsIgnored)
@@ -486,7 +497,7 @@ namespace Galador.Reflection.Serialization
                                     inc = true;
                                 if (!inc)
                                     continue;
-                                if (BaseType != null && BaseType.Members.ContainsKey(pi.Name))
+                                if (skip(pi.Name))
                                     continue;
                                 var m = new Member
                                 {
@@ -496,12 +507,14 @@ namespace Galador.Reflection.Serialization
                                 m.SetMember(pi);
                                 Members.Add(m);
                             }
-                            foreach (var pi in ti.GetRuntimeProperties())
+                            foreach (var pi in ti.DeclaredProperties)
                             {
                                 var pType = GetType(pi.PropertyType);
                                 if (pType.IsIgnored)
                                     continue;
                                 if (pi.GetMethod == null || pi.GetMethod.IsStatic || pi.GetMethod.GetParameters().Length != 0)
+                                    continue;
+                                if (pi.SetMethod == null && pi.DeclaringType.GetTypeInfo().IsValueType)
                                     continue;
                                 if (pi.GetCustomAttribute<NotSerializedAttribute>() != null)
                                     continue;
@@ -510,7 +523,7 @@ namespace Galador.Reflection.Serialization
                                     inc = true;
                                 if (!inc)
                                     continue;
-                                if (BaseType != null && BaseType.Members.ContainsKey(pi.Name))
+                                if (skip(pi.Name))
                                     continue;
                                 var m = new Member
                                 {
@@ -866,7 +879,7 @@ namespace Galador.Reflection.Serialization
                     pInfo = (PropertyInfo)mi;
 #if __NET__ || __NETCORE__
                     getter = EmitHelper.CreatePropertyGetterHandler(pInfo);
-                    if (pInfo.GetSetMethod() != null)
+                    if (pInfo.SetMethod != null)
                     {
                         setter = EmitHelper.CreatePropertySetterHandler(pInfo);
                         switch (Type.Kind)
@@ -1287,8 +1300,6 @@ namespace Galador.Reflection.Serialization
                         BaseType = (ReflectType)reader.Read(RReflectType, null);
                     }
                     var localType = Type != null ? ReflectType.GetType(Type) : null;
-                    //var fields = Type == null ? new Dictionary<string, FieldInfo>(0) : Type.GetRuntimeFields().ToDictionary(x => x.Name);
-                    //var properties = Type == null ? new Dictionary<string, PropertyInfo>(0) : Type.GetRuntimeProperties().ToDictionary(x => x.Name);
                     int NMembers = (int)reader.Reader.ReadVInt();
                     for (int i = 0; i < NMembers; i++)
                     {
@@ -1324,8 +1335,7 @@ namespace Galador.Reflection.Serialization
 
                 if (IsDefaultSave)
                 {
-                    var fields = Type == null ? new Dictionary<string, FieldInfo>(0) : Type.GetRuntimeFields().ToDictionary(x => x.Name);
-                    var properties = Type == null ? new Dictionary<string, PropertyInfo>(0) : Type.GetRuntimeProperties().ToDictionary(x => x.Name);
+                    var localType = Type != null ? ReflectType.GetType(Type) : null;
                     foreach (var em in Element.Members)
                     {
                         var m = new Member
@@ -1337,16 +1347,9 @@ namespace Galador.Reflection.Serialization
                         {
                             m.Type = GenericArguments[em.Type.GenericParameterIndex];
                         }
-                        FieldInfo fi;
-                        PropertyInfo pi;
-                        if (fields.TryGetValue(em.Name, out fi) && fi.FieldType == m.Type.Type)
-                        {
-                            m.SetMember(fi);
-                        }
-                        else if (properties.TryGetValue(em.Name, out pi) && pi.PropertyType == m.Type.Type)
-                        {
-                            m.SetMember(pi);
-                        }
+                        var localM = localType?.Members[m.Name];
+                        if (localM != null)
+                            m.SetMember(localM.GetMember());
                         Members.Add(m);
                     }
                     switch (CollectionType)

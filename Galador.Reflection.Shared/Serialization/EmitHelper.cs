@@ -111,11 +111,26 @@ namespace Galador.Reflection.Serialization
             return (Action<object, object>)dynam.CreateDelegate(typeof(Action<object, object>));
         }
 
+        public static Func<object, object> CreateFieldGetterHandler(FieldInfo fieldInfo)
+        {
+            var dynam = new DynamicMethod(string.Empty, typeof(object), SingleObject, Module, true);
+            ILGenerator il = dynam.GetILGenerator();
+
+            if (!fieldInfo.IsStatic)
+                il.PushInstance(fieldInfo.DeclaringType);
+
+            il.Emit(OpCodes.Ldfld, fieldInfo);
+            il.BoxIfNeeded(fieldInfo.FieldType);
+            il.Emit(OpCodes.Ret);
+
+            return (Func<object, object>)dynam.CreateDelegate(typeof(Func<object, object>));
+        }
+
         public static Action<object, object> CreatePropertySetterHandler(PropertyInfo propertyInfo)
         {
             var dynam = new DynamicMethod(string.Empty, typeof(void), TwoObjects, Module, true);
             ILGenerator il = dynam.GetILGenerator();
-            MethodInfo methodInfo = propertyInfo.GetSetMethod();
+            MethodInfo methodInfo = propertyInfo.SetMethod;
 
             if (!methodInfo.IsStatic)
                 il.PushInstance(propertyInfo.DeclaringType);
@@ -132,26 +147,11 @@ namespace Galador.Reflection.Serialization
             return (Action<object, object>)dynam.CreateDelegate(typeof(Action<object, object>));
         }
 
-        public static Func<object, object> CreateFieldGetterHandler(FieldInfo fieldInfo)
-        {
-            var dynam = new DynamicMethod(string.Empty, typeof(object), SingleObject, Module, true);
-            ILGenerator il = dynam.GetILGenerator();
-
-            if (!fieldInfo.IsStatic)
-                il.PushInstance(fieldInfo.DeclaringType);
-
-            il.Emit(OpCodes.Ldfld, fieldInfo);
-            il.BoxIfNeeded(fieldInfo.FieldType);
-            il.Emit(OpCodes.Ret);
-
-            return (Func<object, object>)dynam.CreateDelegate(typeof(Func<object, object>));
-        }
-
         public static Func<object, object> CreatePropertyGetterHandler(PropertyInfo propertyInfo)
         {
             var dynam = new DynamicMethod(string.Empty, typeof(object), SingleObject, Module, true);
             ILGenerator il = dynam.GetILGenerator();
-            MethodInfo methodInfo = propertyInfo.GetGetMethod();
+            MethodInfo methodInfo = propertyInfo.GetMethod;
 
             if (!methodInfo.IsStatic)
                 il.PushInstance(propertyInfo.DeclaringType);
@@ -227,7 +227,7 @@ namespace Galador.Reflection.Serialization
             var dynam = new DynamicMethod(string.Empty, typeof(void), new Type[] { typeof(object), typeof(T) }, Module, true);
             ILGenerator il = dynam.GetILGenerator();
 
-            var method = member.GetSetMethod();
+            var method = member.SetMethod;
             if (!method.IsStatic)
                 il.PushInstance(method.DeclaringType);
             il.Emit(OpCodes.Ldarg_1);
@@ -242,7 +242,7 @@ namespace Galador.Reflection.Serialization
             var dynam = new DynamicMethod(string.Empty, typeof(T), new Type[] { typeof(object) }, Module, true);
             ILGenerator il = dynam.GetILGenerator();
 
-            var method = member.GetGetMethod();
+            var method = member.GetMethod;
             if (!method.IsStatic)
                 il.PushInstance(method.DeclaringType);
             if (method.IsFinal || !method.IsVirtual) il.Emit(OpCodes.Call, method);

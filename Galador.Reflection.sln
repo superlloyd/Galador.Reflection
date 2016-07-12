@@ -29,9 +29,6 @@ EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Galador.Reflection.NETCore", "Galador.Reflection.Shared\Galador.Reflection.NETCore.xproj", "{F5DB1577-FAB6-4F40-B807-74DC448C8391}"
 EndProject
 Global
-	GlobalSection(Performance) = preSolution
-		HasPerformanceSessions = true
-	EndGlobalSection
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		Galador.Reflection.Shared\Galador.Reflection.Shared.projitems*{419f3792-2cac-47ff-acd6-483d6bbfe846}*SharedItemsImports = 4
 		Galador.Reflection.Shared\Galador.Reflection.Shared.projitems*{70e036d3-b37d-474c-a786-43a8ffaf7bff}*SharedItemsImports = 4
@@ -66,8 +63,8 @@ Global
 		{70E036D3-B37D-474C-A786-43A8FFAF7BFF}.Release|x64.Build.0 = Release|Any CPU
 		{70E036D3-B37D-474C-A786-43A8FFAF7BFF}.Release|x86.ActiveCfg = Release|Any CPU
 		{70E036D3-B37D-474C-A786-43A8FFAF7BFF}.Release|x86.Build.0 = Release|Any CPU
-		{419F3792-2CAC-47FF-ACD6-483D6BBFE846}.Debug|Any CPU.ActiveCfg = Release|Any CPU
-		{419F3792-2CAC-47FF-ACD6-483D6BBFE846}.Debug|Any CPU.Build.0 = Release|Any CPU
+		{419F3792-2CAC-47FF-ACD6-483D6BBFE846}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{419F3792-2CAC-47FF-ACD6-483D6BBFE846}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{419F3792-2CAC-47FF-ACD6-483D6BBFE846}.Debug|ARM.ActiveCfg = Debug|Any CPU
 		{419F3792-2CAC-47FF-ACD6-483D6BBFE846}.Debug|ARM.Build.0 = Debug|Any CPU
 		{419F3792-2CAC-47FF-ACD6-483D6BBFE846}.Debug|x64.ActiveCfg = Debug|Any CPU

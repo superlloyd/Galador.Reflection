@@ -805,10 +805,27 @@ namespace Galador.Reflection.Serialization
             FieldInfo fInfo;
 
             // performance fields, depends on platform
-#pragma warning disable 169 // field not used
+#if __NET__ || __NETCORE__
             Action<object, object> setter;
             Func<object, object> getter;
-#pragma warning restore 169 // field not used
+            bool hasFastSetter;
+            Action<object, string> setterString;
+            Action<object, byte[]> setterBytes;
+            Action<object, Guid> setterGuid;
+            Action<object, bool> setterBool;
+            Action<object, char> setterChar;
+            Action<object, byte> setterByte;
+            Action<object, sbyte> setterSByte;
+            Action<object, short> setterInt16;
+            Action<object, ushort> setterUInt16;
+            Action<object, int> setterInt32;
+            Action<object, uint> setterUInt32;
+            Action<object, long> setterInt64;
+            Action<object, ulong> setterUInt64;
+            Action<object, float> setterSingle;
+            Action<object, double> setterDouble;
+            Action<object, decimal> setterDecimal;
+#endif
 
             internal MemberInfo GetMember() { return member; }
             internal void SetMember(MemberInfo mi)
@@ -820,7 +837,76 @@ namespace Galador.Reflection.Serialization
 #if __NET__ || __NETCORE__
                     getter = EmitHelper.CreatePropertyGetterHandler(pInfo);
                     if (pInfo.GetSetMethod() != null)
+                    {
                         setter = EmitHelper.CreatePropertySetterHandler(pInfo);
+                        switch (Type.Kind)
+                        {
+                            case PrimitiveType.String:
+                                hasFastSetter = true;
+                                setterString = EmitHelper.CreatePropertySetter<string>(pInfo);
+                                break;
+                            case PrimitiveType.Bytes:
+                                hasFastSetter = true;
+                                setterBytes = EmitHelper.CreatePropertySetter<byte[]>(pInfo);
+                                break;
+                            case PrimitiveType.Guid:
+                                hasFastSetter = true;
+                                setterGuid = EmitHelper.CreatePropertySetter<Guid>(pInfo);
+                                break;
+                            case PrimitiveType.Bool:
+                                hasFastSetter = true;
+                                setterBool = EmitHelper.CreatePropertySetter<bool>(pInfo);
+                                break;
+                            case PrimitiveType.Char:
+                                hasFastSetter = true;
+                                setterChar = EmitHelper.CreatePropertySetter<char>(pInfo);
+                                break;
+                            case PrimitiveType.Byte:
+                                hasFastSetter = true;
+                                setterByte = EmitHelper.CreatePropertySetter<byte>(pInfo);
+                                break;
+                            case PrimitiveType.SByte:
+                                hasFastSetter = true;
+                                setterSByte = EmitHelper.CreatePropertySetter<sbyte>(pInfo);
+                                break;
+                            case PrimitiveType.Int16:
+                                hasFastSetter = true;
+                                setterInt16 = EmitHelper.CreatePropertySetter<short>(pInfo);
+                                break;
+                            case PrimitiveType.UInt16:
+                                hasFastSetter = true;
+                                setterUInt16 = EmitHelper.CreatePropertySetter<ushort>(pInfo);
+                                break;
+                            case PrimitiveType.Int32:
+                                hasFastSetter = true;
+                                setterInt32 = EmitHelper.CreatePropertySetter<int>(pInfo);
+                                break;
+                            case PrimitiveType.UInt32:
+                                hasFastSetter = true;
+                                setterUInt32 = EmitHelper.CreatePropertySetter<uint>(pInfo);
+                                break;
+                            case PrimitiveType.Int64:
+                                hasFastSetter = true;
+                                setterInt64 = EmitHelper.CreatePropertySetter<long>(pInfo);
+                                break;
+                            case PrimitiveType.UInt64:
+                                hasFastSetter = true;
+                                setterUInt64 = EmitHelper.CreatePropertySetter<ulong>(pInfo);
+                                break;
+                            case PrimitiveType.Single:
+                                hasFastSetter = true;
+                                setterSingle = EmitHelper.CreatePropertySetter<float>(pInfo);
+                                break;
+                            case PrimitiveType.Double:
+                                hasFastSetter = true;
+                                setterDouble = EmitHelper.CreatePropertySetter<double>(pInfo);
+                                break;
+                            case PrimitiveType.Decimal:
+                                hasFastSetter = true;
+                                setterDecimal = EmitHelper.CreatePropertySetter<decimal>(pInfo);
+                                break;
+                        }
+                    }
 #endif
                 }
                 else
@@ -829,6 +915,73 @@ namespace Galador.Reflection.Serialization
 #if __NET__ || __NETCORE__
                     getter = EmitHelper.CreateFieldGetterHandler(fInfo);
                     setter = EmitHelper.CreateFieldSetterHandler(fInfo);
+                    switch (Type.Kind)
+                    {
+                        case PrimitiveType.String:
+                            hasFastSetter = true;
+                            setterString = EmitHelper.CreateFieldSetter<string>(fInfo);
+                            break;
+                        case PrimitiveType.Bytes:
+                            hasFastSetter = true;
+                            setterBytes = EmitHelper.CreateFieldSetter<byte[]>(fInfo);
+                            break;
+                        case PrimitiveType.Guid:
+                            hasFastSetter = true;
+                            setterGuid = EmitHelper.CreateFieldSetter<Guid>(fInfo);
+                            break;
+                        case PrimitiveType.Bool:
+                            hasFastSetter = true;
+                            setterBool = EmitHelper.CreateFieldSetter<bool>(fInfo);
+                            break;
+                        case PrimitiveType.Char:
+                            hasFastSetter = true;
+                            setterChar = EmitHelper.CreateFieldSetter<char>(fInfo);
+                            break;
+                        case PrimitiveType.Byte:
+                            hasFastSetter = true;
+                            setterByte = EmitHelper.CreateFieldSetter<byte>(fInfo);
+                            break;
+                        case PrimitiveType.SByte:
+                            hasFastSetter = true;
+                            setterSByte = EmitHelper.CreateFieldSetter<sbyte>(fInfo);
+                            break;
+                        case PrimitiveType.Int16:
+                            hasFastSetter = true;
+                            setterInt16 = EmitHelper.CreateFieldSetter<short>(fInfo);
+                            break;
+                        case PrimitiveType.UInt16:
+                            hasFastSetter = true;
+                            setterUInt16 = EmitHelper.CreateFieldSetter<ushort>(fInfo);
+                            break;
+                        case PrimitiveType.Int32:
+                            hasFastSetter = true;
+                            setterInt32 = EmitHelper.CreateFieldSetter<int>(fInfo);
+                            break;
+                        case PrimitiveType.UInt32:
+                            hasFastSetter = true;
+                            setterUInt32 = EmitHelper.CreateFieldSetter<uint>(fInfo);
+                            break;
+                        case PrimitiveType.Int64:
+                            hasFastSetter = true;
+                            setterInt64 = EmitHelper.CreateFieldSetter<long>(fInfo);
+                            break;
+                        case PrimitiveType.UInt64:
+                            hasFastSetter = true;
+                            setterUInt64 = EmitHelper.CreateFieldSetter<ulong>(fInfo);
+                            break;
+                        case PrimitiveType.Single:
+                            hasFastSetter = true;
+                            setterSingle = EmitHelper.CreateFieldSetter<float>(fInfo);
+                            break;
+                        case PrimitiveType.Double:
+                            hasFastSetter = true;
+                            setterDouble = EmitHelper.CreateFieldSetter<double>(fInfo);
+                            break;
+                        case PrimitiveType.Decimal:
+                            hasFastSetter = true;
+                            setterDecimal = EmitHelper.CreateFieldSetter<decimal>(fInfo);
+                            break;
+                    }
 #endif
                 }
             }
@@ -877,6 +1030,63 @@ namespace Galador.Reflection.Serialization
 
             internal void ReadValue(ObjectReader reader, object instance)
             {
+#if __NET__ || __NETCORE__
+                if (hasFastSetter && instance != null)
+                {
+                    switch (Type.Kind)
+                    {
+                        case PrimitiveType.String:
+                            setterString(instance, reader.Reader.ReadString());
+                            break;
+                        case PrimitiveType.Bytes:
+                            setterBytes(instance, reader.Reader.ReadBytes());
+                            break;
+                        case PrimitiveType.Guid:
+                            setterGuid(instance, reader.Reader.ReadGuid());
+                            break;
+                        case PrimitiveType.Bool:
+                            setterBool(instance, reader.Reader.ReadBool());
+                            break;
+                        case PrimitiveType.Char:
+                            setterChar(instance, reader.Reader.ReadChar());
+                            break;
+                        case PrimitiveType.Byte:
+                            setterByte(instance, reader.Reader.ReadByte());
+                            break;
+                        case PrimitiveType.SByte:
+                            setterSByte(instance, reader.Reader.ReadSByte());
+                            break;
+                        case PrimitiveType.Int16:
+                            setterInt16(instance, reader.Reader.ReadInt16());
+                            break;
+                        case PrimitiveType.UInt16:
+                            setterUInt16(instance, reader.Reader.ReadUInt16());
+                            break;
+                        case PrimitiveType.Int32:
+                            setterInt32(instance, reader.Reader.ReadInt32());
+                            break;
+                        case PrimitiveType.UInt32:
+                            setterUInt32(instance, reader.Reader.ReadUInt32());
+                            break;
+                        case PrimitiveType.Int64:
+                            setterInt64(instance, reader.Reader.ReadInt64());
+                            break;
+                        case PrimitiveType.UInt64:
+                            setterUInt64(instance, reader.Reader.ReadUInt64());
+                            break;
+                        case PrimitiveType.Single:
+                            setterSingle(instance, reader.Reader.ReadSingle());
+                            break;
+                        case PrimitiveType.Double:
+                            setterDouble(instance, reader.Reader.ReadDouble());
+                            break;
+                        case PrimitiveType.Decimal:
+                            setterDecimal(instance, reader.Reader.ReadDecimal());
+                            break;
+                    }
+                    return;
+                }
+#endif
                 var org = GetValue(instance);
                 var value = reader.Read(Type, org);
                 SetValue(instance, value);

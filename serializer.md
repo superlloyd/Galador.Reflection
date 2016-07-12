@@ -206,15 +206,14 @@ I did compare my code to NewtonSoft.Json. Serializing List of 100 points many ti
 
 | time (ms)     | Json | My Serializer (Text) | My Serializer (Binary) |
 | ------------ | ---- | -------------------- | ---------------------- |
-|Android Read  | 334 | 574 | 353 |
-|Android Write | 360 | 369 | 136 |
-|Desktop Read  | 67 | 382 | 311 |
+|Android Read  | 263 | 495 | 263 |
+|Android Write | 305 | 337 | 110 |
+|Desktop Read  | 73 | 228 | 177 |
 |Desktop Write | 64 | 54 | 18 |
 
 *Currently investigating those results ...*
 
-Lower is better. There seem to be an (yet) unidentified performance issue with my deserialization code for now...
-Though Android perform acceptably.
+Big loss compare to JSON read on desktop. Doing well elsewhere (since binary format is the default format).
 
 ## Advanced Usage
 

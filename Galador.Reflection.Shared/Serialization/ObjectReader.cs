@@ -188,7 +188,7 @@ namespace Galador.Reflection.Serialization
 #else
             var info = new SRS.SerializationInfo(typeof(object), new SRS.FormatterConverter());
             var ctx = new SRS.StreamingContext(SRS.StreamingContextStates.Persistence);
-            var N = Reader.ReadVInt();
+            var N = (int)Reader.ReadVInt();
             for (int i = 0; i < N; i++)
             {
                 var s = (string)Read(ReflectType.RString, null);
@@ -321,12 +321,14 @@ namespace Galador.Reflection.Serialization
                                 o = missing;
                                 if (oid != 0)
                                     Context.Register(oid, missing);
-                                foreach (var p in ts.Members)
+                                int NMembers = ts.Members.Count;
+                                for (int i = 0; i < NMembers; i++)
                                 {
+                                    var p = ts.Members[i];
                                     var value = Read(p.Type, null);
                                     missing.Members[p.Name].Value = value;
                                 }
-                                var colt = ts.GetCollectionType();
+                                var colt = ts.CollectionInterface;
                                 switch (colt.CollectionType)
                                 {
                                     case ReflectCollectionType.IList:
@@ -367,10 +369,11 @@ namespace Galador.Reflection.Serialization
                                 o = possibleValue ?? ts.TryConstruct();
                                 if (oid != 0)
                                     Context.Register(oid, o);
-                                foreach (var p in ts.RuntimeMembers())
-                                    p.ReadValue(this, o);
+                                int NMembers = ts.RuntimeMembers.Length;
+                                for (int i = 0; i < NMembers; i++)
+                                    ts.RuntimeMembers[i].ReadValue(this, o);
 
-                                var colt = ts.GetCollectionType();
+                                var colt = ts.CollectionInterface;
                                 switch (colt.CollectionType)
                                 {
                                     case ReflectCollectionType.IList:
@@ -433,7 +436,7 @@ namespace Galador.Reflection.Serialization
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void ReadList(IList o)
         {
-            var count = Reader.ReadVInt();
+            var count = (int)Reader.ReadVInt();
             for (int i = 0; i < count; i++)
             {
                 var value = Read();
@@ -443,7 +446,7 @@ namespace Galador.Reflection.Serialization
         }
         void ReadDict(IDictionary o)
         {
-            var count = Reader.ReadVInt();
+            var count = (int)Reader.ReadVInt();
             for (int i = 0; i < count; i++)
             {
                 var key = Read();
@@ -454,7 +457,7 @@ namespace Galador.Reflection.Serialization
         }
         void ReadCollectionT<T>(ICollection<T> col, ReflectType tT)
         {
-            var count = Reader.ReadVInt();
+            var count = (int)Reader.ReadVInt();
             var typeT = typeof(T);
             for (int i = 0; i < count; i++)
             {
@@ -465,7 +468,7 @@ namespace Galador.Reflection.Serialization
         }
         void ReadDictKV<K, V>(IDictionary<K, V> dict, ReflectType tKey, ReflectType tVal)
         {
-            var count = Reader.ReadVInt();
+            var count = (int)Reader.ReadVInt();
             for (int i = 0; i < count; i++)
             {
                 var key = Read(tKey, null);

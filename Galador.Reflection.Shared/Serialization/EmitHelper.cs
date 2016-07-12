@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -170,6 +171,7 @@ namespace Galador.Reflection.Serialization
 
         #region Private Helpers
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static void PushInstance(this ILGenerator il, Type type)
         {
             il.Emit(OpCodes.Ldarg_0);
@@ -177,12 +179,14 @@ namespace Galador.Reflection.Serialization
                 il.Emit(OpCodes.Unbox, type);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static void BoxIfNeeded(this ILGenerator il, Type type)
         {
             if (type.GetTypeInfo().IsValueType)
                 il.Emit(OpCodes.Box, type);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static void UnboxIfNeeded(this ILGenerator il, Type type)
         {
             if (type.GetTypeInfo().IsValueType)

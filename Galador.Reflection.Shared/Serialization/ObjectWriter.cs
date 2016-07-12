@@ -255,7 +255,7 @@ namespace Galador.Reflection.Serialization
                             {
                                 Write(f.Type, f.Value);
                             }
-                            var colt = ts.GetCollectionType();
+                            var colt = ts.CollectionInterface;
                             switch (colt.CollectionType)
                             {
                                 case ReflectCollectionType.IList:
@@ -280,9 +280,11 @@ namespace Galador.Reflection.Serialization
                         }
                         else
                         {
-                            foreach (var f in ts.RuntimeMembers())
-                                f.WriteValue(this, o);
-                            var colt = ts.GetCollectionType();
+                            int NMembers = ts.RuntimeMembers.Length;
+                            for (int i = 0; i < NMembers; i++)
+                                ts.RuntimeMembers[i].WriteValue(this, o);
+
+                            var colt = ts.CollectionInterface;
                             switch (colt.CollectionType)
                             {
                                 case ReflectCollectionType.IList:

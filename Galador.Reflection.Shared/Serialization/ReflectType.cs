@@ -8,6 +8,7 @@ using System.Collections;
 using System.ComponentModel;
 using System.Runtime.Serialization;
 using System.IO;
+using System.Runtime.CompilerServices;
 
 namespace Galador.Reflection.Serialization
 {
@@ -245,23 +246,70 @@ namespace Galador.Reflection.Serialization
         /// </summary>
         public MemberList Members { get; } = new MemberList();
 
-        #region utilities: RuntimeMembers() ParentHierarchy() CollectionType() TryConstruct()
+        #region CollectionInterface
 
         /// <summary>
-        /// Get all member by enumerating this type's <see cref="Members"/> and thos of all its <see cref="BaseType"/>.
+        /// Return the collection type implemented by this type by examining this type
+        /// and its <see cref="BaseType"/> If the type is not a collection return self.
         /// </summary>
-        public IEnumerable<Member> RuntimeMembers()
+        public ReflectType CollectionInterface
         {
-            var p = this;
-            while (p != null)
+            get
             {
-                foreach (var m in p.Members)
-                    yield return m;
-                p = p.BaseType;
+                if (lazyCollectionInterface == null)
+                {
+                    var p = this;
+                    while (p != null)
+                    {
+                        if (p.CollectionType != ReflectCollectionType.None)
+                        {
+                            lazyCollectionInterface = p;
+                            return p;
+                        }
+                        p = p.BaseType;
+                    }
+                    lazyCollectionInterface = this;
+
+                }
+                return lazyCollectionInterface;
             }
         }
+        ReflectType lazyCollectionInterface;
+
+        #endregion
+
+        #region RuntimeMembers
+
+        internal Member[] RuntimeMembers
+        {
+            get
+            {
+                if (lazyMembers == null)
+                {
+                    int N = Members.Count;
+                    int Start = 0;
+                    if (BaseType != null)
+                    {
+                        N += BaseType.RuntimeMembers.Length;
+                        Start += BaseType.RuntimeMembers.Length;
+                    }
+                    var list = new Member[N];
+                    if (BaseType != null)
+                        BaseType.RuntimeMembers.CopyTo(list, 0);
+                    foreach (var m in Members)
+                        list[Start++] = m;
+                    lazyMembers = list;
+                }
+                return lazyMembers;
+            }
+        }
+        Member[] lazyMembers;
+
+        #endregion
 
         internal MethodInfo listWrite, listRead;
+
+        #region utilities: ParentHierarchy() TryConstruct()
 
         /// <summary>
         /// Return the <see cref="BaseType"/>, all the BaseType's BaseType recursively.
@@ -274,22 +322,6 @@ namespace Galador.Reflection.Serialization
                 yield return p;
                 p = p.BaseType;
             }
-        }
-
-        /// <summary>
-        /// Return the collection type implemented by this type by examining this type
-        /// and its <see cref="BaseType"/>.
-        /// </summary>
-        public ReflectType GetCollectionType()
-        {
-            var p = this;
-            while (p != null)
-            {
-                if (p.CollectionType != ReflectCollectionType.None)
-                    return p;
-                p = p.BaseType;
-            }
-            return this;
         }
 
         void SetConstructor(ConstructorInfo ctor)

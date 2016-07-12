@@ -208,7 +208,7 @@ I did compare my code to NewtonSoft.Json. Serializing List of 100 points many ti
 | ------------ | ---- | -------------------- | ---------------------- |
 |Android Read  | 263 | 495 | 263 |
 |Android Write | 305 | 337 | 110 |
-|Desktop Read  | 73 | 228 | 177 |
+|Desktop Read  | 73 | 228 | 168 |
 |Desktop Write | 64 | 54 | 18 |
 
 *Currently investigating those results ...*

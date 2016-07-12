@@ -266,29 +266,29 @@ namespace TestApp
 
             int N2 = 500;
 
-            var json = JsonConvert.SerializeObject(list);
-            var jDT = new Stopwatch();
-            jDT.Start();
-            for (int i = 0; i < N2; i++)
-            {
-                var o = JsonConvert.DeserializeObject(json, typeof(List<Point2D>));
-            }
-            jDT.Stop();
+            //var json = JsonConvert.SerializeObject(list);
+            //var jDT = new Stopwatch();
+            //jDT.Start();
+            //for (int i = 0; i < N2; i++)
+            //{
+            //    var o = JsonConvert.DeserializeObject(json, typeof(List<Point2D>));
+            //}
+            //jDT.Stop();
 
-            var mtext = Serializer.ToSerializedString(list);
-            var mDT = new Stopwatch();
-            mDT.Start();
-            for (int i = 0; i < N2; i++)
-            {
-                var o = Serializer.Deserialize(mtext);
-            }
-            mDT.Stop();
+            //var mtext = Serializer.ToSerializedString(list);
+            //var mDT = new Stopwatch();
+            //mDT.Start();
+            //for (int i = 0; i < N2; i++)
+            //{
+            //    var o = Serializer.Deserialize(mtext);
+            //}
+            //mDT.Stop();
 
             var mem = new MemoryStream(256);
             Serializer.Serialize(list, mem);
             mem.Position = 0;
             Serializer.Deserialize(mem);
-            System.Threading.Thread.Sleep(700);
+            System.Threading.Thread.Sleep(200);
 
             var bDT = new Stopwatch();
             bDT.Start();
@@ -299,11 +299,11 @@ namespace TestApp
             }
             bDT.Stop();
 
-            Debug.WriteLine($"{jDT.ElapsedMilliseconds} {mDT.ElapsedMilliseconds} {bDT.ElapsedMilliseconds}");
+            //Debug.WriteLine($"{jDT.ElapsedMilliseconds} {mDT.ElapsedMilliseconds} {bDT.ElapsedMilliseconds}");
 
             // REMARK: works **much** better (i.e. lower times) 
             // if the Serializer is compiled in RELEASE mode
-            Assert.True(mDT.Elapsed.Ticks < jDT.Elapsed.Ticks);
+            //Assert.True(mDT.Elapsed.Ticks < jDT.Elapsed.Ticks);
         }
 
         public class BList : List<string>

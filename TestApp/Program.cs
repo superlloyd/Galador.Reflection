@@ -23,9 +23,6 @@ namespace TestApp
             //    , typeof(SerializationTests.Serial2)
             //    );
 
-            //var t1 = typeof(List<>);
-            //var t2 = t1.GetGenericTypeDefinition();
-            //var s1 = t1.FullName;
             //var tSer = new SerializationTests();
             //tSer.WinFormTest();
         }

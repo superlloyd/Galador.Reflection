@@ -809,8 +809,6 @@ namespace Galador.Reflection.Serialization
             Action<object, object> setter;
             Func<object, object> getter;
             bool hasFastSetter;
-            Action<object, string> setterString;
-            Action<object, byte[]> setterBytes;
             Action<object, Guid> setterGuid;
             Action<object, bool> setterBool;
             Action<object, char> setterChar;
@@ -841,14 +839,6 @@ namespace Galador.Reflection.Serialization
                         setter = EmitHelper.CreatePropertySetterHandler(pInfo);
                         switch (Type.Kind)
                         {
-                            case PrimitiveType.String:
-                                hasFastSetter = true;
-                                setterString = EmitHelper.CreatePropertySetter<string>(pInfo);
-                                break;
-                            case PrimitiveType.Bytes:
-                                hasFastSetter = true;
-                                setterBytes = EmitHelper.CreatePropertySetter<byte[]>(pInfo);
-                                break;
                             case PrimitiveType.Guid:
                                 hasFastSetter = true;
                                 setterGuid = EmitHelper.CreatePropertySetter<Guid>(pInfo);
@@ -917,14 +907,6 @@ namespace Galador.Reflection.Serialization
                     setter = EmitHelper.CreateFieldSetterHandler(fInfo);
                     switch (Type.Kind)
                     {
-                        case PrimitiveType.String:
-                            hasFastSetter = true;
-                            setterString = EmitHelper.CreateFieldSetter<string>(fInfo);
-                            break;
-                        case PrimitiveType.Bytes:
-                            hasFastSetter = true;
-                            setterBytes = EmitHelper.CreateFieldSetter<byte[]>(fInfo);
-                            break;
                         case PrimitiveType.Guid:
                             hasFastSetter = true;
                             setterGuid = EmitHelper.CreateFieldSetter<Guid>(fInfo);
@@ -1035,12 +1017,6 @@ namespace Galador.Reflection.Serialization
                 {
                     switch (Type.Kind)
                     {
-                        case PrimitiveType.String:
-                            setterString(instance, reader.Reader.ReadString());
-                            break;
-                        case PrimitiveType.Bytes:
-                            setterBytes(instance, reader.Reader.ReadBytes());
-                            break;
                         case PrimitiveType.Guid:
                             setterGuid(instance, reader.Reader.ReadGuid());
                             break;

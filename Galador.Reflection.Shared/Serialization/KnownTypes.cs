@@ -23,7 +23,7 @@ namespace Galador.Reflection.Serialization
             // TODO: load assemblies automatically?!
             //PlatformServices.Default.Application.RuntimeFramework.
             //var assemblies = DependencyContext.Default.RuntimeLibraries.SelectMany(x => x.Assemblies).Select(x => x.Name).Distinct();
-            //Register(assemblies);
+            //AssemblyLoadContext.Default.
         }
 
         public static void RegisterAssemblies(params Assembly[] ass) { RegisterAssemblies((IEnumerable<Assembly>)ass); }

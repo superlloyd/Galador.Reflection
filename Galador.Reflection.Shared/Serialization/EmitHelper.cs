@@ -1,4 +1,6 @@
-﻿using System;
+﻿#if __NET__ || __NETCORE__
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -14,10 +16,12 @@ namespace Galador.Reflection.Serialization
 
     static class EmitHelper
     {
-        static readonly Module Module = typeof(EmitHelper).Module;
+        static readonly Module Module = typeof(EmitHelper).GetTypeInfo().Module;
         static readonly Type[] SingleObject = new[] { typeof(object) };
         static readonly Type[] TwoObjects = new[] { typeof(object), typeof(object) };
         static readonly Type[] ManyObjects = new[] { typeof(object), typeof(object[]) };
+
+        #region CreateMethodHandler() CreateParameterlessConstructorHandler()
 
         public static MethodHandler CreateMethodHandler(MethodBase method)
         {
@@ -33,7 +37,7 @@ namespace Galador.Reflection.Serialization
             il.Emit(OpCodes.Ldc_I4, args.Length);
             il.Emit(OpCodes.Beq, argsOK);
 
-            il.Emit(OpCodes.Newobj, typeof(TargetParameterCountException).GetConstructor(Type.EmptyTypes));
+            il.Emit(OpCodes.Newobj, typeof(TargetParameterCountException).GetTypeInfo().GetConstructor(Type.EmptyTypes));
             il.Emit(OpCodes.Throw);
 
             il.MarkLabel(argsOK);
@@ -66,6 +70,29 @@ namespace Galador.Reflection.Serialization
 
             return (MethodHandler)dynam.CreateDelegate(typeof(MethodHandler));
         }
+
+        public static Func<object> CreateParameterlessConstructorHandler(Type type)
+        {
+            var dynam = new DynamicMethod(string.Empty, typeof(object), Type.EmptyTypes, Module, true);
+            ILGenerator il = dynam.GetILGenerator();
+
+            if (type.GetTypeInfo().IsValueType)
+            {
+                il.DeclareLocal(type);
+                il.Emit(OpCodes.Ldloc_0);
+                il.Emit(OpCodes.Box, type);
+            }
+            else
+                il.Emit(OpCodes.Newobj, type.GetTypeInfo().GetConstructor(Type.EmptyTypes));
+
+            il.Emit(OpCodes.Ret);
+
+            return (Func<object>)dynam.CreateDelegate(typeof(Func<object>));
+        }
+
+        #endregion
+
+        #region CreateFieldSetterHandler() CreatePropertySetterHandler() CreateFieldGetterHandler() CreatePropertyGetterHandler()
 
         public static Action<object, object> CreateFieldSetterHandler(FieldInfo fieldInfo)
         {
@@ -139,46 +166,90 @@ namespace Galador.Reflection.Serialization
             return (Func<object, object>)dynam.CreateDelegate(typeof(Func<object, object>));
         }
 
-        public static Func<object> CreateParameterlessConstructorHandler(Type type)
-        {
-            var dynam = new DynamicMethod(string.Empty, typeof(object), Type.EmptyTypes, Module, true);
-            ILGenerator il = dynam.GetILGenerator();
-
-            if (type.IsValueType)
-            {
-                il.DeclareLocal(type);
-                il.Emit(OpCodes.Ldloc_0);
-                il.Emit(OpCodes.Box, type);
-            }
-            else
-                il.Emit(OpCodes.Newobj, type.GetConstructor(Type.EmptyTypes));
-
-            il.Emit(OpCodes.Ret);
-
-            return (Func<object>)dynam.CreateDelegate(typeof(Func<object>));
-        }
+        #endregion
 
         #region Private Helpers
 
         static void PushInstance(this ILGenerator il, Type type)
         {
             il.Emit(OpCodes.Ldarg_0);
-            if (type.IsValueType)
+            if (type.GetTypeInfo().IsValueType)
                 il.Emit(OpCodes.Unbox, type);
         }
 
         static void BoxIfNeeded(this ILGenerator il, Type type)
         {
-            if (type.IsValueType)
+            if (type.GetTypeInfo().IsValueType)
                 il.Emit(OpCodes.Box, type);
         }
 
         static void UnboxIfNeeded(this ILGenerator il, Type type)
         {
-            if (type.IsValueType)
+            if (type.GetTypeInfo().IsValueType)
                 il.Emit(OpCodes.Unbox_Any, type);
+        }
+
+        #endregion
+
+        #region addition: Create[Field|Property][Getter|Setter]<T>()
+
+        public static Action<object, T> CreateFieldSetter<T>(FieldInfo member)
+        {
+            var dynam = new DynamicMethod(string.Empty, typeof(void), new Type[] { typeof(object), typeof(T) }, Module, true);
+            ILGenerator il = dynam.GetILGenerator();
+
+            if (!member.IsStatic)
+                il.PushInstance(member.DeclaringType);
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Stfld, member);
+            il.Emit(OpCodes.Ret);
+
+            return (Action<object, T>)dynam.CreateDelegate(typeof(Action<object, T>));
+        }
+        public static Func<object, T> CreateFieldGetter<T>(FieldInfo member)
+        {
+            var dynam = new DynamicMethod(string.Empty, typeof(T), new Type[] { typeof(object) }, Module, true);
+            ILGenerator il = dynam.GetILGenerator();
+
+            if (!member.IsStatic)
+                il.PushInstance(member.DeclaringType);
+            il.Emit(OpCodes.Ldfld, member);
+            il.Emit(OpCodes.Ret);
+
+            return (Func<object, T>)dynam.CreateDelegate(typeof(Func<object, T>));
+        }
+        public static Action<object, T> CreatePropertySetter<T>(PropertyInfo member)
+        {
+            var dynam = new DynamicMethod(string.Empty, typeof(void), new Type[] { typeof(object), typeof(T) }, Module, true);
+            ILGenerator il = dynam.GetILGenerator();
+
+            var method = member.GetSetMethod();
+            if (!method.IsStatic)
+                il.PushInstance(method.DeclaringType);
+            il.Emit(OpCodes.Ldarg_1);
+            if (method.IsFinal || !method.IsVirtual) il.Emit(OpCodes.Call, method);
+            else il.Emit(OpCodes.Callvirt, method);
+            il.Emit(OpCodes.Ret);
+
+            return (Action<object, T>)dynam.CreateDelegate(typeof(Action<object, T>));
+        }
+        public static Func<object, T> CreatePropertyGetter<T>(PropertyInfo member)
+        {
+            var dynam = new DynamicMethod(string.Empty, typeof(T), new Type[] { typeof(object) }, Module, true);
+            ILGenerator il = dynam.GetILGenerator();
+
+            var method = member.GetGetMethod();
+            if (!method.IsStatic)
+                il.PushInstance(method.DeclaringType);
+            if (method.IsFinal || !method.IsVirtual) il.Emit(OpCodes.Call, method);
+            else il.Emit(OpCodes.Callvirt, method);
+            il.Emit(OpCodes.Ret);
+
+            return (Func<object, T>)dynam.CreateDelegate(typeof(Func<object, T>));
         }
 
         #endregion
     }
 }
+
+#endif

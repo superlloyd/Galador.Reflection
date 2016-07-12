@@ -292,7 +292,6 @@ namespace Galador.Reflection.Serialization
             return this;
         }
 
-#if !__NET__
         void SetConstructor(ConstructorInfo ctor)
         {
             emtpy_constructor = ctor;
@@ -312,7 +311,6 @@ namespace Galador.Reflection.Serialization
             return Type.GetUninitializedObject();
         }
         ConstructorInfo emtpy_constructor;
-#endif
 
 #endregion
 
@@ -802,20 +800,38 @@ namespace Galador.Reflection.Serialization
             /// </summary>
             public ReflectType Type { get; internal set; }
 
-#if !__NET__
+            MemberInfo member;
             PropertyInfo pInfo;
             FieldInfo fInfo;
-            internal MemberInfo GetMember() 
-            {
-                if (pInfo != null)
-                    return pInfo;
-                return fInfo; 
-            }
+
+#if __NET__ || __NETCORE__
+            Action<object, object> setter;
+            Func<object, object> getter;
+#endif
+
+            internal MemberInfo GetMember() { return member; }
             internal void SetMember(MemberInfo mi)
             {
-                if (mi is PropertyInfo) pInfo = (PropertyInfo)mi;
-                else fInfo = (FieldInfo)mi;
+                member = mi;
+                if (mi is PropertyInfo)
+                {
+                    pInfo = (PropertyInfo)mi;
+#if __NET__ || __NETCORE__
+                    getter = EmitHelper.CreatePropertyGetterHandler(pInfo);
+                    if (pInfo.GetSetMethod() != null)
+                        setter = EmitHelper.CreatePropertySetterHandler(pInfo);
+#endif
+                }
+                else
+                {
+                    fInfo = (FieldInfo)mi;
+#if __NET__ || __NETCORE__
+                    getter = EmitHelper.CreateFieldGetterHandler(fInfo);
+                    setter = EmitHelper.CreateFieldSetterHandler(fInfo);
+#endif
+                }
             }
+
 
             /// <summary>
             /// Gets the value of this member for the given instance.
@@ -826,17 +842,15 @@ namespace Galador.Reflection.Serialization
             {
                 if (instance == null)
                     return null;
-                try
-                {
-                    if (pInfo != null && pInfo.GetMethod != null)
-                        return pInfo.GetValue(instance);
-                    if (fInfo != null)
-                        return fInfo.GetValue(instance);
-                }
-                catch (Exception ex)
-                {
-                    Logging.TraceKeys.Serialization.Error($"Error while serializing {this}, couldn't get member {Name} because {ex}");
-                }
+#if __NET__ || __NETCORE__
+                if (getter != null)
+                    return getter(instance);
+#else
+                if (pInfo != null && pInfo.GetMethod != null)
+                    return pInfo.GetValue(instance);
+                if (fInfo != null)
+                    return fInfo.GetValue(instance);
+#endif
                 return null;
             }
 
@@ -847,21 +861,18 @@ namespace Galador.Reflection.Serialization
             /// <param name="value">The value that must be set.</param>
             public void SetValue(object instance, object value)
             {
-                if (instance == null)
+                if (instance == null || !Type.Type.IsInstanceOf(value))
                     return;
-                try
-                { 
-                    if (pInfo != null && pInfo.SetMethod != null && pInfo.PropertyType.IsInstanceOf(value))
+#if __NET__ || __NETCORE__
+                if (setter != null)
+                    setter(instance, value);
+#else
+                if (pInfo != null && pInfo.SetMethod != null && pInfo.PropertyType.IsInstanceOf(value))
                         pInfo.SetValue(instance, value);
                     else if (fInfo != null && fInfo.FieldType.IsInstanceOf(value))
                         fInfo.SetValue(instance, value);
-                }
-                catch (Exception ex)
-                {
-                    Logging.TraceKeys.Serialization.Error($"Error while deserializing {this}, couldn't set member {Name} because {ex}");
-                }
-            }
 #endif
+            }
         }
 
         /// <summary>

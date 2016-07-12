@@ -12,16 +12,15 @@ namespace Galador.Reflection.Logging
     /// <summary>
     /// Tracing class. Tracing is done in a thread and won't slow down the app.
     /// </summary>
-    partial class TraceKey
+    public class TraceKey
     {
-
         public TraceKey()
         {
             Enabled = true;
             TraceInfo = true;
             TraceWarning = true;
             TraceError = true;
-            Header = () => $"{DateTime.Now:yyyy/MM/dd HH:mm:ss.f} {Environment.CurrentManagedThreadId:000} ";
+            Header = () => $"{Name}({DateTime.Now:yyyy/MM/dd HH:mm:ss.f}, {Environment.CurrentManagedThreadId:000}): ";
         }
 
         public Func<string> Header { get; set; }
@@ -41,36 +40,14 @@ namespace Galador.Reflection.Logging
         public void WriteLineIf(bool condition, string msg) { if (condition) WriteLine(msg); }
         public void WriteLineIf(bool condition, string format, params object[] args) { if (condition) WriteLine(format, args); }
 
-        #region GlobalTraceSink
-
-        //static AsyncQueue writeQueue = new AsyncQueue("TraceKey.LogQueue");
-
-        static void GlobalTraceSink(string s)
-        {
-            //writeQueue.Queue(() => 
-            {
-                try
-                {
-                    WriteText(s);
-                }
-                catch (Exception)
-                {
-#if DEBUG
-                    if (global::System.Diagnostics.Debugger.IsAttached)
-                        global::System.Diagnostics.Debugger.Break();
-#endif
-                }
-            }
-            //);
-        }
-        static partial void WriteText(string s);
-
         public static void Flush()
         {
-            //writeQueue.Flush();
+#if !__PCL__
+            Trace.Flush();
+#else
+            throw new PlatformNotSupportedException("PCL");
+#endif
         }
-
-        #endregion
 
         [Conditional("DEBUG")]
         public void Debug(object o)
@@ -112,43 +89,62 @@ namespace Galador.Reflection.Logging
         {
             if (!Enabled || o == null)
                 return;
-            if (o != null)
-                GlobalTraceSink(o.ToString());
+#if !__PCL__
+            Trace.Write(o);
+#else
+            throw new PlatformNotSupportedException("PCL");
+#endif
         }
         public void Write(string msg)
         {
             if (!Enabled)
                 return;
-            GlobalTraceSink(msg);
+#if !__PCL__
+            Trace.Write(string.Format(msg));
+#else
+            throw new PlatformNotSupportedException("PCL");
+#endif
         }
         public void Write(string format, params object[] args)
         {
             if (!Enabled)
                 return;
-            GlobalTraceSink(string.Format(format, args));
+#if !__PCL__
+            Trace.Write(string.Format(format, args));
+#else
+            throw new PlatformNotSupportedException("PCL");
+#endif
         }
 
         public void WriteLine(object o)
         {
             if (!Enabled || o == null)
                 return;
-            if (o != null)
-                GlobalTraceSink(o.ToString());
-            GlobalTraceSink("\r\n");
+#if !__PCL__
+            Trace.WriteLine(o);
+#else
+            throw new PlatformNotSupportedException("PCL");
+#endif
         }
         public void WriteLine(string msg)
         {
             if (!Enabled)
                 return;
-            GlobalTraceSink(msg);
-            GlobalTraceSink("\r\n");
+#if !__PCL__
+            Trace.WriteLine(msg);
+#else
+            throw new PlatformNotSupportedException("PCL");
+#endif
         }
         public void WriteLine(string format, params object[] args)
         {
             if (!Enabled)
                 return;
-            GlobalTraceSink(string.Format(format, args));
-            GlobalTraceSink("\r\n");
+#if !__PCL__
+            Trace.WriteLine(string.Format(format, args));
+#else
+            throw new PlatformNotSupportedException("PCL");
+#endif
         }
 
         string GetHeader()

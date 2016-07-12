@@ -14,6 +14,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Logging\TraceKeys.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)PropertyPath.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Registry.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Serialization\EmitHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\IDeserialized.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\IPrimitiveReader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\IPrimitiveWriter.cs" />
@@ -34,7 +35,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\Surrogate.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\TypeDescription.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TypeForwarded.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Utils\AsyncQueue.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\CollectionEx.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\Empty.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\ReflectionEx.cs" />

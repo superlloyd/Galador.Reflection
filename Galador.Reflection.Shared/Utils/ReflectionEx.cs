@@ -105,9 +105,9 @@ namespace Galador.Reflection.Utils
             var ctors =
                 from ci in type.GetTypeInfo().DeclaredConstructors
                 let ps = ci.GetParameters()
-                let N = ps.Where(x => x.DefaultValue == DBNull.Value).Count()
+                let N = ps.Where(x => !x.HasDefaultValue).Count()
                 where (argsType == null && N == 0) || (argsType != null && argsType.Length >= N && argsType.Length <= ps.Length)
-                where Enumerable.Range(0, argsType.Length).All(i => IsBaseClass(ps[i].ParameterType, argsType[i]))
+                where argsType.Length == 0 || Enumerable.Range(0, argsType.Length).All(i => IsBaseClass(ps[i].ParameterType, argsType[i]))
                 orderby ci.IsPublic descending, ps.Length descending
                 select ci;
             return ctors;
@@ -124,7 +124,8 @@ namespace Galador.Reflection.Utils
             var ctors =
                 from ci in type.GetTypeInfo().DeclaredConstructors
                 let ps = ci.GetParameters()
-                let N = ps.Where(x => x.DefaultValue == DBNull.Value).Count()
+                let N = ps.Where(x => !x.HasDefaultValue).Count()
+                where !ci.IsStatic
                 where (args == null && N == 0) || (args != null && args.Length >= N && args.Length <= ps.Length)
                 where Enumerable.Range(0, args.Length).All(i => IsInstanceOf(ps[i].ParameterType, args[i]))
                 orderby ci.IsPublic descending, ps.Length descending
@@ -152,7 +153,7 @@ namespace Galador.Reflection.Utils
                 var p = ps[i];
                 if (args == null || args.Length <= i)
                 {
-                    if (p.DefaultValue == DBNull.Value)
+                    if (!p.HasDefaultValue)
                         return null;
                     cargs[i] = p.DefaultValue;
                 }
@@ -184,7 +185,7 @@ namespace Galador.Reflection.Utils
                     || (!m.IsGenericMethod && (genericArgs == null || genericArgs.Length == 0))
                 let mi = !m.IsGenericMethod ? m : m.MakeGenericMethod(genericArgs)
                 let p = mi.GetParameters()
-                let N = p.Where(x => x.DefaultValue == DBNull.Value).Count()
+                let N = p.Where(x => !x.HasDefaultValue).Count()
                 where (argsType == null && N == 0) || (argsType != null && argsType.Length >= N && argsType.Length <= p.Length)
                 where Enumerable.Range(0, argsType.Length).All(i => IsBaseClass(p[i].ParameterType, argsType[i]))
                 orderby mi.IsPublic descending, p.Length - N
@@ -219,6 +220,20 @@ namespace Galador.Reflection.Utils
         internal static IEnumerable<FieldInfo> GetRuntimeFields(this TypeInfo ti) { throw new PlatformNotSupportedException(); }
 
 #endif
+        internal static bool IsGenericTypeDefinition(this TypeInfo ti)
+        {
+#if __NETCORE__
+            if (!ti.IsGenericType)
+                return false;
+            if (ti.IsGenericTypeDefinition)
+                return true;
+            if (ti.GenericTypeArguments[0].IsGenericParameter)
+                return true;
+            return false;
+#else
+            return ti.IsGenericTypeDefinition;
+#endif
+        }
 
 #if __NETCORE__
         internal static IEnumerable<MethodInfo> GetRuntimeMethods(this TypeInfo ti)
@@ -228,7 +243,7 @@ namespace Galador.Reflection.Utils
             {
                 foreach (var m in ti.DeclaredMethods)
                     yield return m;
-                aTi = ti.BaseType?.GetTypeInfo();
+                aTi = aTi.BaseType?.GetTypeInfo();
             }
         }
         internal static IEnumerable<PropertyInfo> GetRuntimeProperties(this TypeInfo ti) 
@@ -238,7 +253,7 @@ namespace Galador.Reflection.Utils
             {
                 foreach (var pi in ti.DeclaredProperties)
                     yield return pi;
-                aTi = ti.BaseType?.GetTypeInfo();
+                aTi = aTi.BaseType?.GetTypeInfo();
             }
         }
         internal static IEnumerable<FieldInfo> GetRuntimeFields(this TypeInfo ti)
@@ -248,7 +263,7 @@ namespace Galador.Reflection.Utils
             {
                 foreach (var pi in ti.DeclaredFields)
                     yield return pi;
-                aTi = ti.BaseType?.GetTypeInfo();
+                aTi = aTi.BaseType?.GetTypeInfo();
             }
         }
 #endif

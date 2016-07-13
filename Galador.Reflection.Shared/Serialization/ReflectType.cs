@@ -329,7 +329,13 @@ namespace Galador.Reflection.Serialization
         void SetConstructor(ConstructorInfo ctor)
         {
             if (ctor == null)
+            {
+#if __NET__ || __NETCORE__
+                if (Type.GetTypeInfo().IsValueType)
+                    fastCtor = EmitHelper.CreateParameterlessConstructorHandler(Type);
+#endif
                 return;
+            }
 
             var ps = ctor.GetParameters();
 #if __NET__ || __NETCORE__
@@ -343,7 +349,7 @@ namespace Galador.Reflection.Serialization
             for (int i = 0; i < ps.Length; i++)
             {
                 var p = ps[i];
-                if (p.DefaultValue == DBNull.Value)
+                if (!p.HasDefaultValue)
                     return;
                 cargs[i] = p.DefaultValue;
             }
@@ -441,7 +447,7 @@ namespace Galador.Reflection.Serialization
                     if (ti.IsGenericType)
                     {
                         IsGeneric = true;
-                        if (ti.IsGenericTypeDefinition)
+                        if (ti.IsGenericTypeDefinition())
                         {
                             IsGenericTypeDefinition = true;
                         }
@@ -470,6 +476,10 @@ namespace Galador.Reflection.Serialization
                         {
                             TypeName = att.TypeName;
                             AssemblyName = att.AssemblyName;
+                        }
+                        if (TypeName == null)
+                        {
+                            IsIgnored = true;
                         }
                     }
                     if (ti.IsEnum)
@@ -728,7 +738,7 @@ namespace Galador.Reflection.Serialization
                 }
                 if (!IsGeneric || IsGenericTypeDefinition)
                 {
-                    hashcode ^= TypeName.GetHashCode();
+                    hashcode ^= (TypeName ?? "").GetHashCode();
                     if (AssemblyName != null)
                         hashcode ^= AssemblyName.GetHashCode();
                 }

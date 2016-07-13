@@ -306,6 +306,34 @@ namespace TestApp
             Assert.True(mDT.Elapsed.Ticks < jDT.Elapsed.Ticks);
         }
 
+        class Generic01<T>
+        {
+            public List<T> Elements;
+        }
+
+        [Fact]
+        public void CheckGeneric()
+        {
+            var o = new Generic01<int>
+            {
+                Elements = new List<int> { 1, 2 }
+            };
+            var o2 = Serializer.Clone(o, true);
+            var o3 = Serializer.Clone(o, false);
+
+            Assert.NotNull(o2.Elements);
+            Assert.NotNull(o3.Elements);
+
+            Assert.Equal(2, o2.Elements.Count);
+            Assert.Equal(2, o3.Elements.Count);
+
+            Assert.Equal(1, o2.Elements[0]);
+            Assert.Equal(2, o2.Elements[1]);
+
+            Assert.Equal(1, o3.Elements[0]);
+            Assert.Equal(2, o3.Elements[1]);
+        }
+
         public class BList : List<string>
         {
             public string Name { get; set; }

@@ -541,7 +541,7 @@ namespace Galador.Reflection
                         Resolve(vault, cache);
                         cargs[i] = vault.Instance;
                     }
-                    else if (p.DefaultValue != DBNull.Value)
+                    else if (p.HasDefaultValue)
                     {
                         cargs[i] = p.DefaultValue;
                     }
@@ -596,7 +596,7 @@ namespace Galador.Reflection
                         var vault = FindRegistrations(t, cache).FirstOrDefault(x => x.Instance != null || x.Type != type);
                         if (vault != null)
                             continue;
-                        if (p.DefaultValue != DBNull.Value)
+                        if (p.HasDefaultValue)
                             continue;
                         if (CanCreate(p.ParameterType, cache))
                             continue;

@@ -454,7 +454,6 @@ namespace Galador.Reflection.Serialization
         void ReadCollectionT<T>(ICollection<T> col, ReflectType tT)
         {
             var count = (int)Reader.ReadVInt();
-            var typeT = typeof(T);
             for (int i = 0; i < count; i++)
             {
                 var value = Read(tT, null);

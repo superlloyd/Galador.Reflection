@@ -283,7 +283,7 @@ namespace Galador.Reflection.Serialization
         /// <summary>
         /// Gets the all the <see cref="Members"/> for that type, including the <see cref="BaseType"/>'s <see cref="RuntimeMembers"/>.
         /// </summary>
-         public IReadOnlyList<Member> RuntimeMembers
+        public IReadOnlyList<Member> RuntimeMembers
         {
             get
             {
@@ -553,7 +553,7 @@ namespace Galador.Reflection.Serialization
                                     continue;
                                 if (pi.GetMethod == null || pi.GetMethod.IsStatic || pi.GetMethod.GetParameters().Length != 0)
                                     continue;
-                                if (pi.SetMethod == null && pi.DeclaringType.GetTypeInfo().IsValueType)
+                                if (pi.SetMethod == null && pi.PropertyType.GetTypeInfo().IsValueType)
                                     continue;
                                 if (pi.GetCustomAttribute<NotSerializedAttribute>() != null)
                                     continue;

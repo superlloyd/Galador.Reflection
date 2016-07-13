@@ -20,23 +20,22 @@ namespace Galador.Reflection.Logging
 
             public TraceKey GetTrace(string key, Action<TraceKey> init)
             {
-                TraceKey result;
-                traces.TryGetValue(key, out result);
-                if (result == null)
-                    lock (traces)
+                lock (traces)
+                {
+                    TraceKey result;
+                    traces.TryGetValue(key, out result);
+                    if (result == null)
                     {
-                        traces.TryGetValue(key, out result);
-                        if (result == null)
-                        {
-                            // REMARK disabled by default! specifically enable for debugging / diagnostic purpose!...
-                            traces[key] = result = new TraceKey() { Name = key, Enabled = false };
-                            if (init != null)
-                                init(result);
-                        }
+                        // REMARK disabled by default! specifically enable for debugging / diagnostic purpose!...
+                        traces[key] = result = new TraceKey() { Name = key, Enabled = false };
+                        if (init != null)
+                            init(result);
                     }
-                return result;
+                    return result;
+                }
             }
 
+            /// <inheritdoc cref="IEnumerable{T}"/>
             public IEnumerator<TraceKey> GetEnumerator() { return traces.Values.GetEnumerator(); }
             IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
         }

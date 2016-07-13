@@ -14,7 +14,7 @@ namespace Galador.Reflection.Logging
     /// </summary>
     public class TraceKey
     {
-        public TraceKey()
+        internal TraceKey()
         {
             Enabled = true;
             TraceInfo = true;

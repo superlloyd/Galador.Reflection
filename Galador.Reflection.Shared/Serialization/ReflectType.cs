@@ -280,7 +280,10 @@ namespace Galador.Reflection.Serialization
 
         #region RuntimeMembers
 
-        internal Member[] RuntimeMembers
+        /// <summary>
+        /// Gets the all the <see cref="Members"/> for that type, including the <see cref="BaseType"/>'s <see cref="RuntimeMembers"/>.
+        /// </summary>
+         public IReadOnlyList<Member> RuntimeMembers
         {
             get
             {
@@ -290,20 +293,19 @@ namespace Galador.Reflection.Serialization
                     int Start = 0;
                     if (BaseType != null)
                     {
-                        N += BaseType.RuntimeMembers.Length;
-                        Start += BaseType.RuntimeMembers.Length;
+                        N += BaseType.RuntimeMembers.Count;
+                        Start += BaseType.RuntimeMembers.Count;
                     }
-                    var list = new Member[N];
+                    var list = new List<Member>(N);
                     if (BaseType != null)
-                        BaseType.RuntimeMembers.CopyTo(list, 0);
-                    foreach (var m in Members)
-                        list[Start++] = m;
+                        list.AddRange(BaseType.RuntimeMembers);
+                    list.AddRange(Members);
                     lazyMembers = list;
                 }
                 return lazyMembers;
             }
         }
-        Member[] lazyMembers;
+        List<Member> lazyMembers;
 
         #endregion
 
@@ -1206,11 +1208,6 @@ namespace Galador.Reflection.Serialization
                 var org = GetValue(instance);
                 var value = reader.Read(Type, org);
                 SetValue(instance, value);
-            }
-            internal void WriteValue(ObjectWriter writer, object instance)
-            {
-                var p = GetValue(instance);
-                writer.Write(Type, p);
             }
         }
 

@@ -320,10 +320,8 @@ namespace Galador.Reflection.Serialization
                                 o = missing;
                                 if (oid != 0)
                                     Context.Register(oid, missing);
-                                int NMembers = ts.Members.Count;
-                                for (int i = 0; i < NMembers; i++)
+                                foreach (var p in ts.Members)
                                 {
-                                    var p = ts.Members[i];
                                     var value = Read(p.Type, null);
                                     missing.Members[p.Name].Value = value;
                                 }
@@ -368,9 +366,8 @@ namespace Galador.Reflection.Serialization
                                 o = possibleValue ?? ts.TryConstruct();
                                 if (oid != 0)
                                     Context.Register(oid, o);
-                                int NMembers = ts.RuntimeMembers.Length;
-                                for (int i = 0; i < NMembers; i++)
-                                    ts.RuntimeMembers[i].ReadValue(this, o);
+                                foreach (var m in ts.RuntimeMembers)
+                                    m.ReadValue(this, o);
 
                                 var colt = ts.CollectionInterface;
                                 switch (colt.CollectionType)

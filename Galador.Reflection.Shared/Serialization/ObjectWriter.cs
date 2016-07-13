@@ -280,9 +280,11 @@ namespace Galador.Reflection.Serialization
                         }
                         else
                         {
-                            int NMembers = ts.RuntimeMembers.Length;
-                            for (int i = 0; i < NMembers; i++)
-                                ts.RuntimeMembers[i].WriteValue(this, o);
+                            foreach (var m in ts.RuntimeMembers)
+                            {
+                                var p = m.GetValue(o);
+                                Write(m.Type, p);
+                            }
 
                             var colt = ts.CollectionInterface;
                             switch (colt.CollectionType)

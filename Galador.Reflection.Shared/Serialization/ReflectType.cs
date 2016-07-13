@@ -1205,7 +1205,9 @@ namespace Galador.Reflection.Serialization
                     return;
                 }
 #endif
-                var org = GetValue(instance);
+                object org = null;
+                if (Type.IsReference)
+                    org = GetValue(instance);
                 var value = reader.Read(Type, org);
                 SetValue(instance, value);
             }

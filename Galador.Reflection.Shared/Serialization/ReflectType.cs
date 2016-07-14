@@ -47,6 +47,7 @@ namespace Galador.Reflection.Serialization
     /// One can object local information with <see cref="ReflectType.GetType(Type)"/>.
     /// This information will be serialized along with object data to exactly reproduce object format when deserializing.
     /// </summary>
+    [SerializationSettings(false)]
     public sealed partial class ReflectType
     {
         #region GetType()
@@ -163,7 +164,7 @@ namespace Galador.Reflection.Serialization
         /// <summary>
         /// Whether this type can have subclass or not (i..e <c>canHaveSubclass = IsFinal == false</c>).
         /// </summary>
-        public bool IsFinal { get; private set; } = true;
+        public bool IsFinal { get; private set; }
         /// <summary>
         /// Whether there is an <see cref="ISurrogate{T}"/> type to use to serialize instances if that type, or not.
         /// </summary>
@@ -399,9 +400,14 @@ namespace Galador.Reflection.Serialization
         {
             Type = type;
             var ti = type.GetTypeInfo();
-            if (type.IsArray)
+            IsFinal = true;
+            IsReference = type.GetTypeInfo().IsByRef;
+            if (IsTypeIgnored(type))
             {
-                IsReference = true;
+                IsIgnored = true;
+            }
+            else if (type.IsArray)
+            {
                 if (type == typeof(byte[]))
                 {
                     Kind = PrimitiveType.Bytes;
@@ -415,7 +421,9 @@ namespace Galador.Reflection.Serialization
             }
             else if (type.IsPointer)
             {
+                IsFinal = true;
                 IsIgnored = true;
+                IsReference = false;
                 IsPointer = true;
                 Element = GetType(type.GetElementType());
             }
@@ -534,8 +542,7 @@ namespace Galador.Reflection.Serialization
                             var attr = ti.GetCustomAttribute<SerializationSettingsAttribute>() ?? DefaultSettings;
                             foreach (var pi in ti.DeclaredFields)
                             {
-                                var pType = GetType(pi.FieldType);
-                                if (pType.IsIgnored)
+                                if (IsTypeIgnored(pi.FieldType))
                                     continue;
                                 if (pi.IsStatic)
                                     continue;
@@ -548,6 +555,7 @@ namespace Galador.Reflection.Serialization
                                     continue;
                                 if (skip(pi.Name))
                                     continue;
+                                var pType = GetType(pi.FieldType);
                                 var m = new Member
                                 {
                                     Name = pi.Name,
@@ -558,8 +566,7 @@ namespace Galador.Reflection.Serialization
                             }
                             foreach (var pi in ti.DeclaredProperties)
                             {
-                                var pType = GetType(pi.PropertyType);
-                                if (pType.IsIgnored)
+                                if (IsTypeIgnored(pi.PropertyType))
                                     continue;
                                 if (pi.GetMethod == null || pi.GetMethod.IsStatic || pi.GetMethod.GetParameters().Length != 0)
                                     continue;
@@ -574,6 +581,7 @@ namespace Galador.Reflection.Serialization
                                     continue;
                                 if (skip(pi.Name))
                                     continue;
+                                var pType = GetType(pi.PropertyType);
                                 var m = new Member
                                 {
                                     Name = pi.Name,
@@ -634,6 +642,26 @@ namespace Galador.Reflection.Serialization
                 }
             }
             InitHashCode();
+        }
+
+        static bool IsTypeIgnored(Type type)
+        {
+#if __PCL__
+            throw new NotSupportedException("PCL");
+#else
+            if (type.IsPointer)
+                return true;
+            if (typeof(Delegate).IsBaseClass(type) || type == typeof(IntPtr))
+                return true;
+            var ti = type.GetTypeInfo();
+            if (ti.IsGenericParameter || ti.IsGenericTypeDefinition)
+                return false;
+            if (ti.GetGenericArguments().Any(x => IsTypeIgnored(x)))
+                return true;
+            if (type.FullName == null) // Last, as GenericParameter has null FullName
+                return true;
+            return false;
+#endif
         }
 
         #endregion

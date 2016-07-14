@@ -24,6 +24,7 @@ namespace Galador.Reflection.Serialization
             WellKnownContext.Register(index++, ReflectType.RString);
             WellKnownContext.Register(index++, ReflectType.RType);
             WellKnownContext.Register(index++, ReflectType.RReflectType);
+            WellKnownContext.Register(index++, ReflectType.RNullable);
             // other well known values, to speed up read-write and reduce stream size
             WellKnownContext.Register(index++, "");
             WellKnownContext.Register(index++, ReflectType.GetType(typeof(byte[])));

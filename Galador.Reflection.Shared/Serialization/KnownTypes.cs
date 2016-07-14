@@ -116,11 +116,11 @@ namespace Galador.Reflection.Serialization
                 case PrimitiveType.Double: return typeof(double);
                 case PrimitiveType.Decimal: return typeof(decimal);
             }
-        } 
+        }
 
-#endregion
+        #endregion
 
-#region GetKind()
+        #region GetKind()
 
         internal static PrimitiveType GetKind(Type type)
         {
@@ -145,12 +145,12 @@ namespace Galador.Reflection.Serialization
             return PrimitiveType.Object;
         }
 
-#endregion
+        #endregion
 
         static Dictionary<Type, Type> typeToSurrogate = new Dictionary<Type, Type>();
         static Dictionary<SerializationNameAttribute, Type> sReplacementTypes = new Dictionary<SerializationNameAttribute, Type>();
 
-#region Register()
+        #region Register()
 
         static void Register(params Assembly[] ass) { Register((IEnumerable<Assembly>)ass); }
         static void Register(IEnumerable<Assembly> assemblies)
@@ -221,9 +221,9 @@ namespace Galador.Reflection.Serialization
             }
         }
 
-#endregion
+        #endregion
 
-#region TryGetSurrogate()
+        #region TryGetSurrogate()
 
         /// <summary>
         /// Tries the get the surrogate for a given type.
@@ -253,6 +253,6 @@ namespace Galador.Reflection.Serialization
             return false;
         }
 
-#endregion
+        #endregion
     }
 }

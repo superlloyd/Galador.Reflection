@@ -235,27 +235,6 @@ namespace Galador.Reflection.Utils
 #endif
         }
 
-        internal static Type GetMemberType(this PropertyInfo ti)
-        {
-            return GetMemberType(ti.PropertyType);
-        }
-        internal static Type GetMemberType(this FieldInfo ti)
-        {
-            return GetMemberType(ti.FieldType);
-        }
-        internal static Type GetMemberType(Type type)
-        {
-            var ti = type.GetTypeInfo();
-            if (!ti.IsGenericType || ti.IsGenericParameter)
-                return type;
-            if (ti.FullName == null)
-            {
-                var result = ti.GetGenericTypeDefinition();
-                return result;
-            }
-            return type;
-        }
-
 #if __NETCORE__
         internal static IEnumerable<MethodInfo> GetRuntimeMethods(this TypeInfo ti)
         {
@@ -264,26 +243,6 @@ namespace Galador.Reflection.Utils
             {
                 foreach (var m in ti.DeclaredMethods)
                     yield return m;
-                aTi = aTi.BaseType?.GetTypeInfo();
-            }
-        }
-        internal static IEnumerable<PropertyInfo> GetRuntimeProperties(this TypeInfo ti) 
-        {
-            var aTi = ti;
-            while (aTi != null)
-            {
-                foreach (var pi in ti.DeclaredProperties)
-                    yield return pi;
-                aTi = aTi.BaseType?.GetTypeInfo();
-            }
-        }
-        internal static IEnumerable<FieldInfo> GetRuntimeFields(this TypeInfo ti)
-        {
-            var aTi = ti;
-            while (aTi != null)
-            {
-                foreach (var pi in ti.DeclaredFields)
-                    yield return pi;
                 aTi = aTi.BaseType?.GetTypeInfo();
             }
         }

@@ -196,9 +196,9 @@ namespace Galador.Reflection.Serialization
             }
             if (ts.Type != null)
             {
-                if (possibleValue != null && ts.Type.IsInstanceOf(possibleValue))
+                if (possibleValue != null && ts.Type.Type.IsInstanceOf(possibleValue))
                 {
-                    var ctor = ts.Type.TryGetConstructors(info.GetType(), ctx.GetType()).FirstOrDefault();
+                    var ctor = ts.Type.Type.TryGetConstructors(info.GetType(), ctx.GetType()).FirstOrDefault();
                     if (ctor != null)
                     {
                         ctor.Invoke(possibleValue, new object[] { info, ctx }); // Dare to do it! Call constructor on existing instance!!
@@ -209,9 +209,9 @@ namespace Galador.Reflection.Serialization
                 }
                 else
                 {
-                    var o = ts.Type.TryConstruct(info, ctx)
+                    var o = ts.Type.Type.TryConstruct(info, ctx)
                         ?? ts.Type.TryConstruct() // try empty object then?
-                        ?? ts.Type.GetUninitializedObject(); // last resort
+                        ?? ts.Type.Type.GetUninitializedObject(); // last resort
                     if (oid > 0)
                         Context.Register(oid, o);
                     return o;
@@ -363,11 +363,20 @@ namespace Galador.Reflection.Serialization
                             }
                             else
                             {
-                                o = possibleValue ?? ts.TryConstruct();
+                                o = possibleValue ?? ts.Type.TryConstruct();
                                 if (oid != 0)
                                     Context.Register(oid, o);
                                 foreach (var m in ts.RuntimeMembers)
-                                    m.ReadValue(this, o);
+                                {
+                                    if (m.RuntimeMember == null || m.RuntimeMember.FastReadSet(this, o))
+                                    {
+                                        object org = null;
+                                        if (m.Type.IsReference)
+                                            org = m.RuntimeMember?.GetValue(o);
+                                        var value = Read(m.Type, org);
+                                        m.RuntimeMember?.SetValue(o, value);
+                                    }
+                                }
 
                                 var colt = ts.CollectionInterface;
                                 switch (colt.CollectionType)
@@ -380,13 +389,13 @@ namespace Galador.Reflection.Serialization
                                         break;
                                     case ReflectCollectionType.ICollectionT:
                                         if (colt.listRead == null)
-                                            colt.listRead = GetType().TryGetMethods("ReadCollectionT", new[] { colt.Collection1.Type }, ts.Type, typeof(ReflectType)).FirstOrDefault();
+                                            colt.listRead = GetType().TryGetMethods("ReadCollectionT", new[] { colt.Collection1.Type.Type }, ts.Type, typeof(ReflectType)).FirstOrDefault();
                                         if (colt.listRead != null)
                                             colt.listRead.Invoke(this, new object[] { o, colt.Collection1 });
                                         break;
                                     case ReflectCollectionType.IDictionaryKV:
                                         if (colt.listWrite == null)
-                                            colt.listWrite = GetType().TryGetMethods("ReadDictKV", new[] { colt.Collection1.Type, colt.Collection2.Type }, ts.Type, typeof(ReflectType), typeof(ReflectType)).FirstOrDefault();
+                                            colt.listWrite = GetType().TryGetMethods("ReadDictKV", new[] { colt.Collection1.Type.Type, colt.Collection2.Type.Type }, ts.Type, typeof(ReflectType), typeof(ReflectType)).FirstOrDefault();
                                         if (colt.listWrite != null)
                                             colt.listWrite.Invoke(this, new object[] { o, colt.Collection1, colt.Collection2 });
                                         break;

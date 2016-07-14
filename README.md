@@ -118,7 +118,7 @@ It is a thin multiplatform wrapper around [System.Diagnostics.Trace](https://doc
 with the added benefit that whole traces can be turned on or off at once *easily* (with `TraceKey.IsEnabled`).
 Hence all TraceListeners apply to it (when the key is enabled).
 
-One get a new trace with `TraceKeys.Traces[name]` or use an already defined one such
+One get a new `TraceKey` with `TraceKeys.Traces[name]` or use an already defined one such
 as `TraceKeys.Application`. Then call any of its method to log something.
 All methods but `TraceKey.Write()` and `TraceKey.WriteLine()` will start the output line with `TraceKey.Header`
 which by default contains the trace name, current date time and thread id.
@@ -131,9 +131,9 @@ Example:
 
     // enable Serializer logging
     // with AppSettings
-    <add key="TraceKeys.Serializer" value="true"/>
+    <add key="TraceKeys.Serialization" value="true"/>
     // with code
-    TraceKeys.Serializer.IsEnabled = true;
+    TraceKeys.Serialization.IsEnabled = true;
 
     // use your own key
     public static readonly LogData = TraceKeys.Traces[$"{nameof(Model)} {nameof(LogData)}"];
@@ -147,3 +147,7 @@ Example:
     LogData.WriteLine(data);
     LogData.Information("all good")
     LogData.Error(exception);
+
+    // enable all traces with code
+    foreach (var trace in TraceKeys.Traces)
+        trace.IsEnabled = true;

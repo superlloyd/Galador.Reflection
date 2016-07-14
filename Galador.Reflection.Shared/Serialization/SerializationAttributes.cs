@@ -171,7 +171,7 @@ namespace Galador.Reflection.Serialization
     /// <summary>
     /// Property or Field with this attribute will NOT be serialized regardless of the <see cref="SerializationSettingsAttribute"/> of their class.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false, Inherited = false)]
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
     public class NotSerializedAttribute : Attribute
     {
     }

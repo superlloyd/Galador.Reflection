@@ -9,6 +9,7 @@ using System.ComponentModel;
 using System.Runtime.Serialization;
 using System.IO;
 using System.Runtime.CompilerServices;
+using Galador.Reflection.Logging;
 
 namespace Galador.Reflection.Serialization
 {
@@ -94,8 +95,6 @@ namespace Galador.Reflection.Serialization
         // this must be first
         static readonly SerializationSettingsAttribute DefaultSettings = new SerializationSettingsAttribute();
 
-        internal static readonly Assembly MSCORLIB = typeof(object).GetTypeInfo().Assembly;
-        internal bool IsMscorlib() { return Type != null && Type.GetTypeInfo().Assembly == MSCORLIB; }
 
         /// <summary>
         /// The serialization information about <see cref="System.Object"/> type. Preloaded for performance and implementation reason.
@@ -219,7 +218,8 @@ namespace Galador.Reflection.Serialization
         /// <see cref="ReflectType"/> created by the <see cref="ObjectReader"/> might have a null value there if the type
         /// can't be found. In which case instance of this type will be deserialized as <see cref="Missing"/>.
         /// </summary>
-        public Type Type { get; private set; }
+        /// <remarks>This property can be null when deserializing and no matching type can be found.</remarks>
+        public RuntimeReflectType Type { get; private set; }
         /// <summary>
         /// Info about the <see cref="ISurrogate{T}"/> type to use to serialize instance of that type, if any.
         /// </summary>
@@ -245,7 +245,7 @@ namespace Galador.Reflection.Serialization
         /// For normal type (i.e. all but primitive type, array, pointer, enum) contains the list of known members.
         /// i.e. property of field that are marked for serialization.
         /// </summary>
-        public MemberList Members { get; } = new MemberList();
+        public MemberList<Member> Members { get; } = new MemberList<Member>();
 
         #region CollectionInterface
 
@@ -312,7 +312,7 @@ namespace Galador.Reflection.Serialization
 
         internal MethodInfo listWrite, listRead;
 
-        #region utilities: ParentHierarchy() TryConstruct()
+        #region utilities: ParentHierarchy()
 
         /// <summary>
         /// Return the <see cref="BaseType"/>, all the BaseType's BaseType recursively.
@@ -327,69 +327,6 @@ namespace Galador.Reflection.Serialization
             }
         }
 
-        void SetConstructor(ConstructorInfo ctor)
-        {
-            if (ctor == null)
-            {
-#if __NET__ || __NETCORE__
-                if (Type.GetTypeInfo().IsValueType)
-                    fastCtor = EmitHelper.CreateParameterlessConstructorHandler(Type);
-#endif
-                return;
-            }
-
-            var ps = ctor.GetParameters();
-#if __NET__ || __NETCORE__
-            if (ps.Length == 0)
-            {
-                fastCtor = EmitHelper.CreateParameterlessConstructorHandler(ctor);
-                return;
-            }
-#endif
-            var cargs = new object[ps.Length];
-            for (int i = 0; i < ps.Length; i++)
-            {
-                var p = ps[i];
-                if (!p.HasDefaultValue)
-                    return;
-                cargs[i] = p.DefaultValue;
-            }
-            emtpy_constructor = ctor;
-            empty_params = cargs;
-
-        }
-        void SetConstructor(ReflectType local)
-        {
-#if __NET__ || __NETCORE__
-            fastCtor = local.fastCtor;
-#endif
-            emtpy_constructor = local.emtpy_constructor;
-            empty_params = local.empty_params;
-        }
-
-        /// <summary>
-        /// Will create and return a new instance of <see cref="Type"/> associated to this <see cref="ReflectType"/>
-        /// By using either the default constructor (i.e. constructor with no parameter or where all parameters have 
-        /// a default value) or creating a so called "uninitialized object". The later case "might" not work very well...
-        /// </summary>
-        public object TryConstruct()
-        {
-            if (Type == null)
-                return null;
-#if __NET__ || __NETCORE__
-            if (fastCtor != null)
-                return fastCtor();
-#endif
-            if (emtpy_constructor != null)
-                return emtpy_constructor.Invoke(empty_params);
-            return Type.GetUninitializedObject();
-        }
-        ConstructorInfo emtpy_constructor;
-        object[] empty_params;
-#if __NET__ || __NETCORE__
-        Func<object> fastCtor;
-#endif
-
         #endregion
 
         #region ctors() Initialize()
@@ -398,11 +335,13 @@ namespace Galador.Reflection.Serialization
 
         void Initialize(Type type)
         {
-            Type = type;
+            Type = RuntimeReflectType.GetType(type);
+            Kind = Type.Kind;
             var ti = type.GetTypeInfo();
             IsFinal = true;
             IsReference = type.GetTypeInfo().IsByRef;
-            if (IsTypeIgnored(type))
+            var na = ti.GetCustomAttribute<NotSerializedAttribute>();
+            if (Type.IsIgnored || na != null)
             {
                 IsIgnored = true;
             }
@@ -451,7 +390,6 @@ namespace Galador.Reflection.Serialization
                 }
                 else if (Kind == PrimitiveType.Object)
                 {
-                    SetConstructor(Type.TryGetConstructors().OrderBy(x => x.GetParameters().Length).FirstOrDefault());
                     if (ti.IsGenericType)
                     {
                         IsGeneric = true;
@@ -477,7 +415,7 @@ namespace Galador.Reflection.Serialization
                         if (att == null)
                         {
                             TypeName = ti.FullName;
-                            if (!IsMscorlib())
+                            if (!Type.IsMscorlib)
                                 AssemblyName = ti.Assembly.GetName().Name;
                         }
                         else
@@ -505,12 +443,12 @@ namespace Galador.Reflection.Serialization
                         IsReference = ti.IsClass || ti.IsInterface;
                         IsFinal = !ti.IsClass || ti.IsSealed;
                         IsDefaultSave = true;
-                        if (IsReference && Type != typeof(object))
+                        if (IsReference && Type.Type != typeof(object))
                         {
                             BaseType = GetType(ti.BaseType);
                         }
 #if !__PCL__
-                        IsSurrogateType = Type.GetTypeHierarchy().Any(x => x.GetTypeInfo().IsInterface && x.GetTypeInfo().IsGenericType && x.GetTypeInfo().GetGenericTypeDefinition() == typeof(ISurrogate<>));
+                        IsSurrogateType = Type.Type.GetTypeHierarchy().Any(x => x.GetTypeInfo().IsInterface && x.GetTypeInfo().IsGenericType && x.GetTypeInfo().GetGenericTypeDefinition() == typeof(ISurrogate<>));
 #endif
                         Type tSurrogate;
                         if (KnownTypes.TryGetSurrogate(type, out tSurrogate))
@@ -540,60 +478,32 @@ namespace Galador.Reflection.Serialization
                                 return false;
                             };
                             var attr = ti.GetCustomAttribute<SerializationSettingsAttribute>() ?? DefaultSettings;
-                            foreach (var pi in ti.DeclaredFields)
+                            foreach (var rm in Type.Members)
                             {
-                                var mType = pi.GetMemberType();
-                                if (IsTypeIgnored(mType))
+                                if (rm.Type.IsIgnored)
                                     continue;
-                                if (pi.IsStatic)
+                                if (rm.HasNotSerializedFlag)
                                     continue;
-                                if (pi.GetCustomAttribute<NotSerializedAttribute>() != null)
+                                if (!rm.HasSerializedFlag)
+                                {
+                                    if (rm.IsField && rm.IsPublic && !attr.IncludePublicFields)
+                                        continue;
+                                    if (rm.IsField && !rm.IsPublic && !attr.IncludePrivateFields)
+                                        continue;
+                                    if (!rm.IsField && rm.IsPublic && !attr.IncludePublicProperties)
+                                        continue;
+                                    if (!rm.IsField && !rm.IsPublic && !attr.IncludePrivateProperties)
+                                        continue;
+                                }
+                                if (skip(rm.Name))
                                     continue;
-                                bool inc = pi.IsPublic ? attr.IncludePublicFields : attr.IncludePrivateFields;
-                                if (!inc && pi.GetCustomAttribute<SerializedAttribute>() != null)
-                                    inc = true;
-                                if (!inc)
-                                    continue;
-                                if (skip(pi.Name))
-                                    continue;
-                                var pType = GetType(mType);
-                                if (pType.IsIgnored)
-                                    continue;
+                                var mType = GetType(rm.Type.Type);
                                 var m = new Member
                                 {
-                                    Name = pi.Name,
-                                    Type = pType,
+                                    Name = rm.Name,
+                                    Type = GetType(rm.Type.Type),
+                                    RuntimeMember = rm,
                                 };
-                                m.SetMember(pi);
-                                Members.Add(m);
-                            }
-                            foreach (var pi in ti.DeclaredProperties)
-                            {
-                                var mType = pi.GetMemberType();
-                                if (IsTypeIgnored(mType))
-                                    continue;
-                                if (pi.GetMethod == null || pi.GetMethod.IsStatic || pi.GetMethod.GetParameters().Length != 0)
-                                    continue;
-                                if (pi.SetMethod == null && (mType.GetTypeInfo().IsValueType || mType.GetTypeInfo().IsArray))
-                                    continue;
-                                if (pi.GetCustomAttribute<NotSerializedAttribute>() != null)
-                                    continue;
-                                bool inc = pi.GetMethod.IsPublic ? attr.IncludePublicProperties : attr.IncludePrivateProperties;
-                                if (!inc && pi.GetCustomAttribute<SerializedAttribute>() != null)
-                                    inc = true;
-                                if (!inc)
-                                    continue;
-                                if (skip(pi.Name))
-                                    continue;
-                                var pType = GetType(mType);
-                                if (pType.IsIgnored)
-                                    continue;
-                                var m = new Member
-                                {
-                                    Name = pi.Name,
-                                    Type = pType,
-                                };
-                                m.SetMember(pi);
                                 Members.Add(m);
                             }
                             Type itype = null;
@@ -648,25 +558,6 @@ namespace Galador.Reflection.Serialization
                 }
             }
             InitHashCode();
-        }
-
-        // a quick test that will cull some case quickly
-        static bool IsTypeIgnored(Type type)
-        {
-#if __PCL__
-            throw new NotSupportedException("PCL");
-#else
-            if (type.IsPointer)
-                return true;
-            if (typeof(Delegate).IsBaseClass(type) || type == typeof(IntPtr))
-                return true;
-            var ti = type.GetTypeInfo();
-            if (ti.IsGenericParameter || ti.IsGenericTypeDefinition)
-                return false;
-            if (ti.GetGenericArguments().Any(x => IsTypeIgnored(x)))
-                return true;
-            return false;
-#endif
         }
 
         #endregion
@@ -914,7 +805,7 @@ namespace Galador.Reflection.Serialization
         /// <summary>
         /// Represent a member of this type, i.e. a property or field that will be serialized.
         /// </summary>
-        public partial class Member
+        public partial class Member : IMember
         {
             /// <summary>
             /// This is the member name for the member, i.e. <see cref="MemberInfo.Name"/>.
@@ -925,417 +816,14 @@ namespace Galador.Reflection.Serialization
             /// This is the info for the declared type of this member, i.e. either of
             /// <see cref="PropertyInfo.PropertyType"/> or <see cref="FieldInfo.FieldType"/>.
             /// </summary>
-            public ReflectType Type { get; internal set; }
-
-            MemberInfo member;
-            PropertyInfo pInfo;
-            FieldInfo fInfo;
-
-            // performance fields, depends on platform
-#if __NET__ || __NETCORE__
-            Action<object, object> setter;
-            Func<object, object> getter;
-            bool hasFastSetter;
-            Action<object, Guid> setterGuid;
-            Action<object, bool> setterBool;
-            Action<object, char> setterChar;
-            Action<object, byte> setterByte;
-            Action<object, sbyte> setterSByte;
-            Action<object, short> setterInt16;
-            Action<object, ushort> setterUInt16;
-            Action<object, int> setterInt32;
-            Action<object, uint> setterUInt32;
-            Action<object, long> setterInt64;
-            Action<object, ulong> setterUInt64;
-            Action<object, float> setterSingle;
-            Action<object, double> setterDouble;
-            Action<object, decimal> setterDecimal;
-#endif
-
-            internal MemberInfo GetMember() { return member; }
-
-            #region SetMember()
-
-            internal void SetMember(MemberInfo mi)
-            {
-                member = mi;
-                if (mi is PropertyInfo)
-                {
-                    pInfo = (PropertyInfo)mi;
-#if __NET__ || __NETCORE__
-                    getter = EmitHelper.CreatePropertyGetterHandler(pInfo);
-                    if (pInfo.SetMethod != null)
-                    {
-                        setter = EmitHelper.CreatePropertySetterHandler(pInfo);
-                        switch (Type.Kind)
-                        {
-                            case PrimitiveType.Guid:
-                                hasFastSetter = true;
-                                setterGuid = EmitHelper.CreatePropertySetter<Guid>(pInfo);
-                                break;
-                            case PrimitiveType.Bool:
-                                hasFastSetter = true;
-                                setterBool = EmitHelper.CreatePropertySetter<bool>(pInfo);
-                                break;
-                            case PrimitiveType.Char:
-                                hasFastSetter = true;
-                                setterChar = EmitHelper.CreatePropertySetter<char>(pInfo);
-                                break;
-                            case PrimitiveType.Byte:
-                                hasFastSetter = true;
-                                setterByte = EmitHelper.CreatePropertySetter<byte>(pInfo);
-                                break;
-                            case PrimitiveType.SByte:
-                                hasFastSetter = true;
-                                setterSByte = EmitHelper.CreatePropertySetter<sbyte>(pInfo);
-                                break;
-                            case PrimitiveType.Int16:
-                                hasFastSetter = true;
-                                setterInt16 = EmitHelper.CreatePropertySetter<short>(pInfo);
-                                break;
-                            case PrimitiveType.UInt16:
-                                hasFastSetter = true;
-                                setterUInt16 = EmitHelper.CreatePropertySetter<ushort>(pInfo);
-                                break;
-                            case PrimitiveType.Int32:
-                                hasFastSetter = true;
-                                setterInt32 = EmitHelper.CreatePropertySetter<int>(pInfo);
-                                break;
-                            case PrimitiveType.UInt32:
-                                hasFastSetter = true;
-                                setterUInt32 = EmitHelper.CreatePropertySetter<uint>(pInfo);
-                                break;
-                            case PrimitiveType.Int64:
-                                hasFastSetter = true;
-                                setterInt64 = EmitHelper.CreatePropertySetter<long>(pInfo);
-                                break;
-                            case PrimitiveType.UInt64:
-                                hasFastSetter = true;
-                                setterUInt64 = EmitHelper.CreatePropertySetter<ulong>(pInfo);
-                                break;
-                            case PrimitiveType.Single:
-                                hasFastSetter = true;
-                                setterSingle = EmitHelper.CreatePropertySetter<float>(pInfo);
-                                break;
-                            case PrimitiveType.Double:
-                                hasFastSetter = true;
-                                setterDouble = EmitHelper.CreatePropertySetter<double>(pInfo);
-                                break;
-                            case PrimitiveType.Decimal:
-                                hasFastSetter = true;
-                                setterDecimal = EmitHelper.CreatePropertySetter<decimal>(pInfo);
-                                break;
-                        }
-                    }
-#endif
-                }
-                else
-                {
-                    fInfo = (FieldInfo)mi;
-#if __NET__ || __NETCORE__
-                    getter = EmitHelper.CreateFieldGetterHandler(fInfo);
-                    setter = EmitHelper.CreateFieldSetterHandler(fInfo);
-                    switch (Type.Kind)
-                    {
-                        case PrimitiveType.Guid:
-                            hasFastSetter = true;
-                            setterGuid = EmitHelper.CreateFieldSetter<Guid>(fInfo);
-                            break;
-                        case PrimitiveType.Bool:
-                            hasFastSetter = true;
-                            setterBool = EmitHelper.CreateFieldSetter<bool>(fInfo);
-                            break;
-                        case PrimitiveType.Char:
-                            hasFastSetter = true;
-                            setterChar = EmitHelper.CreateFieldSetter<char>(fInfo);
-                            break;
-                        case PrimitiveType.Byte:
-                            hasFastSetter = true;
-                            setterByte = EmitHelper.CreateFieldSetter<byte>(fInfo);
-                            break;
-                        case PrimitiveType.SByte:
-                            hasFastSetter = true;
-                            setterSByte = EmitHelper.CreateFieldSetter<sbyte>(fInfo);
-                            break;
-                        case PrimitiveType.Int16:
-                            hasFastSetter = true;
-                            setterInt16 = EmitHelper.CreateFieldSetter<short>(fInfo);
-                            break;
-                        case PrimitiveType.UInt16:
-                            hasFastSetter = true;
-                            setterUInt16 = EmitHelper.CreateFieldSetter<ushort>(fInfo);
-                            break;
-                        case PrimitiveType.Int32:
-                            hasFastSetter = true;
-                            setterInt32 = EmitHelper.CreateFieldSetter<int>(fInfo);
-                            break;
-                        case PrimitiveType.UInt32:
-                            hasFastSetter = true;
-                            setterUInt32 = EmitHelper.CreateFieldSetter<uint>(fInfo);
-                            break;
-                        case PrimitiveType.Int64:
-                            hasFastSetter = true;
-                            setterInt64 = EmitHelper.CreateFieldSetter<long>(fInfo);
-                            break;
-                        case PrimitiveType.UInt64:
-                            hasFastSetter = true;
-                            setterUInt64 = EmitHelper.CreateFieldSetter<ulong>(fInfo);
-                            break;
-                        case PrimitiveType.Single:
-                            hasFastSetter = true;
-                            setterSingle = EmitHelper.CreateFieldSetter<float>(fInfo);
-                            break;
-                        case PrimitiveType.Double:
-                            hasFastSetter = true;
-                            setterDouble = EmitHelper.CreateFieldSetter<double>(fInfo);
-                            break;
-                        case PrimitiveType.Decimal:
-                            hasFastSetter = true;
-                            setterDecimal = EmitHelper.CreateFieldSetter<decimal>(fInfo);
-                            break;
-                    }
-#endif
-                }
-            }
-            internal void SetMember(Member other)
-            {
-                if (other.Type.Type == null || other.Type.Type != Type.Type)
-                    return;
-                member = other.member;
-                pInfo = other.pInfo;
-                fInfo = other.fInfo;
-#if __NET__ || __NETCORE__
-                setter = other.setter;
-                getter = other.getter;
-                hasFastSetter = other.hasFastSetter;
-                switch (Type.Kind)
-                {
-                    case PrimitiveType.Guid:
-                        setterGuid = other.setterGuid;
-                        break;
-                    case PrimitiveType.Bool:
-                        setterBool = other.setterBool;
-                        break;
-                    case PrimitiveType.Char:
-                        setterChar = other.setterChar;
-                        break;
-                    case PrimitiveType.Byte:
-                        setterByte = other.setterByte;
-                        break;
-                    case PrimitiveType.SByte:
-                        setterSByte = other.setterSByte;
-                        break;
-                    case PrimitiveType.Int16:
-                        setterInt16 = other.setterInt16;
-                        break;
-                    case PrimitiveType.UInt16:
-                        setterUInt16 = other.setterUInt16;
-                        break;
-                    case PrimitiveType.Int32:
-                        setterInt32 = other.setterInt32;
-                        break;
-                    case PrimitiveType.UInt32:
-                        setterUInt32 = other.setterUInt32;
-                        break;
-                    case PrimitiveType.Int64:
-                        setterInt64 = other.setterInt64;
-                        break;
-                    case PrimitiveType.UInt64:
-                        setterUInt64 = other.setterUInt64;
-                        break;
-                    case PrimitiveType.Single:
-                        setterSingle = other.setterSingle;
-                        break;
-                    case PrimitiveType.Double:
-                        setterDouble = other.setterDouble;
-                        break;
-                    case PrimitiveType.Decimal:
-                        setterDecimal = other.setterDecimal;
-                        break;
-                }
-#endif
-            }
-
-            #endregion
-
-            #region GetValue() SetValue()
+            public ReflectType Type { get; set; }
 
             /// <summary>
-            /// Gets the value of this member for the given instance.
+            /// This is the info for the declared type of this member, i.e. either of
+            /// <see cref="PropertyInfo.PropertyType"/> or <see cref="FieldInfo.FieldType"/>.
             /// </summary>
-            /// <param name="instance">The instance from which to take the value.</param>
-            /// <returns>The value of the member.</returns>
-            public object GetValue(object instance)
-            {
-                if (instance == null)
-                    return null;
-#if __NET__ || __NETCORE__
-                if (getter != null)
-                    return getter(instance);
-#else
-                if (pInfo != null && pInfo.GetMethod != null)
-                    return pInfo.GetValue(instance);
-                if (fInfo != null)
-                    return fInfo.GetValue(instance);
-#endif
-                return null;
-            }
-
-            /// <summary>
-            /// Sets the value of this member (if possible) for the given instance.
-            /// </summary>
-            /// <param name="instance">The instance on which the member value will be set.</param>
-            /// <param name="value">The value that must be set.</param>
-            public void SetValue(object instance, object value)
-            {
-                if (instance == null || !Type.Type.IsInstanceOf(value))
-                    return;
-#if __NET__ || __NETCORE__
-                if (setter != null)
-                    setter(instance, value);
-#else
-                if (pInfo != null && pInfo.SetMethod != null && pInfo.PropertyType.IsInstanceOf(value))
-                        pInfo.SetValue(instance, value);
-                    else if (fInfo != null && fInfo.FieldType.IsInstanceOf(value))
-                        fInfo.SetValue(instance, value);
-#endif
-            }
-
-            #endregion
-
-            #region ReadValue()
-
-            internal void ReadValue(ObjectReader reader, object instance)
-            {
-#if __NET__ || __NETCORE__
-                if (hasFastSetter && instance != null)
-                {
-                    switch (Type.Kind)
-                    {
-                        case PrimitiveType.Guid:
-                            setterGuid(instance, reader.Reader.ReadGuid());
-                            break;
-                        case PrimitiveType.Bool:
-                            setterBool(instance, reader.Reader.ReadBool());
-                            break;
-                        case PrimitiveType.Char:
-                            setterChar(instance, reader.Reader.ReadChar());
-                            break;
-                        case PrimitiveType.Byte:
-                            setterByte(instance, reader.Reader.ReadByte());
-                            break;
-                        case PrimitiveType.SByte:
-                            setterSByte(instance, reader.Reader.ReadSByte());
-                            break;
-                        case PrimitiveType.Int16:
-                            setterInt16(instance, reader.Reader.ReadInt16());
-                            break;
-                        case PrimitiveType.UInt16:
-                            setterUInt16(instance, reader.Reader.ReadUInt16());
-                            break;
-                        case PrimitiveType.Int32:
-                            setterInt32(instance, reader.Reader.ReadInt32());
-                            break;
-                        case PrimitiveType.UInt32:
-                            setterUInt32(instance, reader.Reader.ReadUInt32());
-                            break;
-                        case PrimitiveType.Int64:
-                            setterInt64(instance, reader.Reader.ReadInt64());
-                            break;
-                        case PrimitiveType.UInt64:
-                            setterUInt64(instance, reader.Reader.ReadUInt64());
-                            break;
-                        case PrimitiveType.Single:
-                            setterSingle(instance, reader.Reader.ReadSingle());
-                            break;
-                        case PrimitiveType.Double:
-                            setterDouble(instance, reader.Reader.ReadDouble());
-                            break;
-                        case PrimitiveType.Decimal:
-                            setterDecimal(instance, reader.Reader.ReadDecimal());
-                            break;
-                    }
-                    return;
-                }
-#endif
-                object org = null;
-                if (Type.IsReference)
-                    org = GetValue(instance);
-                var value = reader.Read(Type, org);
-                SetValue(instance, value);
-            }
-
-            #endregion
-        }
-
-        #endregion
-
-        #region MemberList
-
-        /// <summary>
-        /// Specialized list of <see cref="Member"/>.
-        /// </summary>
-        public class MemberList : IReadOnlyList<Member>, IReadOnlyDictionary<string, Member>
-        {
-            List<Member> list = new List<Member>();
-            Dictionary<string, Member> dict = new Dictionary<string, Member>();
-
-            internal MemberList()
-            {
-            }
-            internal void Add(Member m)
-            {
-                if (dict.ContainsKey(m.Name))
-                    throw new ArgumentException();
-                list.Add(m);
-                dict[m.Name] = m;
-            }
-
-            /// <summary>
-            /// Gets the <see cref="Member"/> with the given name.
-            /// </summary>
-            /// <param name="name">Name of the member.</param>
-            /// <returns>Return the member with name, or null.</returns>
-            public Member this[string name]
-            {
-                get
-                {
-                    Member m;
-                    dict.TryGetValue(name, out m);
-                    return m;
-                }
-            }
-            /// <summary>
-            /// Gets the <see cref="Member"/> at the specified index.
-            /// </summary>
-            public Member this[int index] { get { return list[index]; } }
-            /// <summary>
-            /// Number of <see cref="Member"/>.
-            /// </summary>
-            public int Count { get { return list.Count; } }
-            /// <summary>
-            /// All the member's names.
-            /// </summary>
-            public IEnumerable<string> Keys { get { return dict.Keys; } }
-            /// <summary>
-            /// All the members
-            /// </summary>
-            public IEnumerable<Member> Values { get { return list; } }
-
-            /// <summary>
-            /// Whether a member with such a name exists.
-            /// </summary>
-            /// <param name="name">The member's name.</param>
-            /// <returns>Whether there is such a member.</returns>
-            public bool ContainsKey(string name) { return dict.ContainsKey(name); }
-            /// <summary>
-            /// Enumerate the members.
-            /// </summary>
-            public IEnumerator<Member> GetEnumerator() { return list.GetEnumerator(); }
-            bool IReadOnlyDictionary<string, Member>.TryGetValue(string key, out Member value) { return dict.TryGetValue(key, out value); }
-
-            IEnumerator<KeyValuePair<string, Member>> IEnumerable<KeyValuePair<string, Member>>.GetEnumerator() { return dict.GetEnumerator(); }
-            IEnumerator IEnumerable.GetEnumerator() { return list.GetEnumerator(); }
+            /// <remarks>This property can be null when deserializing and matching member can be found.</remarks>
+            public RuntimeMember RuntimeMember { get; internal set; }
         }
 
         #endregion
@@ -1390,22 +878,22 @@ namespace Galador.Reflection.Serialization
         internal void Read(ObjectReader reader)
         {
             IntToFlags(reader.Reader.ReadInt32());
-            Type = KnownTypes.GetType(Kind);
+            Type = RuntimeReflectType.GetType(Kind);
             if (IsArray)
             {
                 ArrayRank = (int)reader.Reader.ReadVInt();
                 Element = (ReflectType)reader.Read(RReflectType, null);
                 if (Element.Type != null)
                 {
-                    if (ArrayRank == 1) Type = Element.Type.MakeArrayType();
-                    else Type = Element.Type.MakeArrayType(ArrayRank);
+                    if (ArrayRank == 1) Type = Element.Type.Type.MakeArrayType();
+                    else Type = Element.Type.Type.MakeArrayType(ArrayRank);
                 }
             }
             else if (IsPointer)
             {
                 Element = (ReflectType)reader.Read(RReflectType, null);
                 if (Element.Type != null)
-                    Type = Element.Type.MakePointerType();
+                    Type = Element.Type.Type.MakePointerType();
             }
             else if (IsGenericParameter)
             {
@@ -1453,16 +941,13 @@ namespace Galador.Reflection.Serialization
                     {
                         BaseType = (ReflectType)reader.Read(RReflectType, null);
                     }
-                    var localType = Type != null ? ReflectType.GetType(Type) : null;
                     int NMembers = (int)reader.Reader.ReadVInt();
                     for (int i = 0; i < NMembers; i++)
                     {
                         var m = new Member();
                         m.Name = (string)reader.Read(RString, null);
                         m.Type = (ReflectType)reader.Read(RReflectType, null);
-                        var localM = localType?.Members[m.Name];
-                        if (localM != null)
-                            m.SetMember(localM);
+                        m.RuntimeMember = Type?.Members[m.Name];
                         Members.Add(m);
                     }
                     switch (CollectionType)
@@ -1478,67 +963,6 @@ namespace Galador.Reflection.Serialization
                 }
             }
             InitHashCode();
-            if (Kind == PrimitiveType.Object && Type != null)
-                SetConstructor(ReflectType.GetType(Type));
-        }
-        void BuildGenericType()
-        {
-            try
-            {
-                if (Element.Type != null && GenericArguments.All(x => x.Type != null))
-                {
-                    Type = Element.Type.MakeGenericType(GenericArguments.Select(x => x.Type).ToArray());
-                }
-                else
-                {
-                    Console.WriteLine("Problem!!");
-                }
-            }
-            catch (Exception ex)
-            {
-                Logging.TraceKeys.Serialization.Error("Couldn't create concrete type", ex.Message);
-            }
-
-            if (IsDefaultSave)
-            {
-                var localType = Type != null ? ReflectType.GetType(Type) : null;
-                foreach (var em in Element.Members)
-                {
-                    var m = new Member
-                    {
-                        Name = em.Name,
-                        Type = em.Type,
-                    };
-                    if (em.Type.IsGeneric)
-                    {
-                        m.Type = em.Type.MakeGenericType(em.Type.GenericArguments.Select(x => GenericArguments[x.GenericParameterIndex]).ToArray());
-                    }
-                    var localM = localType?.Members[m.Name];
-                    if (localM != null)
-                        m.SetMember(localM);
-                    Members.Add(m);
-                }
-                switch (CollectionType)
-                {
-                    case ReflectCollectionType.ICollectionT:
-                        Collection1 = Element.Collection1;
-                        if (Collection1.IsGenericParameter)
-                            Collection1 = GenericArguments[Element.Collection1.GenericParameterIndex];
-                        break;
-                    case ReflectCollectionType.IDictionaryKV:
-                        Collection1 = Element.Collection1;
-                        if (Collection1.IsGenericParameter)
-                            Collection1 = GenericArguments[Element.Collection1.GenericParameterIndex];
-                        Collection2 = Element.Collection2;
-                        if (Collection2.IsGenericParameter)
-                            Collection2 = GenericArguments[Element.Collection2.GenericParameterIndex];
-                        break;
-                }
-            }
-        }
-        ReflectType MakeGenericType(ReflectType[] parameters)
-        {
-            return this;
         }
 
         internal void Write(ObjectWriter writer)
@@ -1613,6 +1037,87 @@ namespace Galador.Reflection.Serialization
 
         #endregion
 
+        #region BuildGenericType() MakeGenericType()
+        void BuildGenericType()
+        {
+            try
+            {
+                if (Element.Type != null && GenericArguments.All(x => x.Type != null))
+                {
+                    Type = Element.Type.Type.MakeGenericType(GenericArguments.Select(x => x.Type.Type).ToArray());
+                }
+                else
+                {
+                    TraceKeys.Serialization.Error($"Couldn't create concrete {Element.Type}");
+                }
+            }
+            catch (Exception ex)
+            {
+                TraceKeys.Serialization.Error($"Couldn't create concrete {Element.Type}: {ex.Message}\r\n{ex.StackTrace}");
+            }
+
+            if (IsDefaultSave)
+            {
+                foreach (var em in Element.Members)
+                {
+                    var m = new Member
+                    {
+                        Name = em.Name,
+                        Type = em.Type.MakeGenericType(GenericArguments),
+                        RuntimeMember = Type?.Members[em.Name],
+                    };
+                    Members.Add(m);
+                }
+                switch (CollectionType)
+                {
+                    case ReflectCollectionType.ICollectionT:
+                        Collection1 = Element.Collection1.MakeGenericType(GenericArguments);
+                        break;
+                    case ReflectCollectionType.IDictionaryKV:
+                        Collection1 = Element.Collection1.MakeGenericType(GenericArguments);
+                        Collection2 = Element.Collection2.MakeGenericType(GenericArguments);
+                        break;
+                }
+            }
+        }
+
+        ReflectType MakeGenericType(IReadOnlyList<ReflectType> parameters)
+        {
+            if (!IsGeneric)
+                return this;
+            if (IsGenericParameter)
+                return parameters[GenericParameterIndex];
+            if (!IsGenericTypeDefinition && GenericArguments.All(x => !x.IsGenericParameter))
+                return this;
+
+            var result = new ReflectType();
+            result.Type = Type;
+            result.Kind = Kind;
+            result.IntToFlags(FlagsToInt());
+            if (IsArray)
+            {
+                result.ArrayRank = ArrayRank;
+                result.Element = Element.MakeGenericType(parameters);
+            }
+            else if (IsPointer) { result.Element = Element.MakeGenericType(parameters); }
+            else if (IsGenericParameter) { result.Element = Element.MakeGenericType(parameters); }
+            else if (IsGenericParameter) { return parameters[GenericParameterIndex]; }
+            else if (Kind == PrimitiveType.Object)
+            {
+                result.Element = Element.MakeGenericType(parameters);
+                result.GenericArguments = GenericArguments.Select(x => x.MakeGenericType(parameters)).ToArray();
+                result.BaseType = BaseType?.MakeGenericType(parameters);
+                result.Surrogate = Surrogate?.MakeGenericType(parameters);
+                result.Collection1 = Collection1;
+                result.Collection2 = Collection2;
+            }
+            result.InitHashCode();
+            result.BuildGenericType();
+            return result;
+        }
+
+        #endregion
+
         #region GetTypeConverter()
 
         /// <summary>
@@ -1621,13 +1126,13 @@ namespace Galador.Reflection.Serialization
         public TypeConverter GetTypeConverter()
         {
 #if __PCL__
-                    throw new PlatformNotSupportedException("PCL");
+            throw new PlatformNotSupportedException("PCL");
 #else
             if (converter != null)
                 return converter;
             if (Type == null)
                 return null;
-            var attr = Type.GetTypeInfo().GetCustomAttribute<TypeConverterAttribute>();
+            var attr = Type.Type.GetTypeInfo().GetCustomAttribute<TypeConverterAttribute>();
             if (attr == null)
                 return null;
             var tc = TypeDescriptor.GetConverter(Type);
@@ -1660,14 +1165,14 @@ namespace Galador.Reflection.Serialization
         public bool TryGetSurrogate(object o, out object result)
         {
             result = null;
-            if (o == null || Surrogate == null || KnownTypes.GetType(o) != Type)
+            if (o == null || Surrogate == null || KnownTypes.GetType(o) != Type.Type)
                 return false;
 
             result = Surrogate.Type.TryConstruct();
             var ti = typeof(ISurrogate<>).MakeGenericType(KnownTypes.GetType(o));
             var mi = ti.TryGetMethods(nameof(ISurrogate<int>.Initialize), null, KnownTypes.GetType(o)).FirstOrDefault();
             if (mi == null)
-                throw new ArgumentException($"Couldn't Initialize surrogate<{Type.FullName}> for {o}");
+                throw new ArgumentException($"Couldn't Initialize surrogate<{Type.Type.FullName}> for {o}");
             mi.Invoke(result, new[] { o });
             return true;
         }
@@ -1687,21 +1192,21 @@ namespace Galador.Reflection.Serialization
             if (o == null)
                 return false;
 
-            if (KnownTypes.GetType(o) == Type)
+            if (KnownTypes.GetType(o) == Type.Type)
             {
                 result = o;
                 return true;
             }
-            if (KnownTypes.GetType(o) != Surrogate.Type)
+            if (KnownTypes.GetType(o) != Surrogate.Type.Type)
                 return false;
 
-            var surr = (from t in Surrogate.Type.GetTypeHierarchy()
+            var surr = (from t in Surrogate.Type.Type.GetTypeHierarchy()
                         let ti = t.GetTypeInfo()
                         where ti.IsInterface
                         where !ti.IsGenericTypeDefinition
                         where ti.GetGenericTypeDefinition() == typeof(ISurrogate<>)
                         let ts = ti.GenericTypeArguments[0]
-                        where Type == ts
+                        where Type.Type == ts
                         select t
                         ).FirstOrDefault();
             if (surr != null)

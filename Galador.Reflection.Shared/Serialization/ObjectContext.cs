@@ -240,7 +240,7 @@ namespace Galador.Reflection.Serialization
                     continue;
                 if (item.IsSurrogateType)
                     continue;
-                if (item.IsMscorlib())
+                if (item.Type != null && item.Type.IsMscorlib)
                     continue;
                 w.WriteLine();
                 GenerateCSharpCode(w, item);
@@ -390,7 +390,7 @@ namespace Galador.Reflection.Serialization
                 {
                     if (type.IsGenericTypeDefinition)
                     {
-                        if (type.IsMscorlib())
+                        if (type.Type != null && type.Type.IsMscorlib)
                         {
                             var sm = 0;
                             var gm = type.TypeName.LastIndexOf('`');
@@ -419,8 +419,8 @@ namespace Galador.Reflection.Serialization
                 }
                 else
                 {
-                    if (type.Type == typeof(object)) sb.Append("object");
-                    else if (type.IsMscorlib()) sb.Append(type.TypeName);
+                    if (type.Type != null && type.Type.Type == typeof(object)) sb.Append("object");
+                    else if (type.Type != null && type.Type.IsMscorlib) sb.Append(type.TypeName);
                     else sb.Append("Type").Append(objectsToIds[type]);
                 }
             }

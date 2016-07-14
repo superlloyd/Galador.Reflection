@@ -233,7 +233,7 @@ namespace Galador.Reflection
                     var t = ti.AsType();
                     if (!CanBeInstantiated(t))
                     {
-                        TraceKeys.IoC.Warning($"[Registry]: Type {t.Name} can't be exported, it is not Resolvable.");
+                        TraceKeys.Registry.Warning($"[Registry]: Type {t.Name} can't be exported, it is not Resolvable.");
                         continue;
                     }
                     Register(t);

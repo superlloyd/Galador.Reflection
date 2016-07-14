@@ -235,6 +235,27 @@ namespace Galador.Reflection.Utils
 #endif
         }
 
+        internal static Type GetMemberType(this PropertyInfo ti)
+        {
+            return GetMemberType(ti.PropertyType);
+        }
+        internal static Type GetMemberType(this FieldInfo ti)
+        {
+            return GetMemberType(ti.FieldType);
+        }
+        internal static Type GetMemberType(Type type)
+        {
+            var ti = type.GetTypeInfo();
+            if (!ti.IsGenericType || ti.IsGenericParameter)
+                return type;
+            if (ti.FullName == null)
+            {
+                var result = ti.GetGenericTypeDefinition();
+                return result;
+            }
+            return type;
+        }
+
 #if __NETCORE__
         internal static IEnumerable<MethodInfo> GetRuntimeMethods(this TypeInfo ti)
         {

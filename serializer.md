@@ -269,6 +269,12 @@ One can inspect the `reader.Context.Objects` for all `ReflectType` loaded to get
 
 One can also generate appropriate C# code, after a call to `Read()` by calling `reader.Context.GenerateCSharpCode()`
 
+### Readonly Properties
+
+Readonly property can still be desererialized, provided they are initialized by the constructor (or property getter).
+In which case the deserializer will initialize that value. This only applied to reference types (and not array), for obvious reason.
+
+
 ### Serialization Attributes
 
 When deserializing type are matched on `FullName` (with namespace) and assembly name (no version or hash, just the name).

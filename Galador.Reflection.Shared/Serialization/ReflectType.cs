@@ -476,7 +476,7 @@ namespace Galador.Reflection.Serialization
                         var att = ti.GetCustomAttribute<SerializationNameAttribute>();
                         if (att == null)
                         {
-                            TypeName = type.FullName;
+                            TypeName = ti.FullName;
                             if (!IsMscorlib())
                                 AssemblyName = ti.Assembly.GetName().Name;
                         }
@@ -542,7 +542,8 @@ namespace Galador.Reflection.Serialization
                             var attr = ti.GetCustomAttribute<SerializationSettingsAttribute>() ?? DefaultSettings;
                             foreach (var pi in ti.DeclaredFields)
                             {
-                                if (IsTypeIgnored(pi.FieldType))
+                                var mType = pi.GetMemberType();
+                                if (IsTypeIgnored(mType))
                                     continue;
                                 if (pi.IsStatic)
                                     continue;
@@ -555,7 +556,9 @@ namespace Galador.Reflection.Serialization
                                     continue;
                                 if (skip(pi.Name))
                                     continue;
-                                var pType = GetType(pi.FieldType);
+                                var pType = GetType(mType);
+                                if (pType.IsIgnored)
+                                    continue;
                                 var m = new Member
                                 {
                                     Name = pi.Name,
@@ -566,11 +569,12 @@ namespace Galador.Reflection.Serialization
                             }
                             foreach (var pi in ti.DeclaredProperties)
                             {
-                                if (IsTypeIgnored(pi.PropertyType))
+                                var mType = pi.GetMemberType();
+                                if (IsTypeIgnored(mType))
                                     continue;
                                 if (pi.GetMethod == null || pi.GetMethod.IsStatic || pi.GetMethod.GetParameters().Length != 0)
                                     continue;
-                                if (pi.SetMethod == null && pi.PropertyType.GetTypeInfo().IsValueType)
+                                if (pi.SetMethod == null && (mType.GetTypeInfo().IsValueType || mType.GetTypeInfo().IsArray))
                                     continue;
                                 if (pi.GetCustomAttribute<NotSerializedAttribute>() != null)
                                     continue;
@@ -581,7 +585,9 @@ namespace Galador.Reflection.Serialization
                                     continue;
                                 if (skip(pi.Name))
                                     continue;
-                                var pType = GetType(pi.PropertyType);
+                                var pType = GetType(mType);
+                                if (pType.IsIgnored)
+                                    continue;
                                 var m = new Member
                                 {
                                     Name = pi.Name,
@@ -644,6 +650,7 @@ namespace Galador.Reflection.Serialization
             InitHashCode();
         }
 
+        // a quick test that will cull some case quickly
         static bool IsTypeIgnored(Type type)
         {
 #if __PCL__
@@ -657,8 +664,6 @@ namespace Galador.Reflection.Serialization
             if (ti.IsGenericParameter || ti.IsGenericTypeDefinition)
                 return false;
             if (ti.GetGenericArguments().Any(x => IsTypeIgnored(x)))
-                return true;
-            if (type.FullName == null) // Last, as GenericParameter has null FullName
                 return true;
             return false;
 #endif
@@ -904,7 +909,7 @@ namespace Galador.Reflection.Serialization
 
         #endregion
 
-        #region class Member MemberList
+        #region class Member
 
         /// <summary>
         /// Represent a member of this type, i.e. a property or field that will be serialized.
@@ -948,6 +953,9 @@ namespace Galador.Reflection.Serialization
 #endif
 
             internal MemberInfo GetMember() { return member; }
+
+            #region SetMember()
+
             internal void SetMember(MemberInfo mi)
             {
                 member = mi;
@@ -1148,6 +1156,9 @@ namespace Galador.Reflection.Serialization
 #endif
             }
 
+            #endregion
+
+            #region GetValue() SetValue()
 
             /// <summary>
             /// Gets the value of this member for the given instance.
@@ -1189,6 +1200,10 @@ namespace Galador.Reflection.Serialization
                         fInfo.SetValue(instance, value);
 #endif
             }
+
+            #endregion
+
+            #region ReadValue()
 
             internal void ReadValue(ObjectReader reader, object instance)
             {
@@ -1249,7 +1264,13 @@ namespace Galador.Reflection.Serialization
                 var value = reader.Read(Type, org);
                 SetValue(instance, value);
             }
+
+            #endregion
         }
+
+        #endregion
+
+        #region MemberList
 
         /// <summary>
         /// Specialized list of <see cref="Member"/>.
@@ -1415,6 +1436,7 @@ namespace Galador.Reflection.Serialization
                         GenericArguments = gArgs;
                         for (int i = 0; i < NArgs; i++)
                             gArgs[i] = (ReflectType)reader.Read(RReflectType, null);
+                        BuildGenericType();
                     }
                 }
                 if (IsEnum)
@@ -1456,55 +1478,69 @@ namespace Galador.Reflection.Serialization
                 }
             }
             InitHashCode();
-            if (IsGeneric && !IsGenericTypeDefinition)
-            {
-                try
-                {
-                    if (Element.Type != null && GenericArguments.All(x => x.Type != null))
-                        Type = Element.Type.MakeGenericType(GenericArguments.Select(x => x.Type).ToArray());
-                }
-                catch (Exception ex) { Logging.TraceKeys.Serialization.Error("Couldn't create concrete type", ex.Message); }
-
-                if (IsDefaultSave)
-                {
-                    var localType = Type != null ? ReflectType.GetType(Type) : null;
-                    foreach (var em in Element.Members)
-                    {
-                        var m = new Member
-                        {
-                            Name = em.Name,
-                            Type = em.Type,
-                        };
-                        if (em.Type.IsGenericParameter)
-                        {
-                            m.Type = GenericArguments[em.Type.GenericParameterIndex];
-                        }
-                        var localM = localType?.Members[m.Name];
-                        if (localM != null)
-                            m.SetMember(localM);
-                        Members.Add(m);
-                    }
-                    switch (CollectionType)
-                    {
-                        case ReflectCollectionType.ICollectionT:
-                            Collection1 = Element.Collection1;
-                            if (Collection1.IsGenericParameter)
-                                Collection1 = GenericArguments[Element.Collection1.GenericParameterIndex];
-                            break;
-                        case ReflectCollectionType.IDictionaryKV:
-                            Collection1 = Element.Collection1;
-                            if (Collection1.IsGenericParameter)
-                                Collection1 = GenericArguments[Element.Collection1.GenericParameterIndex];
-                            Collection2 = Element.Collection2;
-                            if (Collection2.IsGenericParameter)
-                                Collection2 = GenericArguments[Element.Collection2.GenericParameterIndex];
-                            break;
-                    }
-                }
-            }
             if (Kind == PrimitiveType.Object && Type != null)
                 SetConstructor(ReflectType.GetType(Type));
         }
+        void BuildGenericType()
+        {
+            try
+            {
+                if (Element.Type != null && GenericArguments.All(x => x.Type != null))
+                {
+                    Type = Element.Type.MakeGenericType(GenericArguments.Select(x => x.Type).ToArray());
+                }
+                else
+                {
+                    Console.WriteLine("Problem!!");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logging.TraceKeys.Serialization.Error("Couldn't create concrete type", ex.Message);
+            }
+
+            if (IsDefaultSave)
+            {
+                var localType = Type != null ? ReflectType.GetType(Type) : null;
+                foreach (var em in Element.Members)
+                {
+                    var m = new Member
+                    {
+                        Name = em.Name,
+                        Type = em.Type,
+                    };
+                    if (em.Type.IsGeneric)
+                    {
+                        m.Type = em.Type.MakeGenericType(em.Type.GenericArguments.Select(x => GenericArguments[x.GenericParameterIndex]).ToArray());
+                    }
+                    var localM = localType?.Members[m.Name];
+                    if (localM != null)
+                        m.SetMember(localM);
+                    Members.Add(m);
+                }
+                switch (CollectionType)
+                {
+                    case ReflectCollectionType.ICollectionT:
+                        Collection1 = Element.Collection1;
+                        if (Collection1.IsGenericParameter)
+                            Collection1 = GenericArguments[Element.Collection1.GenericParameterIndex];
+                        break;
+                    case ReflectCollectionType.IDictionaryKV:
+                        Collection1 = Element.Collection1;
+                        if (Collection1.IsGenericParameter)
+                            Collection1 = GenericArguments[Element.Collection1.GenericParameterIndex];
+                        Collection2 = Element.Collection2;
+                        if (Collection2.IsGenericParameter)
+                            Collection2 = GenericArguments[Element.Collection2.GenericParameterIndex];
+                        break;
+                }
+            }
+        }
+        ReflectType MakeGenericType(ReflectType[] parameters)
+        {
+            return this;
+        }
+
         internal void Write(ObjectWriter writer)
         {
             writer.Writer.Write(FlagsToInt());

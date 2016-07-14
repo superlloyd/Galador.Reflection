@@ -14,9 +14,10 @@ namespace Galador.Reflection.Logging
     /// </summary>
     public class TraceKey
     {
-        internal TraceKey()
+        internal TraceKey(string name)
         {
-            Enabled = true;
+            Name = name;
+            IsEnabled = true;
             TraceInfo = true;
             TraceWarning = true;
             TraceError = true;
@@ -25,9 +26,9 @@ namespace Galador.Reflection.Logging
 
         public Func<string> Header { get; set; }
 
-        public string Name { get; set; }
+        public string Name { get; private set; }
 
-        public bool Enabled { get; set; }
+        public bool IsEnabled { get; set; }
 
         public bool TraceInfo { get; set; }
         public bool TraceWarning { get; set; }
@@ -52,42 +53,42 @@ namespace Galador.Reflection.Logging
         [Conditional("DEBUG")]
         public void Debug(object o)
         {
-            if (!Enabled || o == null)
+            if (!IsEnabled || o == null)
                 return;
             WriteLine(GetHeader() + "DEBUG " + o);
         }
         [Conditional("DEBUG")]
         public void Debug(string msg)
         {
-            if (!Enabled)
+            if (!IsEnabled)
                 return;
             WriteLine(GetHeader() + "DEBUG " + msg);
         }
         [Conditional("DEBUG")]
         public void Debug(string format, params object[] args)
         {
-            if (!Enabled)
+            if (!IsEnabled)
                 return;
             WriteLine(GetHeader() + "DEBUG " + format, args);
         }
         [Conditional("DEBUG")]
         public void DebugIf(bool condition, string msg)
         {
-            if (!condition || !Enabled)
+            if (!condition || !IsEnabled)
                 return;
             WriteLine(GetHeader() + "DEBUG " + msg);
         }
         [Conditional("DEBUG")]
         public void DebugIf(bool condition, string format, params object[] args)
         {
-            if (!condition || !Enabled)
+            if (!condition || !IsEnabled)
                 return;
             WriteLine(GetHeader() + "DEBUG " + format, args);
         }
 
         public void Write(object o)
         {
-            if (!Enabled || o == null)
+            if (!IsEnabled || o == null)
                 return;
 #if !__PCL__
             Trace.Write(o);
@@ -97,7 +98,7 @@ namespace Galador.Reflection.Logging
         }
         public void Write(string msg)
         {
-            if (!Enabled)
+            if (!IsEnabled)
                 return;
 #if !__PCL__
             Trace.Write(string.Format(msg));
@@ -107,7 +108,7 @@ namespace Galador.Reflection.Logging
         }
         public void Write(string format, params object[] args)
         {
-            if (!Enabled)
+            if (!IsEnabled)
                 return;
 #if !__PCL__
             Trace.Write(string.Format(format, args));
@@ -118,7 +119,7 @@ namespace Galador.Reflection.Logging
 
         public void WriteLine(object o)
         {
-            if (!Enabled || o == null)
+            if (!IsEnabled || o == null)
                 return;
 #if !__PCL__
             Trace.WriteLine(o);
@@ -128,7 +129,7 @@ namespace Galador.Reflection.Logging
         }
         public void WriteLine(string msg)
         {
-            if (!Enabled)
+            if (!IsEnabled)
                 return;
 #if !__PCL__
             Trace.WriteLine(msg);
@@ -138,7 +139,7 @@ namespace Galador.Reflection.Logging
         }
         public void WriteLine(string format, params object[] args)
         {
-            if (!Enabled)
+            if (!IsEnabled)
                 return;
 #if !__PCL__
             Trace.WriteLine(string.Format(format, args));
@@ -160,57 +161,57 @@ namespace Galador.Reflection.Logging
 
         public void Error(object o)
         {
-            if (!Enabled || !TraceError || o == null)
+            if (!IsEnabled || !TraceError || o == null)
                 return;
             WriteLine(GetHeader() + HeaderError + o);
         }
         public void Error(string msg)
         {
-            if (!Enabled || !TraceError)
+            if (!IsEnabled || !TraceError)
                 return;
             WriteLine(GetHeader() + HeaderError + msg);
         }
         public void Error(string format, params object[] args)
         {
-            if (!Enabled || !TraceError)
+            if (!IsEnabled || !TraceError)
                 return;
             WriteLine(GetHeader() + HeaderError + format, args);
         }
 
         public void Warning(object o)
         {
-            if (!Enabled || !TraceWarning || o == null)
+            if (!IsEnabled || !TraceWarning || o == null)
                 return;
             WriteLine(GetHeader() + HeaderWarning + o);
         }
         public void Warning(string msg)
         {
-            if (!Enabled || !TraceWarning)
+            if (!IsEnabled || !TraceWarning)
                 return;
             WriteLine(GetHeader() + HeaderWarning + msg);
         }
         public void Warning(string format, params object[] args)
         {
-            if (!Enabled || !TraceWarning)
+            if (!IsEnabled || !TraceWarning)
                 return;
             WriteLine(GetHeader() + HeaderWarning + format, args);
         }
 
         public void Information(object o)
         {
-            if (!Enabled || !TraceInfo || o == null)
+            if (!IsEnabled || !TraceInfo || o == null)
                 return;
             WriteLine(GetHeader() + HeaderInfo + o);
         }
         public void Information(string msg)
         {
-            if (!Enabled || !TraceInfo)
+            if (!IsEnabled || !TraceInfo)
                 return;
             WriteLine(GetHeader() + HeaderInfo + msg);
         }
         public void Information(string format, params object[] args)
         {
-            if (!Enabled || !TraceInfo)
+            if (!IsEnabled || !TraceInfo)
                 return;
             WriteLine(GetHeader() + HeaderInfo + format, args);
         }

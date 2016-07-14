@@ -309,6 +309,7 @@ namespace TestApp
         class Generic01<T>
         {
             public List<T> Elements;
+            public List<T> SuperElements { get; set; }
         }
 
         [Fact]

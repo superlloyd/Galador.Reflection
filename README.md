@@ -9,8 +9,8 @@ Use the **iOS**, **Android**, **.NET4.5** or **.NET Core** DLL instead.
 Look in the test apps for additional usage sample.
 
 Still left todo:
-- improve and test **.NET Core** library (might be working now, but need explicit assembly registration)
-- improve `Deserialize()` performance
+- make sure it runs on **.NET Core** (some bug left still in right now...)
+- still some generic type bug left...
 
 ### Getting Started
 
@@ -56,22 +56,6 @@ Finally if provided with a stream created by a third party with this Serializer,
 or `Serializer.GenerateCSharpCode()` to generate a class hierarchy that can be used to deserialize the stream.
 
 
-### PropertyPath
-An handy little utility to observe property path, help synchronize POCO class as much as  WPF does with binding.
-It also register weak event so one should keep a handler to it to keep it alive.
-It watches `INotifyPropertyChange` interface for change, so it is better used with MVVM data models.
-
-Here is a simple use case, of registering an event when a property changes:
-
-    void SetModel(Model m)
-    {
-        modelWatcher = PropertyPath.Watch(m, x => x.Location.City, city => {
-            this.City = city;
-        });
-    }
-    PropertyPath modelWatcher;
-
-
 ### Registry
 [Details](registry.md)
 
@@ -108,3 +92,58 @@ Finally to solve mutually dependent object implement `IRegistryDelegate` such as
     }
     var registry = new Registry();
     var a = registry.Resolve<A>();
+
+
+
+### PropertyPath
+An handy little utility to observe property path, help synchronize POCO class as much as  WPF does with binding.
+It also register weak event so one should keep a handler to it to keep it alive.
+It watches `INotifyPropertyChange` interface for change, so it is better used with MVVM data models.
+
+Here is a simple use case, of registering an event when a property changes:
+
+    void SetModel(Model m)
+    {
+        modelWatcher = PropertyPath.Watch(m, x => x.Location.City, city => {
+            this.City = city;
+        });
+    }
+    PropertyPath modelWatcher;
+
+
+### TraceKeys
+
+This is one of my utility which only happen to be here for convenience.
+It is a thin multiplatform wrapper around [System.Diagnostics.Trace](https://docs.microsoft.com/en-us/dotnet/core/api/system.diagnostics.trace#System_Diagnostics_Trace)
+with the added benefit that whole traces can be turned on or off at once *easily* (with `TraceKey.IsEnabled`).
+Hence all TraceListeners apply to it (when the key is enabled).
+
+One get a new trace with `TraceKeys.Traces[name]` or use an already defined one such
+as `TraceKeys.Application`. Then call any of its method to log something.
+All methods but `TraceKey.Write()` and `TraceKey.WriteLine()` will start the output line with `TraceKey.Header`
+which by default contains the trace name, current date time and thread id.
+
+By default all `TraceKey` are disabled (except `TraceKeys.Application`). On the desktop (full framework or .NET core)
+they will automatically pick up the `AppSettings` values for `"TraceKeys." + key.Name`
+(text value must be in `"true" "false" "0" "1" "on" "off" "enable" "disable"`).
+
+Example:
+
+    // enable Serializer logging
+    // with AppSettings
+    <add key="TraceKeys.Serializer" value="true"/>
+    // with code
+    TraceKeys.Serializer.IsEnabled = true;
+
+    // use your own key
+    public static readonly LogData = TraceKeys.Traces[$"{nameof(Model)} {nameof(LogData)}"];
+    // or
+    public static readonly LogData = TraceKeys.Traces.GetTrace("Model LogData", t => t.IsEnabled = true);
+
+    // enable it with AppSettings
+    <add key="TraceKeys.Model LogData" value="on"/>
+
+    // use it
+    LogData.WriteLine(data);
+    LogData.Information("all good")
+    LogData.Error(exception);

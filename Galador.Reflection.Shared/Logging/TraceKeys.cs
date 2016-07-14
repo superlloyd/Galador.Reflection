@@ -8,7 +8,7 @@ using System.Collections;
 
 namespace Galador.Reflection.Logging
 {
-    public static class TraceKeys
+    public static partial class TraceKeys
     {
         public class TracesProperty : IEnumerable<TraceKey>
         {
@@ -27,7 +27,12 @@ namespace Galador.Reflection.Logging
                     if (result == null)
                     {
                         // REMARK disabled by default! specifically enable for debugging / diagnostic purpose!...
-                        traces[key] = result = new TraceKey() { Name = key, Enabled = false };
+                        traces[key] = result = new TraceKey(key) { IsEnabled = false };
+                        if (init != null)
+                            init(result);
+                    }
+                    else
+                    {
                         if (init != null)
                             init(result);
                     }
@@ -42,8 +47,8 @@ namespace Galador.Reflection.Logging
 
         public static TracesProperty Traces { get; } = new TracesProperty();
 
-        public static TraceKey Application { get; } = Traces.GetTrace(nameof(Application), x => x.Enabled = true); /* only one enabled by default */
+        public static TraceKey Application { get; } = Traces.GetTrace(nameof(Application), x => x.IsEnabled = true); /* only one enabled by default */
         public static TraceKey Serialization { get; } = Traces[nameof(Serialization)];
-        public static TraceKey IoC { get; } = Traces[nameof(IoC)];
+        public static TraceKey Registry { get; } = Traces[nameof(Registry)];
     }
 }

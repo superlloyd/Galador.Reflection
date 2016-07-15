@@ -5,17 +5,31 @@ using System.Threading.Tasks;
 
 namespace Galador.Reflection.Serialization
 {
+    /// <summary>
+    /// An <see cref="IPrimitiveWriter"/> that write data to an object list. It is faster for cloning and also make it easier to debug serialization.
+    /// </summary>
     public class TokenPrimitiveWriter : IPrimitiveWriter
     {
         List<object> stream;
+
+        /// <summary>
+        /// Create a new <see cref="TokenPrimitiveWriter"/> from a list.
+        /// </summary>
+        /// <param name="stream">The target list, where data will be written.</param>
         public TokenPrimitiveWriter(List<object> stream)
         {
             if (stream == null)
                 throw new ArgumentNullException();
             this.stream = stream;
         }
+        /// <summary>
+        /// Create a new <see cref="TokenPrimitiveWriter"/> and its underlying list.
+        /// </summary>
         public TokenPrimitiveWriter() { this.stream = new List<object>(256); }
 
+        /// <summary>
+        /// The list where token will be written.
+        /// </summary>
         public List<object> TokenStream { get { return stream; } }
 
         void IDisposable.Dispose() { }
@@ -41,15 +55,26 @@ namespace Galador.Reflection.Serialization
         void IPrimitiveWriter.WriteVInt(long value) { stream.Add(value); }
     }
 
+    /// <summary>
+    /// An <see cref="IPrimitiveReader"/> that read the data from an object list. It is faster for cloning and also make it easier to debug serialization.
+    /// </summary>
     public class TokenPrimitiveReader : IPrimitiveReader
     {
         List<object> stream;
+
+        /// <summary>
+        /// Construct a new <see cref="TokenPrimitiveReader"/>
+        /// </summary>
+        /// <param name="stream">The source of token</param>
         public TokenPrimitiveReader(List<object> stream)
         {
             if (stream == null)
                 throw new ArgumentNullException();
             this.stream = stream;
         }
+        /// <summary>
+        /// Current position in the list of token.
+        /// </summary>
         public int Position
         {
             get { return position; }
@@ -61,6 +86,10 @@ namespace Galador.Reflection.Serialization
             }
         }
         int position;
+
+        /// <summary>
+        /// The source of values.
+        /// </summary>
         public List<object> TokenStream { get { return stream; } }
 
         string IPrimitiveReader.ReadString() { return (string)stream[position++]; }

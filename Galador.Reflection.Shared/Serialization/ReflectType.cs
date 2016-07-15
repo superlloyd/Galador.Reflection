@@ -412,7 +412,7 @@ namespace Galador.Reflection.Serialization
                             IsNullable = Element == RNullable;
                         }
 #if __PCL__
-                            throw new NotSupportedException("PCL");
+                        throw new NotSupportedException("PCL");
 #else
                         GenericArguments = ti.GetGenericArguments().Select(x => GetType(x)).ToArray();
                         IsIgnored = GenericArguments.Any(x => x.IsIgnored);
@@ -1051,6 +1051,11 @@ namespace Galador.Reflection.Serialization
         #region BuildGenericType() MakeGenericType()
         void BuildGenericType()
         {
+            if (Element == null)
+            {
+                TraceKeys.Serialization.Error($"Type {this} is a generic type without Element");
+                return;
+            }
             try
             {
                 if (Element.Type != null && GenericArguments.All(x => x.Type != null))
@@ -1069,6 +1074,7 @@ namespace Galador.Reflection.Serialization
 
             if (IsDefaultSave)
             {
+                FastType = FastType.GetType(Type);
                 foreach (var em in Element.Members)
                 {
                     var m = new Member
@@ -1094,10 +1100,10 @@ namespace Galador.Reflection.Serialization
 
         ReflectType MakeGenericType(IReadOnlyList<ReflectType> parameters)
         {
-            if (!IsGeneric)
-                return this;
             if (IsGenericParameter)
                 return parameters[GenericParameterIndex];
+            if (!IsGeneric)
+                return this;
             if (!IsGenericTypeDefinition && GenericArguments.All(x => !x.IsGenericParameter))
                 return this;
 
@@ -1105,22 +1111,21 @@ namespace Galador.Reflection.Serialization
             result.Type = Type;
             result.Kind = Kind;
             result.IntToFlags(FlagsToInt());
-            if (IsArray)
+            if (Kind == PrimitiveType.Object)
             {
-                result.ArrayRank = ArrayRank;
-                result.Element = Element.MakeGenericType(parameters);
-            }
-            else if (IsPointer) { result.Element = Element.MakeGenericType(parameters); }
-            else if (IsGenericParameter) { result.Element = Element.MakeGenericType(parameters); }
-            else if (IsGenericParameter) { return parameters[GenericParameterIndex]; }
-            else if (Kind == PrimitiveType.Object)
-            {
-                result.Element = Element.MakeGenericType(parameters);
+                result.Element = Element;
                 result.GenericArguments = GenericArguments.Select(x => x.MakeGenericType(parameters)).ToArray();
                 result.BaseType = BaseType?.MakeGenericType(parameters);
                 result.Surrogate = Surrogate?.MakeGenericType(parameters);
-                result.Collection1 = Collection1;
-                result.Collection2 = Collection2;
+                result.Collection1 = Collection1?.MakeGenericType(parameters);
+                result.Collection2 = Collection2?.MakeGenericType(parameters);
+
+                var tArgs = GenericArguments.Select(x => x.Type).ToArray();
+                if (Element.Type != null && tArgs.All(x => x != null))
+                {
+                    result.Type = Element.Type.MakeGenericType(tArgs);
+                    result.FastType = FastType.GetType(result.Type);
+                }
             }
             result.InitHashCode();
             result.BuildGenericType();

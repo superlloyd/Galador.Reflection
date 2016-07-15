@@ -11,7 +11,7 @@ namespace Galador.Reflection.Serialization
     }
 
     /// <summary>
-    /// Specialized list of <see cref="RuntimeMember"/>.
+    /// Specialized list of <see cref="FastMember"/>.
     /// </summary>
     public class MemberList<T> : IReadOnlyList<T>, IReadOnlyDictionary<string, T>
         where T : IMember

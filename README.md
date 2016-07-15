@@ -111,6 +111,23 @@ Here is a simple use case, of registering an event when a property changes:
     PropertyPath modelWatcher;
 
 
+### FastType
+Unfortunately, even in 2016! .NET reflection has pitiful performance. `FastType` provide
+quick (default) constructor and member getter and setter on platform that support 
+[System.Emit](https://docs.microsoft.com/en-us/dotnet/core/api/system.reflection.emit),
+falling back on normal reflection otherwise.
+
+Example:
+
+    var FT = FastType.GetType(typeof(List<object>));
+    var list = FT.TryConstruct();
+    FT.Members["Capacity"].SetValue(list, 42);
+
+    // same as
+    var list = new List<object>();
+    list.Capacity = 42;
+
+
 ### TraceKeys
 
 This is one of my utility which only happen to be here for convenience.
@@ -118,7 +135,7 @@ It is a thin multiplatform wrapper around [System.Diagnostics.Trace](https://doc
 with the added benefit that whole traces can be turned on or off at once *easily* (with `TraceKey.IsEnabled`).
 Hence all TraceListeners apply to it (when the key is enabled).
 
-One get a new `TraceKey` with `TraceKeys.Traces[name]` or use an already defined one such
+One get a `TraceKey` with `TraceKeys.Traces[name]` or use an already defined one such
 as `TraceKeys.Application`. Then call any of its method to log something.
 All methods but `TraceKey.Write()` and `TraceKey.WriteLine()` will start the output line with `TraceKey.Header`
 which by default contains the trace name, current date time and thread id.

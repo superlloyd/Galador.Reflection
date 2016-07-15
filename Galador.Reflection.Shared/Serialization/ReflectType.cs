@@ -213,13 +213,7 @@ namespace Galador.Reflection.Serialization
         /// For type that are generic parameter, the position / index. Otherwise 0.
         /// </summary>
         public int GenericParameterIndex { get; private set; }
-        /// <summary>
-        /// The .NET <see cref="System.Type"/> that this <see cref="ReflectType"/> represent, if it can be found.
-        /// <see cref="ReflectType"/> created by the <see cref="ObjectReader"/> might have a null value there if the type
-        /// can't be found. In which case instance of this type will be deserialized as <see cref="Missing"/>.
-        /// </summary>
-        /// <remarks>This property can be null when deserializing and no matching type can be found.</remarks>
-        public RuntimeReflectType Type { get; private set; }
+
         /// <summary>
         /// Info about the <see cref="ISurrogate{T}"/> type to use to serialize instance of that type, if any.
         /// </summary>
@@ -246,6 +240,21 @@ namespace Galador.Reflection.Serialization
         /// i.e. property of field that are marked for serialization.
         /// </summary>
         public MemberList<Member> Members { get; } = new MemberList<Member>();
+
+        // runtime data that is not serialized
+
+        /// <summary>
+        /// The .NET <see cref="System.Type"/> that this <see cref="ReflectType"/> represent, if it can be found.
+        /// <see cref="ReflectType"/> created by the <see cref="ObjectReader"/> might have a null value there if the type
+        /// can't be found. In which case instance of this type will be deserialized as <see cref="Missing"/>.
+        /// </summary>
+        /// <remarks>This property can be null when deserializing and no matching type can be found.</remarks>
+        public Type Type { get; private set; }
+
+        /// <summary>
+        /// The associated runtime item. Can be null when deserializing.
+        /// </summary>
+        public FastType FastType { get; private set; }
 
         #region CollectionInterface
 
@@ -335,13 +344,13 @@ namespace Galador.Reflection.Serialization
 
         void Initialize(Type type)
         {
-            Type = RuntimeReflectType.GetType(type);
-            Kind = Type.Kind;
+            Type = type;
+            FastType = FastType.GetType(type);
+            Kind = FastType.Kind;
             var ti = type.GetTypeInfo();
             IsFinal = true;
             IsReference = type.GetTypeInfo().IsByRef;
-            var na = ti.GetCustomAttribute<NotSerializedAttribute>();
-            if (Type.IsIgnored || na != null)
+            if (FastType.IsIgnored || ti.GetCustomAttribute<NotSerializedAttribute>() != null)
             {
                 IsIgnored = true;
             }
@@ -415,7 +424,7 @@ namespace Galador.Reflection.Serialization
                         if (att == null)
                         {
                             TypeName = ti.FullName;
-                            if (!Type.IsMscorlib)
+                            if (!FastType.IsMscorlib)
                                 AssemblyName = ti.Assembly.GetName().Name;
                         }
                         else
@@ -443,12 +452,12 @@ namespace Galador.Reflection.Serialization
                         IsReference = ti.IsClass || ti.IsInterface;
                         IsFinal = !ti.IsClass || ti.IsSealed;
                         IsDefaultSave = true;
-                        if (IsReference && Type.Type != typeof(object))
+                        if (IsReference && Type != typeof(object))
                         {
                             BaseType = GetType(ti.BaseType);
                         }
 #if !__PCL__
-                        IsSurrogateType = Type.Type.GetTypeHierarchy().Any(x => x.GetTypeInfo().IsInterface && x.GetTypeInfo().IsGenericType && x.GetTypeInfo().GetGenericTypeDefinition() == typeof(ISurrogate<>));
+                        IsSurrogateType = Type.GetTypeHierarchy().Any(x => x.GetTypeInfo().IsInterface && x.GetTypeInfo().IsGenericType && x.GetTypeInfo().GetGenericTypeDefinition() == typeof(ISurrogate<>));
 #endif
                         Type tSurrogate;
                         if (KnownTypes.TryGetSurrogate(type, out tSurrogate))
@@ -478,13 +487,13 @@ namespace Galador.Reflection.Serialization
                                 return false;
                             };
                             var attr = ti.GetCustomAttribute<SerializationSettingsAttribute>() ?? DefaultSettings;
-                            foreach (var rm in Type.Members)
+                            foreach (var rm in FastType.Members)
                             {
-                                if (rm.Type.IsIgnored)
+                                if (rm.Type.IsIgnored || rm.IsStatic)
                                     continue;
-                                if (rm.HasNotSerializedFlag)
+                                if (rm.Member.GetCustomAttribute<NotSerializedAttribute>() != null)
                                     continue;
-                                if (!rm.HasSerializedFlag)
+                                if (rm.Member.GetCustomAttribute<SerializedAttribute>() == null)
                                 {
                                     if (rm.IsField && rm.IsPublic && !attr.IncludePublicFields)
                                         continue;
@@ -823,7 +832,7 @@ namespace Galador.Reflection.Serialization
             /// <see cref="PropertyInfo.PropertyType"/> or <see cref="FieldInfo.FieldType"/>.
             /// </summary>
             /// <remarks>This property can be null when deserializing and matching member can be found.</remarks>
-            public RuntimeMember RuntimeMember { get; internal set; }
+            public FastMember RuntimeMember { get; internal set; }
         }
 
         #endregion
@@ -878,22 +887,23 @@ namespace Galador.Reflection.Serialization
         internal void Read(ObjectReader reader)
         {
             IntToFlags(reader.Reader.ReadInt32());
-            Type = RuntimeReflectType.GetType(Kind);
+            Type = KnownTypes.GetType(Kind);
+            FastType = FastType.GetType(Kind);
             if (IsArray)
             {
                 ArrayRank = (int)reader.Reader.ReadVInt();
                 Element = (ReflectType)reader.Read(RReflectType, null);
                 if (Element.Type != null)
                 {
-                    if (ArrayRank == 1) Type = Element.Type.Type.MakeArrayType();
-                    else Type = Element.Type.Type.MakeArrayType(ArrayRank);
+                    if (ArrayRank == 1) Type = Element.Type.MakeArrayType();
+                    else Type = Element.Type.MakeArrayType(ArrayRank);
                 }
             }
             else if (IsPointer)
             {
                 Element = (ReflectType)reader.Read(RReflectType, null);
                 if (Element.Type != null)
-                    Type = Element.Type.Type.MakePointerType();
+                    Type = Element.Type.MakePointerType();
             }
             else if (IsGenericParameter)
             {
@@ -906,6 +916,7 @@ namespace Galador.Reflection.Serialization
                     TypeName = (string)reader.Read(RString, null);
                     AssemblyName = (string)reader.Read(RString, null);
                     Type = KnownTypes.GetType(TypeName, AssemblyName);
+                    FastType = FastType.GetType(Type);
                     if (reader.SkipMetaData)
                     {
                         if (Type == null)
@@ -947,7 +958,7 @@ namespace Galador.Reflection.Serialization
                         var m = new Member();
                         m.Name = (string)reader.Read(RString, null);
                         m.Type = (ReflectType)reader.Read(RReflectType, null);
-                        m.RuntimeMember = Type?.Members[m.Name];
+                        m.RuntimeMember = FastType?.Members[m.Name];
                         Members.Add(m);
                     }
                     switch (CollectionType)
@@ -1044,7 +1055,7 @@ namespace Galador.Reflection.Serialization
             {
                 if (Element.Type != null && GenericArguments.All(x => x.Type != null))
                 {
-                    Type = Element.Type.Type.MakeGenericType(GenericArguments.Select(x => x.Type.Type).ToArray());
+                    Type = Element.Type.MakeGenericType(GenericArguments.Select(x => x.Type).ToArray());
                 }
                 else
                 {
@@ -1064,7 +1075,7 @@ namespace Galador.Reflection.Serialization
                     {
                         Name = em.Name,
                         Type = em.Type.MakeGenericType(GenericArguments),
-                        RuntimeMember = Type?.Members[em.Name],
+                        RuntimeMember = FastType?.Members[em.Name],
                     };
                     Members.Add(m);
                 }
@@ -1132,7 +1143,7 @@ namespace Galador.Reflection.Serialization
                 return converter;
             if (Type == null)
                 return null;
-            var attr = Type.Type.GetTypeInfo().GetCustomAttribute<TypeConverterAttribute>();
+            var attr = Type.GetTypeInfo().GetCustomAttribute<TypeConverterAttribute>();
             if (attr == null)
                 return null;
             var tc = TypeDescriptor.GetConverter(Type);
@@ -1165,14 +1176,14 @@ namespace Galador.Reflection.Serialization
         public bool TryGetSurrogate(object o, out object result)
         {
             result = null;
-            if (o == null || Surrogate == null || KnownTypes.GetType(o) != Type.Type)
+            if (o == null || Surrogate == null || KnownTypes.GetType(o) != Type)
                 return false;
 
             result = Surrogate.Type.TryConstruct();
             var ti = typeof(ISurrogate<>).MakeGenericType(KnownTypes.GetType(o));
             var mi = ti.TryGetMethods(nameof(ISurrogate<int>.Initialize), null, KnownTypes.GetType(o)).FirstOrDefault();
             if (mi == null)
-                throw new ArgumentException($"Couldn't Initialize surrogate<{Type.Type.FullName}> for {o}");
+                throw new ArgumentException($"Couldn't Initialize surrogate<{Type.FullName}> for {o}");
             mi.Invoke(result, new[] { o });
             return true;
         }
@@ -1192,21 +1203,21 @@ namespace Galador.Reflection.Serialization
             if (o == null)
                 return false;
 
-            if (KnownTypes.GetType(o) == Type.Type)
+            if (KnownTypes.GetType(o) == Type)
             {
                 result = o;
                 return true;
             }
-            if (KnownTypes.GetType(o) != Surrogate.Type.Type)
+            if (KnownTypes.GetType(o) != Surrogate.Type)
                 return false;
 
-            var surr = (from t in Surrogate.Type.Type.GetTypeHierarchy()
+            var surr = (from t in Surrogate.Type.GetTypeHierarchy()
                         let ti = t.GetTypeInfo()
                         where ti.IsInterface
                         where !ti.IsGenericTypeDefinition
                         where ti.GetGenericTypeDefinition() == typeof(ISurrogate<>)
                         let ts = ti.GenericTypeArguments[0]
-                        where Type.Type == ts
+                        where Type == ts
                         select t
                         ).FirstOrDefault();
             if (surr != null)

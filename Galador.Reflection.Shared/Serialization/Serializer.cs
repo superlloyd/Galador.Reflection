@@ -68,9 +68,9 @@ namespace Galador.Reflection.Serialization
         /// <returns>A deep clone of the <paramref name="instance"/>.</returns>
         public static T Clone<T>(T instance, bool skipMetaData = true)
         {
-            var ms = new MemoryStream(256);
+            var ms = new List<object>(256);
 
-            var pw = new PrimitiveBinaryWriter(ms);
+            var pw = new TokenPrimitiveWriter(ms);
             var ow = new ObjectWriter(pw)
             {
                 SkipMetaData = skipMetaData,
@@ -78,8 +78,7 @@ namespace Galador.Reflection.Serialization
 
             ow.Write(instance);
 
-            ms.Position = 0;
-            var pr = new PrimitiveBinaryReader(ms);
+            var pr = new TokenPrimitiveReader(ms);
             var or = new ObjectReader(pr)
             {
                 SkipMetaData = skipMetaData,

@@ -9,7 +9,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Galador.Reflection.Serialization
+namespace Galador.Reflection.Utils
 {
     // http://theinstructionlimit.com/fast-net-reflection
 

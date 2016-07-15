@@ -306,32 +306,40 @@ namespace TestApp
             Assert.True(mDT.Elapsed.Ticks < jDT.Elapsed.Ticks);
         }
 
-        class Generic01<T>
+        class Generic01<T1, T2>
         {
-            public List<T> Elements;
+            public List<T1> Elements;
+            public List<T2> Elements2;
         }
 
         [Fact]
         public void CheckGeneric()
         {
-            var o = new Generic01<int>
+            var o = new Generic01<int, string>
             {
-                Elements = new List<int> { 1, 2 }
+                Elements = new List<int> { 1, 2 },
+                Elements2 = new List<string> { "hello" }
             };
             var o2 = Serializer.Clone(o, true);
             var o3 = Serializer.Clone(o, false);
 
             Assert.NotNull(o2.Elements);
             Assert.NotNull(o3.Elements);
+            Assert.NotNull(o2.Elements2);
+            Assert.NotNull(o3.Elements2);
 
             Assert.Equal(2, o2.Elements.Count);
             Assert.Equal(2, o3.Elements.Count);
+            Assert.Equal(1, o2.Elements2.Count);
+            Assert.Equal(1, o3.Elements2.Count);
 
             Assert.Equal(1, o2.Elements[0]);
             Assert.Equal(2, o2.Elements[1]);
+            Assert.Equal("hello", o2.Elements2[0]);
 
             Assert.Equal(1, o3.Elements[0]);
             Assert.Equal(2, o3.Elements[1]);
+            Assert.Equal("hello", o3.Elements2[0]);
         }
 
         public class BList : List<string>
@@ -617,7 +625,7 @@ namespace TestApp
         [Fact]
         public void CheckReaderWriter()
         {
-            var ms = new MemoryStream();
+            var ms = new MemoryStream(256);
             CheckReaderWriter(
                 () => new PrimitiveBinaryWriter(ms),
                 () => {
@@ -625,10 +633,16 @@ namespace TestApp
                     return new PrimitiveBinaryReader(ms);
                 });
 
-            var sb = new StringBuilder();
+            var sb = new StringBuilder(256);
             CheckReaderWriter(
                 () => new PrimitiveTextWriter(new StringWriter(sb)),
                 () => new PrimitiveTextReader(new StringReader(sb.ToString()))
+                );
+
+            var os = new List<object>(256);
+            CheckReaderWriter(
+                () => new TokenPrimitiveWriter(os),
+                () => new TokenPrimitiveReader(os)
                 );
         }
         void CheckReaderWriter(Func<IPrimitiveWriter> getW, Func<IPrimitiveReader> getR)

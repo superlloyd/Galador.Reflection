@@ -297,13 +297,13 @@ namespace Galador.Reflection.Serialization
                                     break;
                                 case ReflectCollectionType.ICollectionT:
                                     if (colt.listWrite == null)
-                                        colt.listWrite = GetType().TryGetMethods("WriteCollection", new[] { colt.Collection1.Type.Type }, ts.Type.Type).FirstOrDefault();
+                                        colt.listWrite = GetType().TryGetMethods("WriteCollection", new[] { colt.Collection1.Type }, ts.Type).FirstOrDefault();
                                     if (colt.listWrite != null)
                                         colt.listWrite.Invoke(this, new object[] { o });
                                     break;
                                 case ReflectCollectionType.IDictionaryKV:
                                     if (colt.listWrite == null)
-                                        colt.listWrite = GetType().TryGetMethods("WriteDictionary", new[] { colt.Collection1.Type.Type, colt.Collection2.Type.Type }, ts.Type.Type).FirstOrDefault();
+                                        colt.listWrite = GetType().TryGetMethods("WriteDictionary", new[] { colt.Collection1.Type, colt.Collection2.Type }, ts.Type).FirstOrDefault();
                                     if (colt.listWrite != null)
                                         colt.listWrite.Invoke(this, new object[] { o });
                                     break;

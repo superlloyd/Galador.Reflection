@@ -104,6 +104,7 @@ namespace Galador.Reflection.Utils
         {
             var ctors =
                 from ci in type.GetTypeInfo().DeclaredConstructors
+                where !ci.IsStatic
                 let ps = ci.GetParameters()
                 let N = ps.Where(x => !x.HasDefaultValue).Count()
                 where (argsType == null && N == 0) || (argsType != null && argsType.Length >= N && argsType.Length <= ps.Length)
@@ -123,6 +124,7 @@ namespace Galador.Reflection.Utils
         {
             var ctors =
                 from ci in type.GetTypeInfo().DeclaredConstructors
+                where !ci.IsStatic
                 let ps = ci.GetParameters()
                 let N = ps.Where(x => !x.HasDefaultValue).Count()
                 where !ci.IsStatic

@@ -1,4 +1,5 @@
-﻿using Galador.Reflection.Utils;
+﻿using Galador.Reflection.Serialization;
+using Galador.Reflection.Utils;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -6,41 +7,44 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 
-namespace Galador.Reflection.Serialization
+namespace Galador.Reflection.Utils
 {
     /// <summary>
-    /// <see cref="RuntimeReflectType"/> are the description of local type. They are not serialized.
-    /// They are here to provide a cached and unique list of members and constructors.
+    /// Each <see cref="FastType"/> instance is associate with a particular .NET <see cref="System.Type"/>.
+    /// It provides access to optimized members and constructor method, using System.Emit whenever possible for top performance.
     /// </summary>
     [NotSerialized]
-    public class RuntimeReflectType
+    public class FastType
     {
-        RuntimeReflectType() { }
+        FastType() { }
 
         #region GetType()
 
         /// <summary>
-        /// Gets the <see cref="RuntimeReflectType"/> associated with any given type.
+        /// Gets the <see cref="FastType"/> associated with any given type.
         /// </summary>
-        public static RuntimeReflectType GetType(Type type)
+        public static FastType GetType(Type type)
         {
             if (type == null)
                 return null;
             lock (sReflectCache)
             {
-                RuntimeReflectType result;
+                FastType result;
                 if (!sReflectCache.TryGetValue(type, out result))
                 {
-                    result = new RuntimeReflectType();
+                    result = new FastType();
                     sReflectCache[type] = result;
                     result.Initialize(type);
                 }
                 return result;
             }
         }
-        static Dictionary<Type, RuntimeReflectType> sReflectCache = new Dictionary<System.Type, RuntimeReflectType>();
+        static Dictionary<Type, FastType> sReflectCache = new Dictionary<System.Type, FastType>();
 
-        public static RuntimeReflectType GetType(PrimitiveType kind)
+        /// <summary>
+        /// Get the <see cref="FastType"/> associated with each primitive type. Except for object, where it returns null.
+        /// </summary>
+        public static FastType GetType(PrimitiveType kind)
         {
             var type = KnownTypes.GetType(kind);
             return GetType(type);
@@ -48,18 +52,21 @@ namespace Galador.Reflection.Serialization
 
         #endregion
 
-        public static implicit operator RuntimeReflectType(Type type) { return GetType(type); }
-        public static implicit operator Type(RuntimeReflectType type) { return type?.Type; }
+        public static implicit operator FastType(Type type) { return GetType(type); }
+        public static implicit operator Type(FastType type) { return type?.Type; }
 
         #region TryConstruct() SetConstructor()
 
         /// <summary>
-        /// Will create and return a new instance of <see cref="Type"/> associated to this <see cref="RuntimeReflectType"/>
+        /// Will create and return a new instance of <see cref="Type"/> associated to this <see cref="FastType"/>
         /// By using either the default constructor (i.e. constructor with no parameter or where all parameters have 
         /// a default value) or creating a so called "uninitialized object". It might return null if it fails.
         /// </summary>
         public object TryConstruct()
         {
+            if (IsGenericMeta || IsAbstract || IsIgnored)
+                return null;
+
 #if __NET__ || __NETCORE__
             if (fastCtor != null)
                 return fastCtor();
@@ -67,8 +74,11 @@ namespace Galador.Reflection.Serialization
             if (emtpy_constructor != null)
                 return emtpy_constructor.Invoke(empty_params);
 
+            if (!IsReference)
+                return Activator.CreateInstance(Type);
+
 #if __PCL__
-            throw new PlatformNotSupportedException(); 
+            throw new PlatformNotSupportedException("PCL"); 
 #elif __NETCORE__
             return null;
 #else
@@ -116,9 +126,19 @@ namespace Galador.Reflection.Serialization
         #endregion
 
         /// <summary>
-        /// Whether or not this member is marked with <see cref="NotSerializedAttribute"/>.
+        /// Whether or not this is associated with a <see cref="Type"/> which is a pointer, delegate or IntPtr.
         /// </summary>
         internal bool IsIgnored { get; private set; }
+
+        /// <summary>
+        /// Whether this is a real class (<c>false</c>), or a generic one missing arguments (<c>true</c>).
+        /// </summary>
+        public bool IsGenericMeta { get; private set; }
+
+        /// <summary>
+        /// Whether this is an abstract class or not.
+        /// </summary>
+        public bool IsAbstract { get; set; }
 
         /// <summary>
         /// Whether or not this is a type passed by reference.
@@ -136,17 +156,26 @@ namespace Galador.Reflection.Serialization
         public Type Type { get; private set; }
 
         /// <summary>
-        /// Gets the <see cref="RuntimeReflectType"/> associated with the BaseType.
+        /// Gets the <see cref="FastType"/> associated with the BaseType.
         /// </summary>
-        public RuntimeReflectType BaseType { get; private set; }
+        public FastType BaseType { get; private set; }
 
         /// <summary>
         /// Member list of this class.
         /// </summary>
-        public MemberList<RuntimeMember> Members { get; } = new MemberList<RuntimeMember>();
+        public MemberList<FastMember> Members { get; } = new MemberList<FastMember>();
 
+        /// <summary>
+        /// Whether or not this type is defined in mscorlib. Assembly name can be omitted for such type when serializing.
+        /// Also they don't need be generated when creating serialized type code.
+        /// </summary>
+        public bool IsMscorlib { get; private set; }
+
+        /// <summary>
+        /// Check whether a type is from mscorlib base library, or not. Impacting the information needed for serialization.
+        /// </summary>
+        public static bool IsFromMscorlib(Type type) { return type.GetTypeInfo().Assembly == MSCORLIB; }
         internal static readonly Assembly MSCORLIB = typeof(object).GetTypeInfo().Assembly;
-        internal bool IsMscorlib { get; private set; }
 
         #region Initialize()
 
@@ -156,96 +185,100 @@ namespace Galador.Reflection.Serialization
             Kind = KnownTypes.GetKind(type);
             IsReference = Type.GetTypeInfo().IsByRef;
             BaseType = GetType(Type.GetTypeInfo().BaseType);
-            IsMscorlib = type.GetTypeInfo().Assembly == MSCORLIB;
+            IsMscorlib = IsFromMscorlib(type);
+            IsAbstract = type.GetTypeInfo().IsAbstract;
+
+            var ti = type.GetTypeInfo();
+            IsGenericMeta = false;
+            if (ti.IsGenericType)
+            {
+                if (ti.IsGenericParameter)
+                    IsGenericMeta = true;
+#if __PCL__
+                throw new PlatformNotSupportedException("PCL");
+#else
+                else 
+                    IsGenericMeta = ti.GetGenericArguments().Any(x => x.GetTypeInfo().IsGenericParameter);
+#endif
+            }
 
             if (type.IsPointer)
                 IsIgnored = true;
             else if (typeof(Delegate).IsBaseClass(type) || type == typeof(IntPtr))
-                IsIgnored = true;
-            else if (type.GetTypeInfo().GetCustomAttribute<NotSerializedAttribute>() != null)
                 IsIgnored = true;
             if (IsIgnored)
                 return;
 
             SetConstructor();
 
-            var ti = type.GetTypeInfo();
             foreach (var pi in ti.DeclaredFields)
             {
-                var mt = RuntimeReflectType.GetType(pi.FieldType);
+                var mt = FastType.GetType(pi.FieldType);
                 if (mt.IsIgnored)
                     continue;
-                if (pi.IsStatic)
-                    continue;
-                var m = new RuntimeMember
+                var m = new FastMember
                 {
                     Name = pi.Name,
                     Type = mt,
                     IsPublic = pi.IsPublic,
                     IsField = true,
-                    HasNotSerializedFlag = pi.GetCustomAttribute<NotSerializedAttribute>() != null,
-                    HasSerializedFlag = pi.GetCustomAttribute<NotSerializedAttribute>() != null,
+                    IsStatic = pi.IsStatic,
+                    CanSet = true,
                 };
-                m.SetMember(pi);
+                if (!IsGenericMeta)
+                    m.SetMember(pi);
                 Members.Add(m);
             }
             foreach (var pi in ti.DeclaredProperties)
             {
-                var mt = RuntimeReflectType.GetType(pi.PropertyType);
+                var mt = FastType.GetType(pi.PropertyType);
                 if (mt.IsIgnored)
                     continue;
-                if (pi.GetMethod.IsStatic)
+                if (pi.GetMethod == null || pi.GetMethod.GetParameters().Length != 0)
                     continue;
-                if (pi.GetMethod == null || pi.GetMethod.IsStatic || pi.GetMethod.GetParameters().Length != 0)
-                    continue;
-                if (pi.SetMethod == null && (pi.PropertyType.GetTypeInfo().IsValueType || pi.PropertyType.GetTypeInfo().IsArray))
-                    continue;
-                var m = new RuntimeMember
+                var m = new FastMember
                 {
                     Name = pi.Name,
                     Type = mt,
                     IsPublic = pi.GetMethod.IsPublic,
                     IsField = false,
-                    HasNotSerializedFlag = pi.GetCustomAttribute<NotSerializedAttribute>() != null,
-                    HasSerializedFlag = pi.GetCustomAttribute<NotSerializedAttribute>() != null,
+                    IsStatic = pi.GetMethod.IsStatic,
+                    CanSet = pi.SetMethod != null,
                 };
-                m.SetMember(pi);
+                if (!IsGenericMeta)
+                    m.SetMember(pi);
                 Members.Add(m);
             }
         }
 
         #endregion
-
     }
 
-    #region class RuntimeMember
+    #region class FastMember
 
     /// <summary>
     /// Represent a member of this type, i.e. a property or field that will be serialized.
     /// Also this will use fast member accessor generated with Emit on platform supporting it.
     /// </summary>
-    public partial class RuntimeMember : IMember
+    public partial class FastMember : IMember
     {
+        internal FastMember() { }
+
         /// <summary>
         /// This is the member name for the member, i.e. <see cref="MemberInfo.Name"/>.
         /// </summary>
         public string Name { get; internal set; }
 
         /// <summary>
-        /// Whether or not this member is marked with <see cref="SerializedAttribute"/>.
+        /// Whether this is a static member or not.
         /// </summary>
-        internal bool HasSerializedFlag { get; set; }
-
-        /// <summary>
-        /// Whether or not this member is marked with <see cref="NotSerializedAttribute"/>.
-        /// </summary>
-        internal bool HasNotSerializedFlag { get; set; }
+        public bool IsStatic { get; internal set; }
 
         /// <summary>
         /// This is the info for the declared type of this member, i.e. either of
         /// <see cref="PropertyInfo.PropertyType"/> or <see cref="FieldInfo.FieldType"/>.
         /// </summary>
-        public RuntimeReflectType Type { get; internal set; }
+        public FastType Type { get; internal set; }
 
         /// <summary>
         /// Whether this is a public member or not
@@ -258,7 +291,13 @@ namespace Galador.Reflection.Serialization
         public bool IsField { get; internal set; }
 
         /// <summary>
-        /// Return the reflection member associated with this instance.
+        /// Whether this member can be set. Will be <c>false</c> if the member is a property without setter. 
+        /// <c>true</c> otherwise.
+        /// </summary>
+        public bool CanSet { get; internal set; }
+
+        /// <summary>
+        /// Return the reflection member associated with this instance, be it a <see cref="FieldInfo"/> or <see cref="PropertyInfo"/>.
         /// </summary>
         public MemberInfo Member { get { return (MemberInfo)pInfo ?? fInfo; } }
 
@@ -441,16 +480,23 @@ namespace Galador.Reflection.Serialization
         /// <returns>The value of the member.</returns>
         public object GetValue(object instance)
         {
-            if (instance == null)
-                return null;
+            if (IsStatic)
+            {
+                instance = null;
+            }
+            else
+            {
+                if (instance == null)
+                    return null;
+            }
 #if __NET__ || __NETCORE__
             if (getter != null)
                 return getter(instance);
 #else
-        if (pInfo != null && pInfo.GetMethod != null)
-            return pInfo.GetValue(instance);
-        if (fInfo != null)
-            return fInfo.GetValue(instance);
+            if (pInfo != null && pInfo.GetMethod != null)
+                return pInfo.GetValue(instance);
+            if (fInfo != null)
+                return fInfo.GetValue(instance);
 #endif
             return null;
         }
@@ -460,26 +506,50 @@ namespace Galador.Reflection.Serialization
         /// </summary>
         /// <param name="instance">The instance on which the member value will be set.</param>
         /// <param name="value">The value that must be set.</param>
-        public void SetValue(object instance, object value)
+        /// <returns>Whether the value has been set, or not.</returns>
+        public bool SetValue(object instance, object value)
         {
-            if (instance == null || !Type.Type.IsInstanceOf(value))
-                return;
+            if (IsStatic)
+            {
+                instance = null;
+            }
+            else
+            {
+                if (instance == null  || !Type.Type.IsInstanceOf(value))
+                    return false;
+            }
 #if __NET__ || __NETCORE__
             if (setter != null)
+            {
                 setter(instance, value);
+                return true;
+            }
 #else
-        if (pInfo != null && pInfo.SetMethod != null)
+            if (pInfo != null && pInfo.SetMethod != null)
+            {
                 pInfo.SetValue(instance, value);
-        else if (fInfo != null)
-            fInfo.SetValue(instance, value);
+                return true;
+            }
+            else if (fInfo != null)
+            {
+                fInfo.SetValue(instance, value);
+                return true;
+            }
 #endif
+            return false;
         }
 
         #endregion
 
-        #region FastReadSet()
+        #region TryFastReadSet()
 
-        internal bool FastReadSet(ObjectReader reader, object instance)
+        /// <summary>
+        /// Am even faster way to et known value type, using strongly typed accessor on platform supporting it.
+        /// </summary>
+        /// <param name="reader">The source of the value</param>
+        /// <param name="instance">The instance which member would be set</param>
+        /// <returns>Whether the value could be set. If not the <paramref name="reader"/> won't be read.</returns>
+        public bool TryFastReadSet(ObjectReader reader, object instance)
         {
 #if __NET__ || __NETCORE__
             if (hasFastSetter && instance != null)
@@ -539,5 +609,4 @@ namespace Galador.Reflection.Serialization
     }
 
     #endregion
-
 }

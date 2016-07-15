@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.ComponentModel;
 using System.Globalization;
+using Galador.Reflection.Utils;
 
 namespace Galador.Reflection.Serialization
 {
@@ -165,7 +166,7 @@ namespace Galador.Reflection.Serialization
             }
             Fullname = type.FullName;
             var ass = type.GetTypeInfo().Assembly;
-            if (ass != RuntimeReflectType.MSCORLIB)
+            if (ass != FastType.MSCORLIB)
             {
                 AssemblyName = ass.GetName().Name;
             }

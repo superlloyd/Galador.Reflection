@@ -197,22 +197,28 @@ namespace Galador.Reflection.Utils
 #if __PCL__
                 throw new PlatformNotSupportedException("PCL");
 #else
-                else 
+                else
                     IsGenericMeta = ti.GetGenericArguments().Any(x => x.GetTypeInfo().IsGenericParameter);
 #endif
             }
 
             if (type.IsPointer)
                 IsIgnored = true;
-            else if (typeof(Delegate).IsBaseClass(type) || type == typeof(IntPtr))
+            else if (typeof(Delegate).IsBaseClass(type) || type == typeof(IntPtr) || type == typeof(Enum))
                 IsIgnored = true;
             if (IsIgnored)
                 return;
 
+            if (type.IsArray || ti.IsEnum)
+                return;
+
             SetConstructor();
 
+            // REMARK: skip static members as they proved problematic...
             foreach (var pi in ti.DeclaredFields)
             {
+                if (pi.IsStatic)
+                    continue;
                 var mt = FastType.GetType(pi.FieldType);
                 if (mt.IsIgnored)
                     continue;
@@ -222,8 +228,8 @@ namespace Galador.Reflection.Utils
                     Type = mt,
                     IsPublic = pi.IsPublic,
                     IsField = true,
-                    IsStatic = pi.IsStatic,
                     CanSet = true,
+                    Member = pi,
                 };
                 if (!IsGenericMeta)
                     m.SetMember(pi);
@@ -231,10 +237,12 @@ namespace Galador.Reflection.Utils
             }
             foreach (var pi in ti.DeclaredProperties)
             {
+                if (pi.GetMethod == null || pi.GetMethod.GetParameters().Length != 0)
+                    continue;
+                if (pi.GetMethod.IsStatic)
+                    continue;
                 var mt = FastType.GetType(pi.PropertyType);
                 if (mt.IsIgnored)
-                    continue;
-                if (pi.GetMethod == null || pi.GetMethod.GetParameters().Length != 0)
                     continue;
                 var m = new FastMember
                 {
@@ -242,8 +250,8 @@ namespace Galador.Reflection.Utils
                     Type = mt,
                     IsPublic = pi.GetMethod.IsPublic,
                     IsField = false,
-                    IsStatic = pi.GetMethod.IsStatic,
                     CanSet = pi.SetMethod != null,
+                    Member = pi,
                 };
                 if (!IsGenericMeta)
                     m.SetMember(pi);
@@ -270,11 +278,6 @@ namespace Galador.Reflection.Utils
         public string Name { get; internal set; }
 
         /// <summary>
-        /// Whether this is a static member or not.
-        /// </summary>
-        public bool IsStatic { get; internal set; }
-
-        /// <summary>
         /// This is the info for the declared type of this member, i.e. either of
         /// <see cref="PropertyInfo.PropertyType"/> or <see cref="FieldInfo.FieldType"/>.
         /// </summary>
@@ -299,8 +302,7 @@ namespace Galador.Reflection.Utils
         /// <summary>
         /// Return the reflection member associated with this instance, be it a <see cref="FieldInfo"/> or <see cref="PropertyInfo"/>.
         /// </summary>
-        public MemberInfo Member { get { return (MemberInfo)pInfo ?? fInfo; } }
-
+        public MemberInfo Member { get; internal set; }
 
         PropertyInfo pInfo;
         FieldInfo fInfo;
@@ -480,15 +482,8 @@ namespace Galador.Reflection.Utils
         /// <returns>The value of the member.</returns>
         public object GetValue(object instance)
         {
-            if (IsStatic)
-            {
-                instance = null;
-            }
-            else
-            {
-                if (instance == null)
-                    return null;
-            }
+            if (instance == null)
+                return null;
 #if __NET__ || __NETCORE__
             if (getter != null)
                 return getter(instance);
@@ -509,15 +504,8 @@ namespace Galador.Reflection.Utils
         /// <returns>Whether the value has been set, or not.</returns>
         public bool SetValue(object instance, object value)
         {
-            if (IsStatic)
-            {
-                instance = null;
-            }
-            else
-            {
-                if (instance == null  || !Type.Type.IsInstanceOf(value))
-                    return false;
-            }
+            if (instance == null  || !Type.Type.IsInstanceOf(value))
+                return false;
 #if __NET__ || __NETCORE__
             if (setter != null)
             {

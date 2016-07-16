@@ -1184,7 +1184,7 @@ namespace Galador.Reflection.Serialization
             if (o == null || Surrogate == null || KnownTypes.GetType(o) != Type)
                 return false;
 
-            result = Surrogate.Type.TryConstruct();
+            result = Surrogate.FastType.TryConstruct();
             var ti = typeof(ISurrogate<>).MakeGenericType(KnownTypes.GetType(o));
             var mi = ti.TryGetMethods(nameof(ISurrogate<int>.Initialize), null, KnownTypes.GetType(o)).FirstOrDefault();
             if (mi == null)

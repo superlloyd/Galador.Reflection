@@ -366,7 +366,7 @@ namespace Galador.Reflection.Serialization
                             }
                             else
                             {
-                                o = possibleValue ?? ts.Type.TryConstruct();
+                                o = possibleValue ?? ts.FastType.TryConstruct();
                                 if (oid != 0)
                                     Context.Register(oid, o);
                                 foreach (var m in ts.RuntimeMembers)

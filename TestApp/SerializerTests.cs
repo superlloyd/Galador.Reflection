@@ -310,6 +310,7 @@ namespace TestApp
         {
             public List<T1> Elements;
             public List<T2> Elements2;
+            public List<Tuple<T1, T2>> Elements3;
         }
 
         [Fact]
@@ -318,7 +319,8 @@ namespace TestApp
             var o = new Generic01<int, string>
             {
                 Elements = new List<int> { 1, 2 },
-                Elements2 = new List<string> { "hello" }
+                Elements2 = new List<string> { "hello" },
+                Elements3 = new List<Tuple<int, string>> { Tuple.Create(1, "haha") },
             };
             var o2 = Serializer.Clone(o, true);
             var o3 = Serializer.Clone(o, false);
@@ -327,19 +329,27 @@ namespace TestApp
             Assert.NotNull(o3.Elements);
             Assert.NotNull(o2.Elements2);
             Assert.NotNull(o3.Elements2);
+            Assert.NotNull(o2.Elements3);
+            Assert.NotNull(o3.Elements3);
 
             Assert.Equal(2, o2.Elements.Count);
             Assert.Equal(2, o3.Elements.Count);
             Assert.Equal(1, o2.Elements2.Count);
             Assert.Equal(1, o3.Elements2.Count);
+            Assert.Equal(1, o2.Elements3.Count);
+            Assert.Equal(1, o3.Elements3.Count);
 
             Assert.Equal(1, o2.Elements[0]);
             Assert.Equal(2, o2.Elements[1]);
             Assert.Equal("hello", o2.Elements2[0]);
+            Assert.Equal(1, o2.Elements3[0].Item1);
+            Assert.Equal("haha", o2.Elements3[0].Item2);
 
             Assert.Equal(1, o3.Elements[0]);
             Assert.Equal(2, o3.Elements[1]);
             Assert.Equal("hello", o3.Elements2[0]);
+            Assert.Equal(1, o3.Elements3[0].Item1);
+            Assert.Equal("haha", o3.Elements3[0].Item2);
         }
 
         public class BList : List<string>

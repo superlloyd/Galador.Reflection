@@ -187,13 +187,14 @@ namespace Galador.Reflection.Utils
         void Initialize(Type type)
         {
             Type = type;
+            var ti = type.GetTypeInfo();
+
             Kind = KnownTypes.GetKind(type);
-            IsReference = Type.GetTypeInfo().IsByRef;
+            IsReference = !ti.IsValueType;
             BaseType = GetType(Type.GetTypeInfo().BaseType);
             IsMscorlib = IsFromMscorlib(type);
             IsAbstract = type.GetTypeInfo().IsAbstract;
 
-            var ti = type.GetTypeInfo();
             IsGenericMeta = false;
             if (ti.IsGenericType)
             {

@@ -504,6 +504,8 @@ namespace Galador.Reflection.Serialization
                                     if (!rm.IsField && !rm.IsPublic && !attr.IncludePrivateProperties)
                                         continue;
                                 }
+                                if (!rm.CanSet && !rm.Type.IsReference)
+                                    continue;
                                 if (skip(rm.Name))
                                     continue;
                                 var mType = GetType(rm.Type.Type);

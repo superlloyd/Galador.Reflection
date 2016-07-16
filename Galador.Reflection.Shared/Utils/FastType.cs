@@ -21,7 +21,12 @@ namespace Galador.Reflection.Utils
         #region GetType()
 
         /// <summary>
-        /// Gets the <see cref="FastType"/> associated with any given type.
+        /// Gets the <see cref="FastType"/> associated with <typeparamref name="T"/> type.
+        /// </summary>
+        public static FastType GetType<T>() { return GetType(typeof(T)); }
+
+        /// <summary>
+        /// Gets the <see cref="FastType"/> associated with <paramref name="type"/> type.
         /// </summary>
         public static FastType GetType(Type type)
         {
@@ -409,8 +414,10 @@ namespace Galador.Reflection.Utils
                 fInfo = (FieldInfo)mi;
                 if (fInfo.IsLiteral)
                 {
+#if __NET__ || __NETCORE__
                     var value = fInfo.GetValue(null);
                     getter = (x) => value;
+#endif
                 }
                 else
                 {

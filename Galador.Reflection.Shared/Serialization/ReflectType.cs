@@ -402,7 +402,7 @@ namespace Galador.Reflection.Serialization
                     if (ti.IsGenericType)
                     {
                         IsGeneric = true;
-                        if (ti.IsGenericTypeDefinition())
+                        if (ti.IsGenericTypeDefinition)
                         {
                             IsGenericTypeDefinition = true;
                         }
@@ -1111,22 +1111,21 @@ namespace Galador.Reflection.Serialization
             result.Type = Type;
             result.Kind = Kind;
             result.IntToFlags(FlagsToInt());
-            if (Kind == PrimitiveType.Object)
-            {
-                result.Element = Element;
-                result.GenericArguments = GenericArguments.Select(x => x.MakeGenericType(parameters)).ToArray();
-                result.BaseType = BaseType?.MakeGenericType(parameters);
-                result.Surrogate = Surrogate?.MakeGenericType(parameters);
-                result.Collection1 = Collection1?.MakeGenericType(parameters);
-                result.Collection2 = Collection2?.MakeGenericType(parameters);
 
-                var tArgs = GenericArguments.Select(x => x.Type).ToArray();
-                if (Element.Type != null && tArgs.All(x => x != null))
-                {
-                    result.Type = Element.Type.MakeGenericType(tArgs);
-                    result.FastType = FastType.GetType(result.Type);
-                }
+            result.Element = Element ?? this;
+            result.GenericArguments = GenericArguments.Select(x => x.MakeGenericType(parameters)).ToArray();
+            result.BaseType = BaseType?.MakeGenericType(parameters);
+            result.Surrogate = Surrogate?.MakeGenericType(parameters);
+            result.Collection1 = Collection1?.MakeGenericType(parameters);
+            result.Collection2 = Collection2?.MakeGenericType(parameters);
+
+            var tArgs = result.GenericArguments.Select(x => x.Type).ToArray();
+            if (result.Element.Type != null && tArgs.All(x => x != null))
+            {
+                result.Type = result.Element.Type.MakeGenericType(tArgs);
+                result.FastType = FastType.GetType(result.Type);
             }
+
             result.InitHashCode();
             result.BuildGenericType();
             return result;

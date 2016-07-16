@@ -222,20 +222,6 @@ namespace Galador.Reflection.Utils
         internal static IEnumerable<FieldInfo> GetRuntimeFields(this TypeInfo ti) { throw new PlatformNotSupportedException(); }
 
 #endif
-        internal static bool IsGenericTypeDefinition(this TypeInfo ti)
-        {
-#if __NETCORE__
-            if (!ti.IsGenericType)
-                return false;
-            if (ti.IsGenericTypeDefinition)
-                return true;
-            if (ti.GenericTypeArguments[0].IsGenericParameter)
-                return true;
-            return false;
-#else
-            return ti.IsGenericTypeDefinition;
-#endif
-        }
 
 #if __NETCORE__
         internal static IEnumerable<MethodInfo> GetRuntimeMethods(this TypeInfo ti)

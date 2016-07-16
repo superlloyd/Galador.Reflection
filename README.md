@@ -143,7 +143,7 @@ By default all `TraceKey` are disabled (except `TraceKeys.Application`). On the 
 they will automatically pick up the `AppSettings` values for `"TraceKeys." + key.Name`
 (text value must be in `"true" "false" "0" "1" "on" "off" "enable" "disable"`).
 
-Example:
+Examples:
 
     // enable Serializer logging
     // with AppSettings

@@ -214,11 +214,8 @@ namespace Galador.Reflection.Utils
 
             SetConstructor();
 
-            // REMARK: skip static members as they proved problematic...
             foreach (var pi in ti.DeclaredFields)
             {
-                if (pi.IsStatic)
-                    continue;
                 var mt = FastType.GetType(pi.FieldType);
                 if (mt.IsIgnored)
                     continue;
@@ -228,7 +225,8 @@ namespace Galador.Reflection.Utils
                     Type = mt,
                     IsPublic = pi.IsPublic,
                     IsField = true,
-                    CanSet = true,
+                    CanSet = !pi.IsLiteral,
+                    IsStatic = pi.IsStatic,
                     Member = pi,
                 };
                 if (!IsGenericMeta)
@@ -238,8 +236,6 @@ namespace Galador.Reflection.Utils
             foreach (var pi in ti.DeclaredProperties)
             {
                 if (pi.GetMethod == null || pi.GetMethod.GetParameters().Length != 0)
-                    continue;
-                if (pi.GetMethod.IsStatic)
                     continue;
                 var mt = FastType.GetType(pi.PropertyType);
                 if (mt.IsIgnored)
@@ -251,6 +247,7 @@ namespace Galador.Reflection.Utils
                     IsPublic = pi.GetMethod.IsPublic,
                     IsField = false,
                     CanSet = pi.SetMethod != null,
+                    IsStatic = pi.GetMethod.IsStatic,
                     Member = pi,
                 };
                 if (!IsGenericMeta)
@@ -278,6 +275,11 @@ namespace Galador.Reflection.Utils
         public string Name { get; internal set; }
 
         /// <summary>
+        /// Whether or not this describe a static member.
+        /// </summary>
+        public bool IsStatic { get; internal set; }
+
+        /// <summary>
         /// This is the info for the declared type of this member, i.e. either of
         /// <see cref="PropertyInfo.PropertyType"/> or <see cref="FieldInfo.FieldType"/>.
         /// </summary>
@@ -294,8 +296,8 @@ namespace Galador.Reflection.Utils
         public bool IsField { get; internal set; }
 
         /// <summary>
-        /// Whether this member can be set. Will be <c>false</c> if the member is a property without setter. 
-        /// <c>true</c> otherwise.
+        /// Whether this member can be set. Will be <c>false</c> if the member is a property without setter, 
+        /// or if the field is a literal (set at compile time), <c>true</c> otherwise.
         /// </summary>
         public bool CanSet { get; internal set; }
 
@@ -405,69 +407,77 @@ namespace Galador.Reflection.Utils
             else
             {
                 fInfo = (FieldInfo)mi;
-#if __NET__ || __NETCORE__
-                getter = EmitHelper.CreateFieldGetterHandler(fInfo);
-                setter = EmitHelper.CreateFieldSetterHandler(fInfo);
-                switch (Type.Kind)
+                if (fInfo.IsLiteral)
                 {
-                    case PrimitiveType.Guid:
-                        hasFastSetter = true;
-                        setterGuid = EmitHelper.CreateFieldSetter<Guid>(fInfo);
-                        break;
-                    case PrimitiveType.Bool:
-                        hasFastSetter = true;
-                        setterBool = EmitHelper.CreateFieldSetter<bool>(fInfo);
-                        break;
-                    case PrimitiveType.Char:
-                        hasFastSetter = true;
-                        setterChar = EmitHelper.CreateFieldSetter<char>(fInfo);
-                        break;
-                    case PrimitiveType.Byte:
-                        hasFastSetter = true;
-                        setterByte = EmitHelper.CreateFieldSetter<byte>(fInfo);
-                        break;
-                    case PrimitiveType.SByte:
-                        hasFastSetter = true;
-                        setterSByte = EmitHelper.CreateFieldSetter<sbyte>(fInfo);
-                        break;
-                    case PrimitiveType.Int16:
-                        hasFastSetter = true;
-                        setterInt16 = EmitHelper.CreateFieldSetter<short>(fInfo);
-                        break;
-                    case PrimitiveType.UInt16:
-                        hasFastSetter = true;
-                        setterUInt16 = EmitHelper.CreateFieldSetter<ushort>(fInfo);
-                        break;
-                    case PrimitiveType.Int32:
-                        hasFastSetter = true;
-                        setterInt32 = EmitHelper.CreateFieldSetter<int>(fInfo);
-                        break;
-                    case PrimitiveType.UInt32:
-                        hasFastSetter = true;
-                        setterUInt32 = EmitHelper.CreateFieldSetter<uint>(fInfo);
-                        break;
-                    case PrimitiveType.Int64:
-                        hasFastSetter = true;
-                        setterInt64 = EmitHelper.CreateFieldSetter<long>(fInfo);
-                        break;
-                    case PrimitiveType.UInt64:
-                        hasFastSetter = true;
-                        setterUInt64 = EmitHelper.CreateFieldSetter<ulong>(fInfo);
-                        break;
-                    case PrimitiveType.Single:
-                        hasFastSetter = true;
-                        setterSingle = EmitHelper.CreateFieldSetter<float>(fInfo);
-                        break;
-                    case PrimitiveType.Double:
-                        hasFastSetter = true;
-                        setterDouble = EmitHelper.CreateFieldSetter<double>(fInfo);
-                        break;
-                    case PrimitiveType.Decimal:
-                        hasFastSetter = true;
-                        setterDecimal = EmitHelper.CreateFieldSetter<decimal>(fInfo);
-                        break;
+                    var value = fInfo.GetValue(null);
+                    getter = (x) => value;
                 }
+                else
+                {
+#if __NET__ || __NETCORE__
+                    getter = EmitHelper.CreateFieldGetterHandler(fInfo);
+                    setter = EmitHelper.CreateFieldSetterHandler(fInfo);
+                    switch (Type.Kind)
+                    {
+                        case PrimitiveType.Guid:
+                            hasFastSetter = true;
+                            setterGuid = EmitHelper.CreateFieldSetter<Guid>(fInfo);
+                            break;
+                        case PrimitiveType.Bool:
+                            hasFastSetter = true;
+                            setterBool = EmitHelper.CreateFieldSetter<bool>(fInfo);
+                            break;
+                        case PrimitiveType.Char:
+                            hasFastSetter = true;
+                            setterChar = EmitHelper.CreateFieldSetter<char>(fInfo);
+                            break;
+                        case PrimitiveType.Byte:
+                            hasFastSetter = true;
+                            setterByte = EmitHelper.CreateFieldSetter<byte>(fInfo);
+                            break;
+                        case PrimitiveType.SByte:
+                            hasFastSetter = true;
+                            setterSByte = EmitHelper.CreateFieldSetter<sbyte>(fInfo);
+                            break;
+                        case PrimitiveType.Int16:
+                            hasFastSetter = true;
+                            setterInt16 = EmitHelper.CreateFieldSetter<short>(fInfo);
+                            break;
+                        case PrimitiveType.UInt16:
+                            hasFastSetter = true;
+                            setterUInt16 = EmitHelper.CreateFieldSetter<ushort>(fInfo);
+                            break;
+                        case PrimitiveType.Int32:
+                            hasFastSetter = true;
+                            setterInt32 = EmitHelper.CreateFieldSetter<int>(fInfo);
+                            break;
+                        case PrimitiveType.UInt32:
+                            hasFastSetter = true;
+                            setterUInt32 = EmitHelper.CreateFieldSetter<uint>(fInfo);
+                            break;
+                        case PrimitiveType.Int64:
+                            hasFastSetter = true;
+                            setterInt64 = EmitHelper.CreateFieldSetter<long>(fInfo);
+                            break;
+                        case PrimitiveType.UInt64:
+                            hasFastSetter = true;
+                            setterUInt64 = EmitHelper.CreateFieldSetter<ulong>(fInfo);
+                            break;
+                        case PrimitiveType.Single:
+                            hasFastSetter = true;
+                            setterSingle = EmitHelper.CreateFieldSetter<float>(fInfo);
+                            break;
+                        case PrimitiveType.Double:
+                            hasFastSetter = true;
+                            setterDouble = EmitHelper.CreateFieldSetter<double>(fInfo);
+                            break;
+                        case PrimitiveType.Decimal:
+                            hasFastSetter = true;
+                            setterDecimal = EmitHelper.CreateFieldSetter<decimal>(fInfo);
+                            break;
+                    }
 #endif
+                }
             }
         }
 
@@ -482,8 +492,15 @@ namespace Galador.Reflection.Utils
         /// <returns>The value of the member.</returns>
         public object GetValue(object instance)
         {
-            if (instance == null)
-                return null;
+            if (IsStatic)
+            {
+                instance = null;
+            }
+            else
+            {
+                if (instance == null)
+                    return null;
+            }
 #if __NET__ || __NETCORE__
             if (getter != null)
                 return getter(instance);
@@ -504,8 +521,18 @@ namespace Galador.Reflection.Utils
         /// <returns>Whether the value has been set, or not.</returns>
         public bool SetValue(object instance, object value)
         {
-            if (instance == null  || !Type.Type.IsInstanceOf(value))
+            if (!CanSet)
                 return false;
+            if (IsStatic)
+            {
+                instance = null;
+            }
+            else
+            {
+                if (instance == null || !Type.Type.IsInstanceOf(value))
+                    return false;
+            }
+
 #if __NET__ || __NETCORE__
             if (setter != null)
             {

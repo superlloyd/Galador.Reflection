@@ -489,7 +489,7 @@ namespace Galador.Reflection.Serialization
                             var attr = ti.GetCustomAttribute<SerializationSettingsAttribute>() ?? DefaultSettings;
                             foreach (var rm in FastType.Members)
                             {
-                                if (rm.Type.IsIgnored)
+                                if (rm.Type.IsIgnored || rm.IsStatic)
                                     continue;
                                 if (rm.Member.GetCustomAttribute<NotSerializedAttribute>() != null)
                                     continue;

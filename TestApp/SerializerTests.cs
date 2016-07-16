@@ -73,7 +73,7 @@ namespace TestApp
             d.A = "B";
             d.Me = d;
             d.C = 42;
-            var o = Serializer.Clone(d, false);
+            var o = Serializer.Clone(d, new SerializationSettings { SkipMetaData = false });
             Assert.Equal(d.A, o.A);
             Assert.Equal(d.C, o.C);
             Assert.Equal(o.Me, o);
@@ -306,7 +306,7 @@ namespace TestApp
             Assert.True(mDT.Elapsed.Ticks < jDT.Elapsed.Ticks);
         }
 
-        class Generic01<T1, T2>
+        public class Generic01<T1, T2>
         {
             public List<T1> Elements;
             public List<T2> Elements2;
@@ -322,8 +322,8 @@ namespace TestApp
                 Elements2 = new List<string> { "hello" },
                 Elements3 = new List<Tuple<int, string>> { Tuple.Create(1, "haha") },
             };
-            var o2 = Serializer.Clone(o, true);
-            var o3 = Serializer.Clone(o, false);
+            var o2 = Serializer.Clone(o, new SerializationSettings { SkipMetaData = true });
+            var o3 = Serializer.Clone(o, new SerializationSettings { SkipMetaData = false });
 
             Assert.NotNull(o2.Elements);
             Assert.NotNull(o3.Elements);
@@ -407,23 +407,28 @@ namespace TestApp
             big.Objects.Add(big);
             ((BigClass)big.Other).Other = big;
 
+            Action<BigClass> check = (big2) =>
+            {
+                Assert.Equal(big.ID, big2.ID);
+                Assert.Equal(big.Name, big2.Name);
+                Assert.Equal(big.Objects.Count, big2.Objects.Count);
+                Assert.Equal("one", big2.Objects[0]);
+                Assert.Equal(typeof(BigClass), big2.Objects[1]);
+                Assert.Equal(33, big2.Objects[2]);
+                Assert.Equal(big2, big2.Objects[3]);
+                Assert.Equal(big.Values.Count, big2.Values.Count);
+                Assert.Equal(1, big2.Values["one"]);
+                Assert.Equal(big2, big2.Values["meself"]);
+                Assert.IsType<BigClass>(big2.Other);
+                var big3 = (BigClass)big2.Other;
+                Assert.Equal(101, big3.ID);
+                Assert.Equal("what", big3.Name);
+                Assert.Equal(big2, big3.Other);
+            };
+
             var text = Serializer.ToSerializedString(big);
-            var big2 = Serializer.Clone(big);
-            Assert.Equal(big.ID, big2.ID);
-            Assert.Equal(big.Name, big2.Name);
-            Assert.Equal(big.Objects.Count, big2.Objects.Count);
-            Assert.Equal("one", big2.Objects[0]);
-            Assert.Equal(typeof(BigClass), big2.Objects[1]);
-            Assert.Equal(33, big2.Objects[2]);
-            Assert.Equal(big2, big2.Objects[3]);
-            Assert.Equal(big.Values.Count, big2.Values.Count);
-            Assert.Equal(1, big2.Values["one"]);
-            Assert.Equal(big2, big2.Values["meself"]);
-            Assert.IsType<BigClass>(big2.Other);
-            var big3 = (BigClass)big2.Other;
-            Assert.Equal(101, big3.ID);
-            Assert.Equal("what", big3.Name);
-            Assert.Equal(big2, big3.Other);
+            check(Serializer.Clone(big));
+            check(Serializer.Clone(big, new SerializationSettings { IgnoreISerializable = true }));
         }
 
         [Fact]

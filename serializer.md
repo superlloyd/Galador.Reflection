@@ -206,10 +206,10 @@ I did compare my code to NewtonSoft.Json. Serializing List of 100 points many ti
 
 | time (ms)     | Json | My Serializer (Text) | My Serializer (Binary) |
 | ------------ | ---- | -------------------- | ---------------------- |
-|Android Read  | 283 | 455 | 228 |
-|Android Write | 347 | 337 | 98 |
-|Desktop Read  | 65 | 70 | 27 |
-|Desktop Write | 64 | 54 | 16 |
+| Android Read  | 283 | 455 | 228 |
+| Android Write | 347 | 337 | 98 |
+| Desktop Read  | 65 | 70 | 27 |
+| Desktop Write | 64 | 54 | 16 |
 
 There is some variation and result are not consistent. However, overall, 
 this *Binary* serializer performs similarly or faster than JSON serializer.

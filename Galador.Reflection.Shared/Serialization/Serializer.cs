@@ -16,21 +16,23 @@ namespace Galador.Reflection.Serialization
         /// </summary>
         /// <param name="o">The object to serialize.</param>
         /// <param name="target">The target where the serialized version will be written.</param>
-        public static void Serialize(object o, StringBuilder target)
+        /// <param name="settings">The serialization settings to use</param>
+        public static void Serialize(object o, StringBuilder target, SerializationSettings settings = null)
         {
             var pw = new PrimitiveTextWriter(new StringWriter(target, CultureInfo.InvariantCulture));
-            var ow = new ObjectWriter(pw);
+            var ow = new ObjectWriter(pw) { Settings = settings };
             ow.Write(o);
         }
         /// <summary>
         /// Deserialize an object from a string.
         /// </summary>
         /// <param name="source">The string to read as a serialized object.</param>
+        /// <param name="settings">The serialization settings to use</param>
         /// <returns>A newly deserialized object.</returns>
-        public static object Deserialize(string source)
+        public static object Deserialize(string source, SerializationSettings settings = null)
         {
             var pr = new PrimitiveTextReader(new StringReader(source));
-            var or = new ObjectReader(pr);
+            var or = new ObjectReader(pr) { Settings = settings };
             return or.Read();
         }
 
@@ -39,21 +41,23 @@ namespace Galador.Reflection.Serialization
         /// </summary>
         /// <param name="o">The object to serialize.</param>
         /// <param name="target">The target where the serialized version will be written.</param>
-        public static void Serialize(object o, Stream target)
+        /// <param name="settings">The serialization settings to use</param>
+        public static void Serialize(object o, Stream target, SerializationSettings settings = null)
         {
             var pw = new PrimitiveBinaryWriter(target);
-            var ow = new ObjectWriter(pw);
+            var ow = new ObjectWriter(pw) { Settings = settings };
             ow.Write(o);
         }
         /// <summary>
         /// Deserialize an object from a stream.
         /// </summary>
         /// <param name="source">The stream to read as a serialized object.</param>
+        /// <param name="settings">The serialization settings to use</param>
         /// <returns>A newly deserialized object.</returns>
-        public static object Deserialize(Stream source)
+        public static object Deserialize(Stream source, SerializationSettings settings = null)
         {
             var pr = new PrimitiveBinaryReader(source);
-            var or = new ObjectReader(pr);
+            var or = new ObjectReader(pr) { Settings = settings };
             return or.Read();
         }
 
@@ -65,15 +69,16 @@ namespace Galador.Reflection.Serialization
         /// <param name="skipMetaData">Whether to set <see cref="ObjectWriter.SkipMetaData"/> to true or not. 
         /// Default value is true. Set this to true to make serialization a little faster.
         /// </param>
+        /// <param name="settings">The serialization settings to use</param>
         /// <returns>A deep clone of the <paramref name="instance"/>.</returns>
-        public static T Clone<T>(T instance, bool skipMetaData = true)
+        public static T Clone<T>(T instance, SerializationSettings settings = null)
         {
             var ms = new List<object>(256);
 
             var pw = new TokenPrimitiveWriter(ms);
             var ow = new ObjectWriter(pw)
             {
-                SkipMetaData = skipMetaData,
+                Settings = settings,
             };
 
             ow.Write(instance);
@@ -81,7 +86,7 @@ namespace Galador.Reflection.Serialization
             var pr = new TokenPrimitiveReader(ms);
             var or = new ObjectReader(pr)
             {
-                SkipMetaData = skipMetaData,
+                Settings = settings,
             };
 
             var result = or.Read();
@@ -92,11 +97,12 @@ namespace Galador.Reflection.Serialization
         /// Serialize the <paramref name="instance"/> as a string and returns it.
         /// </summary>
         /// <param name="instance">The instance to serialize as a string.</param>
+        /// <param name="settings">The serialization settings to use</param>
         /// <returns>A string version of the object.</returns>
-        public static string ToSerializedString(object instance)
+        public static string ToSerializedString(object instance, SerializationSettings settings = null)
         {
             var sb = new StringBuilder(256);
-            Serialize(instance, sb);
+            Serialize(instance, sb, settings);
             return sb.ToString();
         }
     }

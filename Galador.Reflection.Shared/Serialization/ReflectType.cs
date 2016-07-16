@@ -465,16 +465,17 @@ namespace Galador.Reflection.Serialization
                             Surrogate = GetType(tSurrogate);
                             HasSurrogate = true;
                         }
-                        else if (typeof(ISerializable).IsBaseClass(type))
-                        {
-                            IsISerializable = true;
-                        }
-                        else if (GetTypeConverter() != null)
-                        {
-                            HasConverter = true;
-                        }
                         else
                         {
+                            if (typeof(ISerializable).IsBaseClass(type))
+                            {
+                                IsISerializable = true;
+                            }
+                            if (GetTypeConverter() != null)
+                            {
+                                HasConverter = true;
+                            }
+
                             Predicate<string> skip = s =>
                             {
                                 var p = BaseType;
@@ -919,7 +920,7 @@ namespace Galador.Reflection.Serialization
                     AssemblyName = (string)reader.Read(RString, null);
                     Type = KnownTypes.GetType(TypeName, AssemblyName);
                     FastType = FastType.GetType(Type);
-                    if (reader.SkipMetaData)
+                    if (reader.Settings.SkipMetaData)
                     {
                         if (Type == null)
                             throw new IOException("No MetaData with skip = true");
@@ -947,6 +948,10 @@ namespace Galador.Reflection.Serialization
                 else if (HasSurrogate)
                 {
                     Surrogate = (ReflectType)reader.Read(RReflectType, null);
+                }
+                else if ((IsISerializable && !reader.Settings.IgnoreISerializable) || (HasConverter && reader.Settings.IgnoreTypeConverter))
+                {
+                    // skip members
                 }
                 else if (!IsGeneric || IsGenericTypeDefinition)
                 {
@@ -1000,7 +1005,7 @@ namespace Galador.Reflection.Serialization
                 {
                     writer.Write(RString, TypeName);
                     writer.Write(RString, AssemblyName);
-                    if (writer.SkipMetaData)
+                    if (writer.Settings.SkipMetaData)
                         return;
                 }
                 if (IsGeneric)
@@ -1021,7 +1026,11 @@ namespace Galador.Reflection.Serialization
                 {
                     writer.Write(RReflectType, Surrogate);
                 }
-                else if (IsDefaultSave && (!IsGeneric || IsGenericTypeDefinition))
+                else if ((IsISerializable && !writer.Settings.IgnoreISerializable) || (HasConverter && writer.Settings.IgnoreTypeConverter))
+                {
+                    // skip members
+                }
+                else if (!IsGeneric || IsGenericTypeDefinition)
                 {
                     if (IsReference)
                     {
@@ -1090,11 +1099,11 @@ namespace Galador.Reflection.Serialization
                 switch (CollectionType)
                 {
                     case ReflectCollectionType.ICollectionT:
-                        Collection1 = Element.Collection1.MakeGenericType(GenericArguments);
+                        Collection1 = Element.Collection1?.MakeGenericType(GenericArguments);
                         break;
                     case ReflectCollectionType.IDictionaryKV:
-                        Collection1 = Element.Collection1.MakeGenericType(GenericArguments);
-                        Collection2 = Element.Collection2.MakeGenericType(GenericArguments);
+                        Collection1 = Element.Collection1?.MakeGenericType(GenericArguments);
+                        Collection2 = Element.Collection2?.MakeGenericType(GenericArguments);
                         break;
                 }
             }

@@ -238,6 +238,8 @@ namespace Galador.Reflection.Serialization
             {
                 if (item.IsGeneric && !item.IsGenericTypeDefinition)
                     continue;
+                if (item.IsGenericParameter)
+                    continue;
                 if (item.IsSurrogateType)
                     continue;
                 if (item.FastType != null && item.FastType.IsMscorlib)

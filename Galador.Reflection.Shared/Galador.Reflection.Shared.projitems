@@ -30,6 +30,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\PrimitiveType.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\ReflectType.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\SerializationAttributes.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Serialization\SerializationSettings.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\Serializer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\StreamExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\Surrogate.cs" />

@@ -67,15 +67,17 @@ namespace Galador.Reflection.Serialization
         /// </summary>
         public IPrimitiveWriter Writer { get; private set; }
 
-        /// <summary>
-        /// Whether to write exhaustive (when <see cref="SkipMetaData"/> is <c>false</c>) or minimal (when <see cref="SkipMetaData"/> is <c>true</c>)
-        /// type information. It should be matched <see cref="ObjectReader.SkipMetaData"/> (i.e. value set in the reader). 
-        /// <br/>
-        /// If <see cref="SkipMetaData"/> is <c>true</c> and the type can not be resolved by the reader, or there is a version mismatch data would be irrecoverably corrupted.
-        /// <br/>
-        /// It should NOT be used, unless it is used for in process object deep cloning.
-        /// </summary>
-        public bool SkipMetaData { get; set; } = false;
+        public SerializationSettings Settings
+        {
+            get
+            {
+                if (settings == null)
+                    settings = new SerializationSettings();
+                return settings;
+            }
+            set { settings = value; }
+        }
+        SerializationSettings settings;
 
         /// <summary>
         /// Writes the next object to the <see cref="Writer"/>.
@@ -125,11 +127,11 @@ namespace Galador.Reflection.Serialization
                 var rf = ReflectType.GetType((Type)o);
                 Write(ReflectType.RReflectType, rf);
             }
-            else if (ots.IsISerializable)
+            else if (ots.IsISerializable && !settings.IgnoreISerializable)
             {
                 WriteISerializable(ots, o);
             }
-            else if (ots.HasConverter)
+            else if (ots.HasConverter && !settings.IgnoreISerializable)
             {
                 WriteConverter(ots, o);
             }

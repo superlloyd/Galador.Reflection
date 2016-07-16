@@ -13,18 +13,19 @@ namespace TestApp
         static void Main(string[] args)
         {
             var tSer = new SerializationTests();
+
             //tSer.CheckWriteIsFastEnough();
-            tSer.CheckReadIsFastEnough();
+            //tSer.CheckReadIsFastEnough();
 
-            //var csharp = ObjectContext.GenerateCSharpCode("Generated"
-            //    , typeof(SerializationTests.BigClass)
-            //    , typeof(SerializationTests.SimpleClass<Dictionary<int, string>>)
-            //    , typeof(SerializationTests.BList)
-            //    , typeof(SerializationTests.Serial2)
-            //    );
+            var csharp = ObjectContext.GenerateCSharpCode("Generated"
+                , typeof(SerializationTests.BigClass)
+                , typeof(SerializationTests.SimpleClass<Dictionary<int, string>>)
+                , typeof(SerializationTests.BList)
+                , typeof(SerializationTests.Serial2)
+                , typeof(SerializationTests.Generic01<int, string>)
+                );
 
-            //var tSer = new SerializationTests();
-            //tSer.WinFormTest();
+            tSer.WinFormTest();
         }
 
     }

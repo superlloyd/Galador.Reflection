@@ -14,10 +14,17 @@ using System.Configuration;
 
 namespace Galador.Reflection.Logging
 {
+    /// <summary>
+    /// The class that hold reference to all <see cref="TraceKey"/>, which are very thin wrapper around <c>System.Diagnostic.Trace</c>.
+    /// </summary>
+    /// <remarks>
+    /// All <see cref="TraceKey.IsEnabled"/> state can be initialized in th <c>App.config</c> file on the full .NET framework.
+    /// With the key <c>"TraceKeys." + trace.Name</c>, and value <c>true, false, on, off</c>
+    /// </remarks>
     public static class TraceKeys
     {
 #if __NET__
-
+        // init IsEnabled from App.config
         static TraceKeys()
         {
             var prefix = "TraceKeys.";
@@ -35,27 +42,39 @@ namespace Galador.Reflection.Logging
                 TraceKeys.Traces[name].IsEnabled = value;
             }
         }
-
 #endif
 
+        /// <summary>
+        /// The list of existing traces (i.e. <see cref="TraceKey"/>).
+        /// </summary>
         public class TracesProperty : IEnumerable<TraceKey>
         {
             ConcurrentDictionary<string, TraceKey> traces = new ConcurrentDictionary<string, TraceKey>();
-            public TraceKey this[string key]
+
+            /// <summary>
+            /// Gets a <see cref="TraceKey"/> by <paramref name="name"/>.
+            /// </summary>
+            public TraceKey this[string name]
             {
-                get { return GetTrace(key, null); }
+                get { return GetTrace(name, null); }
             }
 
-            public TraceKey GetTrace(string key, Action<TraceKey> init)
+            /// <summary>
+            /// Gets a <see cref="TraceKey"/> by <paramref name="name"/> and run some code (<paramref name="init"/>) against it.
+            /// </summary>
+            /// <param name="name">The name of the trace.</param>
+            /// <param name="init">Initialization or updating code to run on the <see cref="TraceKey"/>.</param>
+            /// <returns>The <see cref="TraceKey"/> with the <paramref name="name"/></returns>
+            public TraceKey GetTrace(string name, Action<TraceKey> init)
             {
                 lock (traces)
                 {
                     TraceKey result;
-                    traces.TryGetValue(key, out result);
+                    traces.TryGetValue(name, out result);
                     if (result == null)
                     {
                         // REMARK disabled by default! specifically enable for debugging / diagnostic purpose!...
-                        traces[key] = result = new TraceKey(key) { IsEnabled = false };
+                        traces[name] = result = new TraceKey(name) { IsEnabled = false };
                         if (init != null)
                             init(result);
                     }
@@ -73,10 +92,27 @@ namespace Galador.Reflection.Logging
             IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
         }
 
+        /// <summary>
+        /// Gets all the traces.
+        /// </summary>
         public static TracesProperty Traces { get; } = new TracesProperty();
 
+        /// <summary>
+        /// A predefined trace, with <see cref="TraceKey.IsEnabled"/> <c>true</c> by default.
+        /// Use that for your main application.
+        /// </summary>
         public static TraceKey Application { get; } = Traces.GetTrace(nameof(Application), x => x.IsEnabled = true); /* only one enabled by default */
+
+        /// <summary>
+        /// A predefined trace, with <see cref="TraceKey.IsEnabled"/> <c>false</c> by default.
+        /// Used by the serialization code to log information.
+        /// </summary>
         public static TraceKey Serialization { get; } = Traces[nameof(Serialization)];
+
+        /// <summary>
+        /// A predefined trace, with <see cref="TraceKey.IsEnabled"/> <c>false</c> by default.
+        /// Used by the <see cref="Galador.Reflection.Registry"/> code to log information.
+        /// </summary>
         public static TraceKey Registry { get; } = Traces[nameof(Registry)];
     }
 }

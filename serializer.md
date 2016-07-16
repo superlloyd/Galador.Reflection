@@ -262,6 +262,23 @@ Or a Reader, for deserialization
     }
 call `var o = reader.Read()` to get the next object in the stream.
 
+### SerializationSettings
+
+The serializer has a `Settings` property with the following members
+
+    bool SkipMetaData;
+    bool IgnoreISerializable;
+    bool IgnoreTypeConverter;
+
+`SkipMetaData` is useful to make the serialization output more compact by omitting important but bulky
+type information. It must be used for in-memory cloning or when the reading and writing process have the
+exact same library. A versioning issue will irrecoverably break a stream with this option `true`.
+
+`IgnoreISerializable` and `IgnoreTypeConverter` are compatibility settings to use to communicate 
+across framework, since *.NET Core* doesn't have `ISerializable`, and Xamarin might have different `TypeConverter`
+than full framework.
+
+
 ### Handling unknown data
 
 when calling `reader.Read()` one can get a `Galador.Reflection.Serializer.Missing` if the target type is absent or has not been found.

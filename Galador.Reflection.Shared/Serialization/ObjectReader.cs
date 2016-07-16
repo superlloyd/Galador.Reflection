@@ -55,11 +55,6 @@ namespace Galador.Reflection.Serialization
         /// </summary>
         public IPrimitiveReader Reader { get; private set; }
 
-        /// <summary>
-        /// Whether or not all data was read successfully. If any data was not successfully used, will be set to false.
-        /// </summary>
-        public bool Success { get; private set; } = true;
-
         internal SerializationSettings settings = new SerializationSettings();
 
         /// <summary>

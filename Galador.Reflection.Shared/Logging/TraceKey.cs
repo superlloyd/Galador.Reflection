@@ -1,4 +1,5 @@
-﻿using Galador.Reflection.Utils;
+﻿using Galador.Reflection.Serialization;
+using Galador.Reflection.Utils;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -7,12 +8,16 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 
+#pragma warning disable 1591 // code comments
 namespace Galador.Reflection.Logging
 {
     /// <summary>
-    /// Tracing class. Tracing is done in a thread and won't slow down the app.
+    /// Thin multiplatform wrapper around <c>System.Diagnostics.Trace</c>.
+    /// All its methods, but <see cref="Write(string)"/> and <see cref="WriteLine(string)"/>, 
+    /// will start the line with a <see cref="Header"/>.
     /// </summary>
-    public class TraceKey
+    [NotSerialized]
+    public sealed class TraceKey
     {
         internal TraceKey(string name)
         {
@@ -24,14 +29,38 @@ namespace Galador.Reflection.Logging
             Header = () => $"{Name}({DateTime.Now:yyyy/MM/dd HH:mm:ss.f}, {Environment.CurrentManagedThreadId:000}): ";
         }
 
+        /// <summary>
+        /// Header written at the start of each line. By default output trace's <see cref="Name"/>, date, time and current thread ID.
+        /// </summary>
         public Func<string> Header { get; set; }
 
+        /// <summary>
+        /// Name of the trace
+        /// </summary>
         public string Name { get; private set; }
 
+        /// <summary>
+        /// Whether the trace is enabled or not. Disabled trace do not write anything.
+        /// </summary>
+        /// <remarks>
+        /// All <see cref="TraceKey.IsEnabled"/> state can be initialized in th <c>App.config</c> file on the full .NET framework.
+        /// With the key <c>"TraceKeys." + trace.Name</c>, and value <c>true, false, on, off</c>
+        /// </remarks>
         public bool IsEnabled { get; set; }
 
+        /// <summary>
+        /// Whether to disable the <see cref="Information(object)"/> methods and overrides.
+        /// </summary>
         public bool TraceInfo { get; set; }
+
+        /// <summary>
+        /// Whether to disable the <see cref="Warning(object)"/> methods and overrides.
+        /// </summary>
         public bool TraceWarning { get; set; }
+
+        /// <summary>
+        /// Whether to disable the <see cref="Error(object)"/> method and override.
+        /// </summary>
         public bool TraceError { get; set; }
 
         public void Assert(bool condition, string message) { WriteLineIf(!condition, message); }
@@ -155,8 +184,19 @@ namespace Galador.Reflection.Logging
             return null;
         }
 
+        /// <summary>
+        /// Additional header for <see cref="Error(object)"/> methods.
+        /// </summary>
         public const string HeaderError = "ERROR ";
+
+        /// <summary>
+        /// Additional header for <see cref="Warning(object)"/> methods
+        /// </summary>
         public const string HeaderWarning = "WARNING ";
+
+        /// <summary>
+        /// Additional header for <see cref="Information(object)"/> methods.
+        /// </summary>
         public const string HeaderInfo = "INFO ";
 
         public void Error(object o)
@@ -217,3 +257,4 @@ namespace Galador.Reflection.Logging
         }
     }
 }
+#pragma warning restore 1591 // code comments

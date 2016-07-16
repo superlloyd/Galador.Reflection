@@ -14,7 +14,7 @@ namespace Galador.Reflection.Utils
     /// It provides access to optimized members and constructor method, using System.Emit whenever possible for top performance.
     /// </summary>
     [NotSerialized]
-    public class FastType
+    public sealed class FastType
     {
         FastType() { }
 
@@ -318,7 +318,8 @@ namespace Galador.Reflection.Utils
     /// Represent a member of this type, i.e. a property or field that will be serialized.
     /// Also this will use fast member accessor generated with Emit on platform supporting it.
     /// </summary>
-    public partial class FastMember : IMember
+    [NotSerialized]
+    public sealed class FastMember : IMember
     {
         internal FastMember(MemberInfo member)
         {

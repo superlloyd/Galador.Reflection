@@ -427,6 +427,8 @@ namespace TestApp
             };
 
             var text = Serializer.ToSerializedString(big);
+            var text2 = Serializer.ToSerializedString(big, new SerializationSettings { IgnoreISerializable = true });
+            Assert.NotEqual(text, text2);
             check(Serializer.Clone(big));
             check(Serializer.Clone(big, new SerializationSettings { IgnoreISerializable = true }));
         }

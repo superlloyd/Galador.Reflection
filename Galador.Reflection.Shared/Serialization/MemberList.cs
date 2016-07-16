@@ -5,13 +5,21 @@ using System.Text;
 
 namespace Galador.Reflection.Serialization
 {
+    /// <summary>
+    /// Object which have a name and are used with <see cref="MemberList{T}"/>.
+    /// So far either of <see cref="Utils.FastMember"/>, <see cref="ReflectType.Member"/> and <see cref="Missing.Member"/>.
+    /// </summary>
     public interface IMember
     {
+        /// <summary>
+        /// The name of this member. Use as an index in <see cref="MemberList{T}"/>.
+        /// </summary>
         string Name { get; }
     }
 
     /// <summary>
-    /// Specialized list of <see cref="FastMember"/>.
+    /// Specialized list of <typeparamref name="T"/> which must be <see cref="IMember"/>.
+    /// Index them by both int index but also name.
     /// </summary>
     public class MemberList<T> : IReadOnlyList<T>, IReadOnlyDictionary<string, T>, IEnumerable<T>
         where T : IMember
@@ -32,7 +40,7 @@ namespace Galador.Reflection.Serialization
         }
 
         /// <summary>
-        /// Gets the <see cref="Member"/> with the given name.
+        /// Gets the <typeparamref name="T"/> with the given name.
         /// </summary>
         /// <param name="name">Name of the member.</param>
         /// <returns>Return the member with name, or null.</returns>
@@ -46,12 +54,12 @@ namespace Galador.Reflection.Serialization
             }
         }
         /// <summary>
-        /// Gets the <see cref="Member"/> at the specified index.
+        /// Gets the <typeparamref name="T"/> at the specified index.
         /// </summary>
         public T this[int index] { get { return list[index]; } }
 
         /// <summary>
-        /// Number of <see cref="Member"/>.
+        /// Number of members or item.
         /// </summary>
         public int Count { get { return list.Count; } }
 

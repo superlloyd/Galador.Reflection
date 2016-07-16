@@ -77,6 +77,12 @@ namespace Galador.Reflection.Utils
 #endif
         }
 
+        /// <summary>
+        /// Call the associated method.
+        /// </summary>
+        /// <param name="target">The instance to use to call. For constructor and static method, pass null.</param>
+        /// <param name="args">The arguments of the method call. Argument with default value can be omitted.</param>
+        /// <returns>The return of the method, if any.</returns>
         public object Invoke(object target, params object[] args)
         {
             if (args == null)

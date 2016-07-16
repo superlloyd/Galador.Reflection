@@ -386,4 +386,11 @@ Implement `IDeserialized` for that purpose and your object will be called once d
 If your application load multiple version of the same assembly the deserialization 
 behavior is unfortunately undefined at the moment.
 
-Also if a class define member with the same name than one of its base type, this member will never be saved.
+If a class define member with the same name than one of its base type, this member will never be saved.
+
+*.NET Core* does not support `ISerializable`, to write compatible stream disable support for this interface
+via `ObjectWriter.Settings.IgnoreISerializable`.
+
+There is a limited support for `DataContractAttribute` (but NO support for `DataMemberAttribute`) however
+this attribute is not supported on Android/iOS. However this attribute is just replaced with 
+`SerializationNameAttribute` that will work on all platform.

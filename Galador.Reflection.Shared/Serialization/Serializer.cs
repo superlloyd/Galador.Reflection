@@ -27,7 +27,6 @@ namespace Galador.Reflection.Serialization
         /// Deserialize an object from a string.
         /// </summary>
         /// <param name="source">The string to read as a serialized object.</param>
-        /// <param name="settings">The serialization settings to use</param>
         /// <returns>A newly deserialized object.</returns>
         public static object Deserialize(string source)
         {
@@ -52,7 +51,6 @@ namespace Galador.Reflection.Serialization
         /// Deserialize an object from a stream.
         /// </summary>
         /// <param name="source">The stream to read as a serialized object.</param>
-        /// <param name="settings">The serialization settings to use</param>
         /// <returns>A newly deserialized object.</returns>
         public static object Deserialize(Stream source)
         {
@@ -66,10 +64,7 @@ namespace Galador.Reflection.Serialization
         /// </summary>
         /// <typeparam name="T">The type of the object to clone.</typeparam>
         /// <param name="instance">The instance to clone.</param>
-        /// <param name="skipMetaData">Whether to set <see cref="ObjectWriter.SkipMetaData"/> to true or not. 
-        /// Default value is true. Set this to true to make serialization a little faster.
-        /// </param>
-        /// <param name="settings">The serialization settings to use</param>
+        /// <param name="settings">The settings to use with the <see cref="ObjectWriter"/></param>
         /// <returns>A deep clone of the <paramref name="instance"/>.</returns>
         public static T Clone<T>(T instance, SerializationSettings settings = null)
         {

@@ -67,6 +67,9 @@ namespace Galador.Reflection.Serialization
         /// </summary>
         public IPrimitiveWriter Writer { get; private set; }
 
+        /// <summary>
+        /// Some settings that can affect the serialization process.
+        /// </summary>
         public SerializationSettings Settings
         {
             get
@@ -138,7 +141,7 @@ namespace Galador.Reflection.Serialization
             {
                 WriteISerializable(ots, o);
             }
-            else if (ots.HasConverter && !settings.IgnoreISerializable)
+            else if (ots.HasConverter && !settings.IgnoreTypeConverter)
             {
                 WriteConverter(ots, o);
             }

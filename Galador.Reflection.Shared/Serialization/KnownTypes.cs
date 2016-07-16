@@ -189,6 +189,13 @@ namespace Galador.Reflection.Serialization
             if (nattr != null)
                 lock (typeToSurrogate)
                     sReplacementTypes[nattr] = type;
+
+#if __NET__ || __NETCORE__
+            var dcattr = type.GetTypeInfo().GetCustomAttribute<DataContractAttribute>();
+            if (dcattr != null)
+                lock (typeToSurrogate)
+                    sReplacementTypes[new SerializationNameAttribute(dcattr.Name, dcattr.Namespace)] = type;
+#endif
         }
 
         static IEnumerable<Type> GetSurrogateElements(Type type)

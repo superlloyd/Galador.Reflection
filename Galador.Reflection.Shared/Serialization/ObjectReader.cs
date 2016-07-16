@@ -133,7 +133,7 @@ namespace Galador.Reflection.Serialization
             {
                 o = ReadISerializable(actual, oid, possibleValue);
             }
-            else if (actual.HasConverter && !settings.IgnoreISerializable)
+            else if (actual.HasConverter && !settings.IgnoreTypeConverter)
             {
                 o = ReadConverter(actual, oid);
             }

@@ -136,7 +136,7 @@ as `TraceKeys.Application`. Then call any of its method to log something.
 All methods but `TraceKey.Write()` and `TraceKey.WriteLine()` will start the output line with `TraceKey.Header`
 which by default contains the trace name, current date time and thread id.
 
-By default all `TraceKey` are disabled (except `TraceKeys.Application`). On the desktop (full framework or .NET core)
+By default all `TraceKey` are disabled (except `TraceKeys.Application`). On the desktop (full .NET framework)
 they will automatically pick up the `AppSettings` values for `"TraceKeys." + key.Name`
 (text value must be in `"true" "false" "0" "1" "on" "off" "enable" "disable"`).
 

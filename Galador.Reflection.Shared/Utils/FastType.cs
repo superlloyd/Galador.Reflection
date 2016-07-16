@@ -215,6 +215,9 @@ namespace Galador.Reflection.Utils
 
         #endregion
 
+        /// <summary>
+        /// Enumerate all <see cref="FastMember"/> of this class and all of its base classes.
+        /// </summary>
         public IEnumerable<FastMember> GetRuntimeMembers()
         {
             var p = this;
@@ -317,7 +320,7 @@ namespace Galador.Reflection.Utils
     /// </summary>
     public partial class FastMember : IMember
     {
-        public FastMember(MemberInfo member)
+        internal FastMember(MemberInfo member)
         {
             Name = member.Name;
             Member = member;

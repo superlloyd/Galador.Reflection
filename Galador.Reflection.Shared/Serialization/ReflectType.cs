@@ -949,7 +949,7 @@ namespace Galador.Reflection.Serialization
                 {
                     Surrogate = (ReflectType)reader.Read(RReflectType, null);
                 }
-                else if ((IsISerializable && !reader.settings.IgnoreISerializable) || (HasConverter && reader.settings.IgnoreTypeConverter))
+                else if ((IsISerializable && !reader.settings.IgnoreISerializable) || (HasConverter && !reader.settings.IgnoreTypeConverter))
                 {
                     // skip members
                 }
@@ -1026,7 +1026,7 @@ namespace Galador.Reflection.Serialization
                 {
                     writer.Write(RReflectType, Surrogate);
                 }
-                else if ((IsISerializable && !writer.Settings.IgnoreISerializable) || (HasConverter && writer.Settings.IgnoreTypeConverter))
+                else if ((IsISerializable && !writer.Settings.IgnoreISerializable) || (HasConverter && !writer.Settings.IgnoreTypeConverter))
                 {
                     // skip members
                 }

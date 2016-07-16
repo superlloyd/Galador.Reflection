@@ -1,14 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Text;
 
 namespace Galador.Reflection.Serialization
 {
+    /// <summary>
+    /// Settings for the <see cref="ObjectWriter"/> that will affect serialization
+    /// </summary>
     public class SerializationSettings
     {
         /// <summary>
-        /// Whether the reader contain exhaustive (when <see cref="SkipMetaData"/> is <c>false</c>) or minimal (when <see cref="SkipMetaData"/> is <c>true</c>)
-        /// type information. It should match <see cref="ObjectWriter.SkipMetaData"/> (i.e. value set in the writer). 
+        /// Whether the serialized output contains exhaustive (when <see cref="SkipMetaData"/> is <c>false</c>) or minimal (when <see cref="SkipMetaData"/> is <c>true</c>)
+        /// type information. 
         /// <br/>
         /// If <see cref="SkipMetaData"/> is <c>true</c> and the type can not be resolved or there is a version mismatch data would be irrecoverably corrupted.
         /// <br/>
@@ -16,8 +20,14 @@ namespace Galador.Reflection.Serialization
         /// </summary>
         public bool SkipMetaData { get; set; } = false;
 
+        /// <summary>
+        /// Whether to ignore <c>ISerializable</c> interface when serializing. Necessary for compatibility with .NET Core.
+        /// </summary>
         public bool IgnoreISerializable { get; set; }
 
+        /// <summary>
+        /// Whether to ignore <see cref="TypeConverter"/> when serializing. If they prove problematic.
+        /// </summary>
         public bool IgnoreTypeConverter { get; set; }
 
 

@@ -60,17 +60,7 @@ namespace Galador.Reflection.Serialization
         /// </summary>
         public bool Success { get; private set; } = true;
 
-        public SerializationSettings Settings
-        {
-            get
-            {
-                if (settings == null)
-                    settings = new SerializationSettings();
-                return settings;
-            }
-            set { settings = value; }
-        }
-        SerializationSettings settings;
+        internal SerializationSettings settings = new SerializationSettings();
 
         /// <summary>
         /// Reads the next object from the <see cref="Reader"/>.
@@ -78,15 +68,18 @@ namespace Galador.Reflection.Serialization
         /// <returns>The next object in the stream.</returns>
         public object Read()
         {
-            recurseDepth++;
+            if (recurseDepth++ == 0)
+            {
+                var sFlags = Reader.ReadVInt();
+                settings.FromFlags((int)sFlags);
+            }
             try
             {
                 return Read(ReflectType.RObject, null);
             }
             finally
             {
-                recurseDepth--;
-                if (recurseDepth == 0)
+                if (--recurseDepth == 0)
                 {
                     foreach (var item in Context.Objects.OfType<IDeserialized>())
                         item.Deserialized();
@@ -395,18 +388,17 @@ namespace Galador.Reflection.Serialization
                                     case ReflectCollectionType.IDictionary:
                                         ReadDict((IDictionary)o);
                                         break;
-                                    // REMARK do not use FastMethod or make sure it is cached (as it is expensive to create)
                                     case ReflectCollectionType.ICollectionT:
                                         if (colt.listRead == null)
-                                            colt.listRead = GetType().TryGetMethods("ReadCollectionT", new[] { colt.Collection1.Type }, ts.Type, typeof(ReflectType)).First();
+                                            colt.listRead = FastMethod.GetMethod(GetType().TryGetMethods("ReadCollectionT", new[] { colt.Collection1.Type }, ts.Type, typeof(ReflectType)).First());
                                         if (colt.listRead != null)
-                                            colt.listRead.Invoke(this, new object[] { o, colt.Collection1 });
+                                            colt.listRead.Invoke(this, o, colt.Collection1);
                                         break;
                                     case ReflectCollectionType.IDictionaryKV:
                                         if (colt.listRead == null)
-                                            colt.listRead = GetType().TryGetMethods("ReadDictKV", new[] { colt.Collection1.Type, colt.Collection2.Type }, ts.Type, typeof(ReflectType), typeof(ReflectType)).First();
+                                            colt.listRead = FastMethod.GetMethod(GetType().TryGetMethods("ReadDictKV", new[] { colt.Collection1.Type, colt.Collection2.Type }, ts.Type, typeof(ReflectType), typeof(ReflectType)).First());
                                         if (colt.listRead != null)
-                                            colt.listRead.Invoke(this, new object[] { o, colt.Collection1, colt.Collection2 });
+                                            colt.listRead.Invoke(this, o, colt.Collection1, colt.Collection2);
                                         break;
                                 }
                             }

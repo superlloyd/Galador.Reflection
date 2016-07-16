@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Reflection;
 using System.Collections;
 using Galador.Reflection.Logging;
+using Galador.Reflection.Utils;
 
 namespace Galador.Reflection
 {
@@ -406,9 +407,11 @@ namespace Galador.Reflection
             if (cache == null)
                 cache = new RequestCache();
 
+            var ftype = FastType.GetType(instance.GetType());
             var props = (
-                from p in instance.GetType().GetRuntimeProperties()
-                let pi = p.GetCustomAttributes<ImportAttribute>().FirstOrDefault()
+                from p in ftype.GetRuntimeMembers()
+                where !p.IsStatic
+                let pi = p.Member.GetCustomAttributes<ImportAttribute>().FirstOrDefault()
                 where pi != null
                 select new { p, pi }
             ).ToList();
@@ -416,15 +419,15 @@ namespace Galador.Reflection
             {
                 var p = item.p;
                 var pi = item.pi;
-                if (IsBaseClass(typeof(IEnumerable), p.PropertyType))
+                if (IsBaseClass(typeof(IEnumerable), p.Type.Type))
                 {
                     var t = pi.ImportedType;
                     // T[]
-                    if (p.PropertyType.IsArray)
+                    if (p.Type.Type.IsArray)
                     {
                         if (t == null)
-                            t = p.PropertyType.GetElementType();
-                        if (!IsBaseClass(p.PropertyType.GetElementType(), t))
+                            t = p.Type.Type.GetElementType();
+                        if (!IsBaseClass(p.Type.Type.GetElementType(), t))
                             throw new NotSupportedException($"Property {instance.GetType().Name}.{p.Name}, can't import {t.Name}");
                         var objs = FindRegistrations(t, cache).Select(x => Resolve(x, cache)).ToList();
                         var prop = Array.CreateInstance(t, objs.Count);
@@ -435,12 +438,12 @@ namespace Galador.Reflection
                     // List<T>
                     else
                     {
-                        if (!IsBaseClass(typeof(IList), p.PropertyType))
+                        if (!IsBaseClass(typeof(IList), p.Type.Type))
                             throw new InvalidOperationException($"[Import] property {instance.GetType().Name}.{p.Name} must be an array or an IList");
 
                         if (t == null)
                         {
-                            var ga = p.PropertyType.GenericTypeArguments;
+                            var ga = p.Type.Type.GenericTypeArguments;
                             if (ga.Length != 1)
                                 throw new NotSupportedException($"[Import] property {instance.GetType().Name}.{p.Name} must be generic or the Import type must be defined");
                             t = ga[0];
@@ -448,9 +451,9 @@ namespace Galador.Reflection
                         var value = p.GetValue(instance);
                         if (value == null)
                         {
-                            if (!CanBeInstantiated(p.PropertyType))
-                                throw new InvalidOperationException($"Can't [Import]{p.PropertyType.Name} for {instance.GetType().Name}.{p.Name}");
-                            value = Create(p.PropertyType, cache);
+                            if (!CanBeInstantiated(p.Type.Type) || !p.CanSet)
+                                throw new InvalidOperationException($"Can't [Import]{p.Type.Type.Name} for {instance.GetType().Name}.{p.Name}");
+                            value = Create(p.Type.Type, cache);
                             p.SetValue(instance, value);
                         }
                         var list = (IList)value;
@@ -460,7 +463,7 @@ namespace Galador.Reflection
                 else
                 {
                     // simple property
-                    var o = ResolveAll(pi.ImportedType ?? p.PropertyType, cache).First();
+                    var o = ResolveAll(pi.ImportedType ?? p.Type.Type, cache).First();
                     item.p.SetValue(instance, o);
                 }
             }
@@ -551,7 +554,8 @@ namespace Galador.Reflection
                         cargs[i] = instance;
                     }
                 }
-                var result = qc.c.Invoke(cargs);
+                var fc = FastMethod.GetMethod(qc.c);
+                var result = fc.Invoke(null, cargs);
                 cache[type] = result;
                 if (result is IRegistryDelegate)
                     createSession.Add((IRegistryDelegate)result);

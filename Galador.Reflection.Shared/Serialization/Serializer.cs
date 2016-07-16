@@ -29,10 +29,10 @@ namespace Galador.Reflection.Serialization
         /// <param name="source">The string to read as a serialized object.</param>
         /// <param name="settings">The serialization settings to use</param>
         /// <returns>A newly deserialized object.</returns>
-        public static object Deserialize(string source, SerializationSettings settings = null)
+        public static object Deserialize(string source)
         {
             var pr = new PrimitiveTextReader(new StringReader(source));
-            var or = new ObjectReader(pr) { Settings = settings };
+            var or = new ObjectReader(pr);
             return or.Read();
         }
 
@@ -54,10 +54,10 @@ namespace Galador.Reflection.Serialization
         /// <param name="source">The stream to read as a serialized object.</param>
         /// <param name="settings">The serialization settings to use</param>
         /// <returns>A newly deserialized object.</returns>
-        public static object Deserialize(Stream source, SerializationSettings settings = null)
+        public static object Deserialize(Stream source)
         {
             var pr = new PrimitiveBinaryReader(source);
-            var or = new ObjectReader(pr) { Settings = settings };
+            var or = new ObjectReader(pr);
             return or.Read();
         }
 
@@ -84,10 +84,7 @@ namespace Galador.Reflection.Serialization
             ow.Write(instance);
 
             var pr = new TokenPrimitiveReader(ms);
-            var or = new ObjectReader(pr)
-            {
-                Settings = settings,
-            };
+            var or = new ObjectReader(pr);
 
             var result = or.Read();
             return (T)result;

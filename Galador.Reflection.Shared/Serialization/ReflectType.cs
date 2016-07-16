@@ -319,7 +319,7 @@ namespace Galador.Reflection.Serialization
 
         #endregion
 
-        internal MethodInfo listWrite, listRead;
+        internal FastMethod listWrite, listRead;
 
         #region utilities: ParentHierarchy()
 
@@ -920,7 +920,7 @@ namespace Galador.Reflection.Serialization
                     AssemblyName = (string)reader.Read(RString, null);
                     Type = KnownTypes.GetType(TypeName, AssemblyName);
                     FastType = FastType.GetType(Type);
-                    if (reader.Settings.SkipMetaData)
+                    if (reader.settings.SkipMetaData)
                     {
                         if (Type == null)
                             throw new IOException("No MetaData with skip = true");
@@ -949,7 +949,7 @@ namespace Galador.Reflection.Serialization
                 {
                     Surrogate = (ReflectType)reader.Read(RReflectType, null);
                 }
-                else if ((IsISerializable && !reader.Settings.IgnoreISerializable) || (HasConverter && reader.Settings.IgnoreTypeConverter))
+                else if ((IsISerializable && !reader.settings.IgnoreISerializable) || (HasConverter && reader.settings.IgnoreTypeConverter))
                 {
                     // skip members
                 }

@@ -29,6 +29,11 @@ namespace Galador.Reflection.Utils
         public MethodBase Method { get { return method; } }
 
         /// <summary>
+        /// Return the method's parameters.
+        /// </summary>
+        public IReadOnlyList<ParameterInfo> Paremeters { get { return parameters; } }
+
+        /// <summary>
         /// Construct a new <see cref="FastMethod"/> associated with an existing method.
         /// </summary>
         /// <param name="method">The method.</param>
@@ -42,6 +47,25 @@ namespace Galador.Reflection.Utils
 #else
 #endif
         }
+
+        /// <summary>
+        /// Create and return cached <see cref="FastMethod"/> from any <see cref="MethodBase"/>.
+        /// </summary>
+        public static FastMethod GetMethod(MethodBase method)
+        {
+            if (method == null)
+                return null;
+            lock (allmethods)
+            {
+                FastMethod result;
+                if (allmethods.TryGetValue(method, out result))
+                    return result;
+                result = new Utils.FastMethod(method);
+                allmethods[method] = result;
+                return result;
+            }
+        }
+        static Dictionary<MethodBase, FastMethod> allmethods = new Dictionary<MethodBase, FastMethod>();
 
         internal FastMethod(ConstructorInfo method, bool doNotCreate = false)
         {

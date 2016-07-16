@@ -215,6 +215,17 @@ namespace Galador.Reflection.Utils
 
         #endregion
 
+        public IEnumerable<FastMember> GetRuntimeMembers()
+        {
+            var p = this;
+            while (p != null)
+            {
+                foreach (var m in p.DeclaredMembers)
+                    yield return m;
+                p = p.BaseType;
+            }
+        }
+
         #region DeclaredMembers
 
         /// <summary>

@@ -19,5 +19,22 @@ namespace Galador.Reflection.Serialization
         public bool IgnoreISerializable { get; set; }
 
         public bool IgnoreTypeConverter { get; set; }
+
+
+        internal int ToFlags()
+        {
+            int result = 0;
+            result |= SkipMetaData ? 1 << 0 : 0;
+            result |= IgnoreISerializable ? 1 << 1 : 0;
+            result |= IgnoreTypeConverter ? 1 << 2 : 0;
+            return result;
+        }
+        internal void FromFlags(int l)
+        {
+            var flags = (int)l;
+            SkipMetaData = (flags & (1 << 0)) != 0;
+            IgnoreISerializable = (flags & (1 << 1)) != 0;
+            IgnoreTypeConverter = (flags & (1 << 2)) != 0;
+        }
     }
 }

@@ -85,8 +85,15 @@ namespace Galador.Reflection.Serialization
         /// <param name="o">The object to write.</param>
         public void Write(object o)
         {
-            Write(ReflectType.RObject, o);
+            if (recurseDepth++ == 0)
+            {
+                var sFlags = Settings.ToFlags();
+                Writer.WriteVInt(sFlags);
+            }
+            try { Write(ReflectType.RObject, o); }
+            finally { recurseDepth--; }
         }
+        int recurseDepth = 0;
 
         internal void Write(ReflectType expected, object o)
         {
@@ -297,18 +304,17 @@ namespace Galador.Reflection.Serialization
                                 case ReflectCollectionType.IDictionary:
                                     WriteDict((IDictionary)o);
                                     break;
-                                // REMARK do not use FastMethod or make sure it is cached (as it is expensive to create)
                                 case ReflectCollectionType.ICollectionT:
                                     if (colt.listWrite == null)
-                                        colt.listWrite = GetType().TryGetMethods("WriteCollection", new[] { colt.Collection1.Type }, ts.Type).First();
+                                        colt.listWrite = FastMethod.GetMethod(GetType().TryGetMethods("WriteCollection", new[] { colt.Collection1.Type }, ts.Type).First());
                                     if (colt.listWrite != null)
-                                        colt.listWrite.Invoke(this, new object[] { o });
+                                        colt.listWrite.Invoke(this, o);
                                     break;
                                 case ReflectCollectionType.IDictionaryKV:
                                     if (colt.listWrite == null)
-                                        colt.listWrite = GetType().TryGetMethods("WriteDictionary", new[] { colt.Collection1.Type, colt.Collection2.Type }, ts.Type).First();
+                                        colt.listWrite = FastMethod.GetMethod(GetType().TryGetMethods("WriteDictionary", new[] { colt.Collection1.Type, colt.Collection2.Type }, ts.Type).First());
                                     if (colt.listWrite != null)
-                                        colt.listWrite.Invoke(this, new object[] { o });
+                                        colt.listWrite.Invoke(this, o);
                                     break;
                             }
                         }

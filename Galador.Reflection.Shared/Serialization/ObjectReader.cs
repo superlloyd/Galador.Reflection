@@ -397,10 +397,10 @@ namespace Galador.Reflection.Serialization
                                             colt.listRead.Invoke(this, new object[] { o, colt.Collection1 });
                                         break;
                                     case ReflectCollectionType.IDictionaryKV:
-                                        if (colt.listWrite == null)
-                                            colt.listWrite = GetType().TryGetMethods("ReadDictKV", new[] { colt.Collection1.Type, colt.Collection2.Type }, ts.Type, typeof(ReflectType), typeof(ReflectType)).FirstOrDefault();
-                                        if (colt.listWrite != null)
-                                            colt.listWrite.Invoke(this, new object[] { o, colt.Collection1, colt.Collection2 });
+                                        if (colt.listRead == null)
+                                            colt.listRead = GetType().TryGetMethods("ReadDictKV", new[] { colt.Collection1.Type, colt.Collection2.Type }, ts.Type, typeof(ReflectType), typeof(ReflectType)).FirstOrDefault();
+                                        if (colt.listRead != null)
+                                            colt.listRead.Invoke(this, new object[] { o, colt.Collection1, colt.Collection2 });
                                         break;
                                 }
                             }

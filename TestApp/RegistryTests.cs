@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
@@ -124,7 +125,7 @@ namespace TestApp
             var t0 = new FooImpl(null);
 
             var r = new Registry();
-            r.RegisterAssemblies(GetType().Assembly);
+            r.RegisterAssemblies(GetType().GetTypeInfo().Assembly);
 
             var o = r.ResolveAll<IBar>().ToList();
             Assert.Equal(o.Count, 1);

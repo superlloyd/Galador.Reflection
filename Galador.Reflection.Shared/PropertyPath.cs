@@ -193,7 +193,7 @@ namespace Galador.Reflection
             {
                 if (Equals(Root, value))
                     return;
-                if (value != null && !pvalues[0].Member.DeclaringType.IsInstanceOf(value))
+                if (value != null && !pvalues[0].Member.Member.DeclaringType.IsInstanceOf(value))
                     throw new InvalidCastException();
                 root = value;
                 pvalues[0].Object = root;
@@ -246,7 +246,9 @@ namespace Galador.Reflection
             {
                 this.index = index;
                 Path = path;
-                Member = member;
+
+                var ot = FastType.GetType(member.DeclaringType);
+                Member = ot.DeclaredMembers[member.Name];
             }
             int index;
 
@@ -257,7 +259,7 @@ namespace Galador.Reflection
             /// <summary>
             /// The <see cref="MemberInfo"/> that this object maps too.
             /// </summary>
-            public MemberInfo Member { get; private set; }
+            public FastMember Member { get; private set; }
             /// <summary>
             /// <see cref="Member"/>'s name.
             /// </summary>
@@ -267,23 +269,14 @@ namespace Galador.Reflection
             {
                 if (Object == null)
                     return;
-                if (Member is FieldInfo)
-                    ((FieldInfo)Member).SetValue(Object, value);
-                else if (Member is PropertyInfo)
-                    ((PropertyInfo)Member).SetValue(Object, value);
-                else
+                if (!Member.SetValue(Object, Value))
                     throw new InvalidOperationException();
             }
             object GetMemberValue()
             {
                 if (Object == null)
                     return null;
-                else if (Member is FieldInfo)
-                    return ((FieldInfo)Member).GetValue(Object);
-                else if (Member is PropertyInfo)
-                    return ((PropertyInfo)Member).GetValue(Object, null);
-                else
-                    throw new InvalidOperationException();
+                return Member.GetValue(Object);
             }
 
             /// <summary>

@@ -13,7 +13,7 @@ namespace Galador.Reflection.Serialization
     /// <summary>
     /// Specialized list of <see cref="FastMember"/>.
     /// </summary>
-    public class MemberList<T> : IReadOnlyList<T>, IReadOnlyDictionary<string, T>
+    public class MemberList<T> : IReadOnlyList<T>, IReadOnlyDictionary<string, T>, IEnumerable<T>
         where T : IMember
     {
         List<T> list = new List<T>();

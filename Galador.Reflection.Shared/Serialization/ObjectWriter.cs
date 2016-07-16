@@ -364,6 +364,9 @@ namespace Galador.Reflection.Serialization
 
         void WriteList(IList list)
         {
+            Writer.Write(list.IsReadOnly);
+            if (list.IsReadOnly)
+                return;
             var count = list.Count;
             Writer.WriteVInt(count);
             foreach (var item in list)
@@ -376,6 +379,9 @@ namespace Galador.Reflection.Serialization
         }
         void WriteDict(IDictionary dictionary)
         {
+            Writer.Write(dictionary.IsReadOnly);
+            if (dictionary.IsReadOnly)
+                return;
             var count = dictionary.Count;
             Writer.WriteVInt(count);
             foreach (DictionaryEntry kv in dictionary)
@@ -389,6 +395,9 @@ namespace Galador.Reflection.Serialization
         }
         void WriteCollection<T>(ICollection<T> list)
         {
+            Writer.Write(list.IsReadOnly);
+            if (list.IsReadOnly)
+                return;
             var count = list.Count;
             Writer.WriteVInt(count);
             var surt = ReflectType.GetType(typeof(T));
@@ -402,6 +411,9 @@ namespace Galador.Reflection.Serialization
         }
         void WriteDictionary<K, V>(IDictionary<K, V> list)
         {
+            Writer.Write(list.IsReadOnly);
+            if (list.IsReadOnly)
+                return;
             var count = list.Count;
             Writer.WriteVInt(count);
             var surk = ReflectType.GetType(typeof(K));

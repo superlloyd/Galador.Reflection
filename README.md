@@ -8,9 +8,6 @@ Use the **iOS**, **Android**, **.NET4.5** or **.NET Core** DLL instead.
 
 Look in the test apps for additional usage sample.
 
-Still left todo:
-- make sure it runs on **.NET Core** (some bug left still in right now...)
-
 ### Getting Started
 
     Install-Package Galador.Reflection
@@ -114,7 +111,7 @@ Here is a simple use case, of registering an event when a property changes:
 Unfortunately, even in 2016! .NET reflection has pitiful performance. `FastType` provide
 quick (default) constructor and member getter and setter on platform that support 
 [System.Emit](https://docs.microsoft.com/en-us/dotnet/core/api/system.reflection.emit),
-falling back on normal reflection otherwise.
+(i.e. full .NET framework and .NET core, but not Android/iOS) falling back on normal reflection otherwise.
 
 Example:
 

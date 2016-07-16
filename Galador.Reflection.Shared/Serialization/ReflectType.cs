@@ -480,7 +480,7 @@ namespace Galador.Reflection.Serialization
                                 var p = BaseType;
                                 while (p != null)
                                 {
-                                    if (p.Members.ContainsKey(s))
+                                    if (p.Members.Contains(s))
                                         return true;
                                     p = p.BaseType;
                                 }

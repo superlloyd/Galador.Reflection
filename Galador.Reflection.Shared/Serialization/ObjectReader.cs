@@ -444,6 +444,9 @@ namespace Galador.Reflection.Serialization
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void ReadList(IList o)
         {
+            var isRO = Reader.ReadBool();
+            if (isRO)
+                return;
             var count = (int)Reader.ReadVInt();
             for (int i = 0; i < count; i++)
             {
@@ -454,6 +457,9 @@ namespace Galador.Reflection.Serialization
         }
         void ReadDict(IDictionary o)
         {
+            var isRO = Reader.ReadBool();
+            if (isRO)
+                return;
             var count = (int)Reader.ReadVInt();
             for (int i = 0; i < count; i++)
             {
@@ -465,6 +471,9 @@ namespace Galador.Reflection.Serialization
         }
         void ReadCollectionT<T>(ICollection<T> col, ReflectType tT)
         {
+            var isRO = Reader.ReadBool();
+            if (isRO)
+                return;
             var count = (int)Reader.ReadVInt();
             for (int i = 0; i < count; i++)
             {
@@ -475,6 +484,9 @@ namespace Galador.Reflection.Serialization
         }
         void ReadDictKV<K, V>(IDictionary<K, V> dict, ReflectType tKey, ReflectType tVal)
         {
+            var isRO = Reader.ReadBool();
+            if (isRO)
+                return;
             var count = (int)Reader.ReadVInt();
             for (int i = 0; i < count; i++)
             {

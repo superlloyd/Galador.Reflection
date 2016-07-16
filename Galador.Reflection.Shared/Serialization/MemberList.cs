@@ -49,25 +49,28 @@ namespace Galador.Reflection.Serialization
         /// Gets the <see cref="Member"/> at the specified index.
         /// </summary>
         public T this[int index] { get { return list[index]; } }
+
         /// <summary>
         /// Number of <see cref="Member"/>.
         /// </summary>
         public int Count { get { return list.Count; } }
+
         /// <summary>
         /// All the member's names.
         /// </summary>
-        public IEnumerable<string> Keys { get { return dict.Keys; } }
-        /// <summary>
-        /// All the members
-        /// </summary>
-        public IEnumerable<T> Values { get { return list; } }
+        public IEnumerable<string> MemberNames { get { return dict.Keys; } }
+        IEnumerable<string> IReadOnlyDictionary<string, T>.Keys { get { return dict.Keys; } }
+
+        IEnumerable<T> IReadOnlyDictionary<string, T>.Values { get { return list; } }
 
         /// <summary>
         /// Whether a member with such a name exists.
         /// </summary>
         /// <param name="name">The member's name.</param>
         /// <returns>Whether there is such a member.</returns>
-        public bool ContainsKey(string name) { return dict.ContainsKey(name); }
+        public bool Contains(string name) { return dict.ContainsKey(name); }
+        bool IReadOnlyDictionary<string, T>.ContainsKey(string name) { return dict.ContainsKey(name); }
+
         /// <summary>
         /// Enumerate the members.
         /// </summary>

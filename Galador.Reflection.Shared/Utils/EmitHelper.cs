@@ -24,7 +24,7 @@ namespace Galador.Reflection.Utils
 
         #region CreateMethodHandler() CreateParameterlessConstructorHandler()
 
-        public static MethodHandler CreateMethodHandler(MethodBase method)
+        public static MethodHandler CreateMethodHandler(MethodBase method, bool ctorDoNotCreate = false)
         {
             var dynam = new DynamicMethod(string.Empty, typeof(object), ManyObjects, Module, true);
             ILGenerator il = dynam.GetILGenerator();
@@ -43,23 +43,37 @@ namespace Galador.Reflection.Utils
 
             il.MarkLabel(argsOK);
 
-            il.PushInstance(method.DeclaringType);
+            if (!method.IsConstructor || ctorDoNotCreate)
+                il.PushInstance(method.DeclaringType);
 
             for (int i = 0; i < args.Length; i++)
             {
                 il.Emit(OpCodes.Ldarg_1);
                 il.Emit(OpCodes.Ldc_I4, i);
                 il.Emit(OpCodes.Ldelem_Ref);
-
                 il.UnboxIfNeeded(args[i].ParameterType);
             }
 
             if (method.IsConstructor)
-                il.Emit(OpCodes.Newobj, method as ConstructorInfo);
+            {
+                if (ctorDoNotCreate)
+                {
+                    il.Emit(OpCodes.Call, method as ConstructorInfo);
+                    throw new NotImplementedException("This is not yet working ... :'(");
+                }
+                else
+                {
+                    il.Emit(OpCodes.Newobj, method as ConstructorInfo);
+                }
+            }
             else if (method.IsFinal || !method.IsVirtual)
+            {
                 il.Emit(OpCodes.Call, method as MethodInfo);
+            }
             else
+            {
                 il.Emit(OpCodes.Callvirt, method as MethodInfo);
+            }
 
             Type returnType = method.IsConstructor ? method.DeclaringType : (method as MethodInfo).ReturnType;
             if (returnType != typeof(void))

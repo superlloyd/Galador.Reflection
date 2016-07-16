@@ -487,7 +487,7 @@ namespace Galador.Reflection.Serialization
                                 return false;
                             };
                             var attr = ti.GetCustomAttribute<SerializationSettingsAttribute>() ?? DefaultSettings;
-                            foreach (var rm in FastType.Members)
+                            foreach (var rm in FastType.DeclaredMembers)
                             {
                                 if (rm.Type.IsIgnored || rm.IsStatic)
                                     continue;
@@ -960,7 +960,7 @@ namespace Galador.Reflection.Serialization
                         var m = new Member();
                         m.Name = (string)reader.Read(RString, null);
                         m.Type = (ReflectType)reader.Read(RReflectType, null);
-                        m.RuntimeMember = FastType?.Members[m.Name];
+                        m.RuntimeMember = FastType?.DeclaredMembers[m.Name];
                         Members.Add(m);
                     }
                     switch (CollectionType)
@@ -1083,7 +1083,7 @@ namespace Galador.Reflection.Serialization
                     {
                         Name = em.Name,
                         Type = em.Type.MakeGenericType(GenericArguments),
-                        RuntimeMember = FastType?.Members[em.Name],
+                        RuntimeMember = FastType?.DeclaredMembers[em.Name],
                     };
                     Members.Add(m);
                 }

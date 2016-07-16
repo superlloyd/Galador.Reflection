@@ -206,6 +206,9 @@ namespace Galador.Reflection.Serialization
                     var ctor = ts.Type.TryGetConstructors(info.GetType(), ctx.GetType()).FirstOrDefault();
                     if (ctor != null)
                     {
+                        // No FastMethod() couldn't manage to call constructor on existing instance
+                        //var fctor = new FastMethod(ctor, true);
+                        //fctor.Invoke(possibleValue, info, ctx);
                         ctor.Invoke(possibleValue, new object[] { info, ctx }); // Dare to do it! Call constructor on existing instance!!
                         if (oid > 0)
                             Context.Register(oid, possibleValue);
@@ -390,15 +393,16 @@ namespace Galador.Reflection.Serialization
                                     case ReflectCollectionType.IDictionary:
                                         ReadDict((IDictionary)o);
                                         break;
+                                    // REMARK do not use FastMethod or make sure it is cached (as it is expensive to create)
                                     case ReflectCollectionType.ICollectionT:
                                         if (colt.listRead == null)
-                                            colt.listRead = GetType().TryGetMethods("ReadCollectionT", new[] { colt.Collection1.Type }, ts.Type, typeof(ReflectType)).FirstOrDefault();
+                                            colt.listRead = GetType().TryGetMethods("ReadCollectionT", new[] { colt.Collection1.Type }, ts.Type, typeof(ReflectType)).First();
                                         if (colt.listRead != null)
                                             colt.listRead.Invoke(this, new object[] { o, colt.Collection1 });
                                         break;
                                     case ReflectCollectionType.IDictionaryKV:
                                         if (colt.listRead == null)
-                                            colt.listRead = GetType().TryGetMethods("ReadDictKV", new[] { colt.Collection1.Type, colt.Collection2.Type }, ts.Type, typeof(ReflectType), typeof(ReflectType)).FirstOrDefault();
+                                            colt.listRead = GetType().TryGetMethods("ReadDictKV", new[] { colt.Collection1.Type, colt.Collection2.Type }, ts.Type, typeof(ReflectType), typeof(ReflectType)).First();
                                         if (colt.listRead != null)
                                             colt.listRead.Invoke(this, new object[] { o, colt.Collection1, colt.Collection2 });
                                         break;

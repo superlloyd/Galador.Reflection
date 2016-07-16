@@ -57,9 +57,6 @@ namespace Galador.Reflection.Utils
 
         #endregion
 
-        public static implicit operator FastType(Type type) { return GetType(type); }
-        public static implicit operator Type(FastType type) { return type?.Type; }
-
         #region TryConstruct() SetConstructor()
 
         /// <summary>
@@ -91,7 +88,7 @@ namespace Galador.Reflection.Utils
 #endif
         }
 
-        ConstructorInfo emtpy_constructor;
+        FastMethod emtpy_constructor;
         object[] empty_params;
 #if __NET__ || __NETCORE__
         Func<object> fastCtor;
@@ -109,13 +106,6 @@ namespace Galador.Reflection.Utils
             }
 
             var ps = ctor.GetParameters();
-#if __NET__ || __NETCORE__
-            if (ps.Length == 0)
-            {
-                fastCtor = EmitHelper.CreateParameterlessConstructorHandler(ctor);
-                return;
-            }
-#endif
             var cargs = new object[ps.Length];
             for (int i = 0; i < ps.Length; i++)
             {
@@ -124,7 +114,7 @@ namespace Galador.Reflection.Utils
                     return;
                 cargs[i] = p.DefaultValue;
             }
-            emtpy_constructor = ctor;
+            emtpy_constructor = new FastMethod(ctor);
             empty_params = cargs;
         }
 
@@ -166,11 +156,6 @@ namespace Galador.Reflection.Utils
         public FastType BaseType { get; private set; }
 
         /// <summary>
-        /// Member list of this class.
-        /// </summary>
-        public MemberList<FastMember> Members { get; } = new MemberList<FastMember>();
-
-        /// <summary>
         /// Whether or not this type is defined in mscorlib. Assembly name can be omitted for such type when serializing.
         /// Also they don't need be generated when creating serialized type code.
         /// </summary>
@@ -181,6 +166,27 @@ namespace Galador.Reflection.Utils
         /// </summary>
         public static bool IsFromMscorlib(Type type) { return type.GetTypeInfo().Assembly == MSCORLIB; }
         internal static readonly Assembly MSCORLIB = typeof(object).GetTypeInfo().Assembly;
+
+        #region IsUndefined()
+
+        /// <summary>
+        /// Whether <paramref name="type"/> is a generic type with generic argument, such as <c>List&lt;&gt;</c>.
+        /// </summary>
+        public static bool IsUndefined(Type type)
+        {
+            if (type.IsGenericParameter)
+                return true;
+#if __PCL__
+                throw new PlatformNotSupportedException("PCL");
+#else
+            var ti = type.GetTypeInfo();
+            if (!ti.IsGenericType)
+                return false;
+            return ti.GetGenericArguments().Any(x => x.GetTypeInfo().IsGenericParameter);
+#endif
+        }
+
+        #endregion
 
         #region Initialize()
 
@@ -194,19 +200,7 @@ namespace Galador.Reflection.Utils
             BaseType = GetType(Type.GetTypeInfo().BaseType);
             IsMscorlib = IsFromMscorlib(type);
             IsAbstract = type.GetTypeInfo().IsAbstract;
-
-            IsGenericMeta = false;
-            if (ti.IsGenericType)
-            {
-                if (ti.IsGenericParameter)
-                    IsGenericMeta = true;
-#if __PCL__
-                throw new PlatformNotSupportedException("PCL");
-#else
-                else
-                    IsGenericMeta = ti.GetGenericArguments().Any(x => x.GetTypeInfo().IsGenericParameter);
-#endif
-            }
+            IsGenericMeta = IsUndefined(type);
 
             if (type.IsPointer)
                 IsIgnored = true;
@@ -215,52 +209,91 @@ namespace Galador.Reflection.Utils
             if (IsIgnored)
                 return;
 
-            if (type.IsArray || ti.IsEnum)
-                return;
+            if (!type.IsArray && !ti.IsEnum)
+                SetConstructor();
+        }
 
-            SetConstructor();
+        #endregion
 
-            foreach (var pi in ti.DeclaredFields)
+        #region DeclaredMembers
+
+        /// <summary>
+        /// Members list for this <see cref="Type"/> as <see cref="FastMember"/>.
+        /// </summary>
+        public MemberList<FastMember> DeclaredMembers
+        {
+            get
             {
-                var mt = FastType.GetType(pi.FieldType);
-                if (mt.IsIgnored)
-                    continue;
-                var m = new FastMember
-                {
-                    Name = pi.Name,
-                    Type = mt,
-                    IsPublic = pi.IsPublic,
-                    IsField = true,
-                    CanSet = !pi.IsLiteral,
-                    IsStatic = pi.IsStatic,
-                    Member = pi,
-                };
-                if (!IsGenericMeta)
-                    m.SetMember(pi);
-                Members.Add(m);
-            }
-            foreach (var pi in ti.DeclaredProperties)
-            {
-                if (pi.GetMethod == null || pi.GetMethod.GetParameters().Length != 0)
-                    continue;
-                var mt = FastType.GetType(pi.PropertyType);
-                if (mt.IsIgnored)
-                    continue;
-                var m = new FastMember
-                {
-                    Name = pi.Name,
-                    Type = mt,
-                    IsPublic = pi.GetMethod.IsPublic,
-                    IsField = false,
-                    CanSet = pi.SetMethod != null,
-                    IsStatic = pi.GetMethod.IsStatic,
-                    Member = pi,
-                };
-                if (!IsGenericMeta)
-                    m.SetMember(pi);
-                Members.Add(m);
+                if (members == null)
+                    lock (this)
+                        if (members == null)
+                        {
+                            var result = new MemberList<FastMember>();
+                            var ti = Type.GetTypeInfo();
+                            foreach (var pi in ti.DeclaredFields)
+                            {
+                                var mt = FastType.GetType(pi.FieldType);
+                                if (mt.IsIgnored)
+                                    continue;
+                                var m = new FastMember(pi);
+                                result.Add(m);
+                            }
+                            foreach (var pi in ti.DeclaredProperties)
+                            {
+                                if (pi.GetMethod == null || pi.GetMethod.GetParameters().Length != 0)
+                                    continue;
+                                var mt = FastType.GetType(pi.PropertyType);
+                                if (mt.IsIgnored)
+                                    continue;
+                                var m = new FastMember(pi);
+                                result.Add(m);
+                            }
+                            members = result;
+                        }
+                return members;
             }
         }
+        MemberList<FastMember> members;
+
+        #endregion
+
+        #region DeclaredMethods
+
+        /// <summary>
+        /// Gets all the declared methods of <see cref="Type"/> as <see cref="FastMethod"/>.
+        /// </summary>
+        public IReadOnlyList<FastMethod> DeclaredMethods
+        {
+            get
+            {
+                if (methods == null)
+                    lock (this)
+                        if (methods == null)
+                            methods = Type.GetTypeInfo().DeclaredMethods.Select(x => new FastMethod(x)).ToArray();
+                return methods;
+            }
+        }
+        FastMethod[] methods;
+
+        #endregion
+
+        #region DeclaredConstructors
+
+        /// <summary>
+        /// Gets all the declared constructors of <see cref="Type"/> as <see cref="FastMethod"/>.
+        /// </summary>
+        public IReadOnlyList<FastMethod> DeclaredConstructors
+        {
+            get
+            {
+                if (ctors == null)
+                    lock (this)
+                        if (ctors == null)
+                            ctors = Type.GetTypeInfo().DeclaredConstructors.Select(x => new FastMethod(x)).ToArray();
+                return ctors;
+            }
+        }
+        FastMethod[] ctors;
 
         #endregion
     }
@@ -273,47 +306,67 @@ namespace Galador.Reflection.Utils
     /// </summary>
     public partial class FastMember : IMember
     {
-        internal FastMember() { }
+        public FastMember(MemberInfo member)
+        {
+            Name = member.Name;
+            Member = member;
+            if (member is FieldInfo)
+            {
+                var pi = (FieldInfo)member;
+                IsField = true;
+                Type = FastType.GetType(pi.FieldType);
+                IsPublic = pi.IsPublic;
+                CanSet = !pi.IsLiteral;
+                IsStatic = pi.IsStatic;
+            }
+            else
+            {
+                var pi = (PropertyInfo)member;
+                Type = FastType.GetType(pi.PropertyType);
+                IsPublic = pi.GetMethod.IsPublic;
+                IsField = false;
+                CanSet = pi.SetMethod != null;
+                IsStatic = pi.GetMethod.IsStatic;
+            }
+            SetMember(member);
+        }
 
         /// <summary>
         /// This is the member name for the member, i.e. <see cref="MemberInfo.Name"/>.
         /// </summary>
-        public string Name { get; internal set; }
+        public string Name { get; private set; }
 
         /// <summary>
         /// Whether or not this describe a static member.
         /// </summary>
-        public bool IsStatic { get; internal set; }
+        public bool IsStatic { get; private set; }
 
         /// <summary>
         /// This is the info for the declared type of this member, i.e. either of
         /// <see cref="PropertyInfo.PropertyType"/> or <see cref="FieldInfo.FieldType"/>.
         /// </summary>
-        public FastType Type { get; internal set; }
+        public FastType Type { get; private set; }
 
         /// <summary>
         /// Whether this is a public member or not
         /// </summary>
-        public bool IsPublic { get; internal set; }
+        public bool IsPublic { get; private set; }
 
         /// <summary>
         /// Whether this is a field or a property
         /// </summary>
-        public bool IsField { get; internal set; }
+        public bool IsField { get; private set; }
 
         /// <summary>
         /// Whether this member can be set. Will be <c>false</c> if the member is a property without setter, 
         /// or if the field is a literal (set at compile time), <c>true</c> otherwise.
         /// </summary>
-        public bool CanSet { get; internal set; }
+        public bool CanSet { get; private set; }
 
         /// <summary>
         /// Return the reflection member associated with this instance, be it a <see cref="FieldInfo"/> or <see cref="PropertyInfo"/>.
         /// </summary>
-        public MemberInfo Member { get; internal set; }
-
-        PropertyInfo pInfo;
-        FieldInfo fInfo;
+        public MemberInfo Member { get; private set; }
 
         // performance fields, depends on platform
 #if __NET__ || __NETCORE__
@@ -334,6 +387,9 @@ namespace Galador.Reflection.Utils
         Action<object, float> setterSingle;
         Action<object, double> setterDouble;
         Action<object, decimal> setterDecimal;
+#else
+        PropertyInfo pInfo;
+        FieldInfo fInfo;
 #endif
 
         #region SetMember()
@@ -342,148 +398,154 @@ namespace Galador.Reflection.Utils
         {
             if (mi is PropertyInfo)
             {
-                pInfo = (PropertyInfo)mi;
+                var pi = (PropertyInfo)mi;
 #if __NET__ || __NETCORE__
-                getter = EmitHelper.CreatePropertyGetterHandler(pInfo);
-                if (pInfo.SetMethod != null)
+                getter = EmitHelper.CreatePropertyGetterHandler(pi);
+                if (pi.SetMethod != null)
                 {
-                    setter = EmitHelper.CreatePropertySetterHandler(pInfo);
+                    setter = EmitHelper.CreatePropertySetterHandler(pi);
                     switch (Type.Kind)
                     {
                         case PrimitiveType.Guid:
                             hasFastSetter = true;
-                            setterGuid = EmitHelper.CreatePropertySetter<Guid>(pInfo);
+                            setterGuid = EmitHelper.CreatePropertySetter<Guid>(pi);
                             break;
                         case PrimitiveType.Bool:
                             hasFastSetter = true;
-                            setterBool = EmitHelper.CreatePropertySetter<bool>(pInfo);
+                            setterBool = EmitHelper.CreatePropertySetter<bool>(pi);
                             break;
                         case PrimitiveType.Char:
                             hasFastSetter = true;
-                            setterChar = EmitHelper.CreatePropertySetter<char>(pInfo);
+                            setterChar = EmitHelper.CreatePropertySetter<char>(pi);
                             break;
                         case PrimitiveType.Byte:
                             hasFastSetter = true;
-                            setterByte = EmitHelper.CreatePropertySetter<byte>(pInfo);
+                            setterByte = EmitHelper.CreatePropertySetter<byte>(pi);
                             break;
                         case PrimitiveType.SByte:
                             hasFastSetter = true;
-                            setterSByte = EmitHelper.CreatePropertySetter<sbyte>(pInfo);
+                            setterSByte = EmitHelper.CreatePropertySetter<sbyte>(pi);
                             break;
                         case PrimitiveType.Int16:
                             hasFastSetter = true;
-                            setterInt16 = EmitHelper.CreatePropertySetter<short>(pInfo);
+                            setterInt16 = EmitHelper.CreatePropertySetter<short>(pi);
                             break;
                         case PrimitiveType.UInt16:
                             hasFastSetter = true;
-                            setterUInt16 = EmitHelper.CreatePropertySetter<ushort>(pInfo);
+                            setterUInt16 = EmitHelper.CreatePropertySetter<ushort>(pi);
                             break;
                         case PrimitiveType.Int32:
                             hasFastSetter = true;
-                            setterInt32 = EmitHelper.CreatePropertySetter<int>(pInfo);
+                            setterInt32 = EmitHelper.CreatePropertySetter<int>(pi);
                             break;
                         case PrimitiveType.UInt32:
                             hasFastSetter = true;
-                            setterUInt32 = EmitHelper.CreatePropertySetter<uint>(pInfo);
+                            setterUInt32 = EmitHelper.CreatePropertySetter<uint>(pi);
                             break;
                         case PrimitiveType.Int64:
                             hasFastSetter = true;
-                            setterInt64 = EmitHelper.CreatePropertySetter<long>(pInfo);
+                            setterInt64 = EmitHelper.CreatePropertySetter<long>(pi);
                             break;
                         case PrimitiveType.UInt64:
                             hasFastSetter = true;
-                            setterUInt64 = EmitHelper.CreatePropertySetter<ulong>(pInfo);
+                            setterUInt64 = EmitHelper.CreatePropertySetter<ulong>(pi);
                             break;
                         case PrimitiveType.Single:
                             hasFastSetter = true;
-                            setterSingle = EmitHelper.CreatePropertySetter<float>(pInfo);
+                            setterSingle = EmitHelper.CreatePropertySetter<float>(pi);
                             break;
                         case PrimitiveType.Double:
                             hasFastSetter = true;
-                            setterDouble = EmitHelper.CreatePropertySetter<double>(pInfo);
+                            setterDouble = EmitHelper.CreatePropertySetter<double>(pi);
                             break;
                         case PrimitiveType.Decimal:
                             hasFastSetter = true;
-                            setterDecimal = EmitHelper.CreatePropertySetter<decimal>(pInfo);
+                            setterDecimal = EmitHelper.CreatePropertySetter<decimal>(pi);
                             break;
                     }
                 }
+#else
+                pInfo = pi;
 #endif
             }
             else
             {
-                fInfo = (FieldInfo)mi;
-                if (fInfo.IsLiteral)
+                var fi = (FieldInfo)mi;
+                if (fi.IsLiteral)
                 {
 #if __NET__ || __NETCORE__
-                    var value = fInfo.GetValue(null);
+                    var value = fi.GetValue(null);
                     getter = (x) => value;
+#else
+                    fInfo = fi;
 #endif
                 }
                 else
                 {
 #if __NET__ || __NETCORE__
-                    getter = EmitHelper.CreateFieldGetterHandler(fInfo);
-                    setter = EmitHelper.CreateFieldSetterHandler(fInfo);
+                    getter = EmitHelper.CreateFieldGetterHandler(fi);
+                    setter = EmitHelper.CreateFieldSetterHandler(fi);
                     switch (Type.Kind)
                     {
                         case PrimitiveType.Guid:
                             hasFastSetter = true;
-                            setterGuid = EmitHelper.CreateFieldSetter<Guid>(fInfo);
+                            setterGuid = EmitHelper.CreateFieldSetter<Guid>(fi);
                             break;
                         case PrimitiveType.Bool:
                             hasFastSetter = true;
-                            setterBool = EmitHelper.CreateFieldSetter<bool>(fInfo);
+                            setterBool = EmitHelper.CreateFieldSetter<bool>(fi);
                             break;
                         case PrimitiveType.Char:
                             hasFastSetter = true;
-                            setterChar = EmitHelper.CreateFieldSetter<char>(fInfo);
+                            setterChar = EmitHelper.CreateFieldSetter<char>(fi);
                             break;
                         case PrimitiveType.Byte:
                             hasFastSetter = true;
-                            setterByte = EmitHelper.CreateFieldSetter<byte>(fInfo);
+                            setterByte = EmitHelper.CreateFieldSetter<byte>(fi);
                             break;
                         case PrimitiveType.SByte:
                             hasFastSetter = true;
-                            setterSByte = EmitHelper.CreateFieldSetter<sbyte>(fInfo);
+                            setterSByte = EmitHelper.CreateFieldSetter<sbyte>(fi);
                             break;
                         case PrimitiveType.Int16:
                             hasFastSetter = true;
-                            setterInt16 = EmitHelper.CreateFieldSetter<short>(fInfo);
+                            setterInt16 = EmitHelper.CreateFieldSetter<short>(fi);
                             break;
                         case PrimitiveType.UInt16:
                             hasFastSetter = true;
-                            setterUInt16 = EmitHelper.CreateFieldSetter<ushort>(fInfo);
+                            setterUInt16 = EmitHelper.CreateFieldSetter<ushort>(fi);
                             break;
                         case PrimitiveType.Int32:
                             hasFastSetter = true;
-                            setterInt32 = EmitHelper.CreateFieldSetter<int>(fInfo);
+                            setterInt32 = EmitHelper.CreateFieldSetter<int>(fi);
                             break;
                         case PrimitiveType.UInt32:
                             hasFastSetter = true;
-                            setterUInt32 = EmitHelper.CreateFieldSetter<uint>(fInfo);
+                            setterUInt32 = EmitHelper.CreateFieldSetter<uint>(fi);
                             break;
                         case PrimitiveType.Int64:
                             hasFastSetter = true;
-                            setterInt64 = EmitHelper.CreateFieldSetter<long>(fInfo);
+                            setterInt64 = EmitHelper.CreateFieldSetter<long>(fi);
                             break;
                         case PrimitiveType.UInt64:
                             hasFastSetter = true;
-                            setterUInt64 = EmitHelper.CreateFieldSetter<ulong>(fInfo);
+                            setterUInt64 = EmitHelper.CreateFieldSetter<ulong>(fi);
                             break;
                         case PrimitiveType.Single:
                             hasFastSetter = true;
-                            setterSingle = EmitHelper.CreateFieldSetter<float>(fInfo);
+                            setterSingle = EmitHelper.CreateFieldSetter<float>(fi);
                             break;
                         case PrimitiveType.Double:
                             hasFastSetter = true;
-                            setterDouble = EmitHelper.CreateFieldSetter<double>(fInfo);
+                            setterDouble = EmitHelper.CreateFieldSetter<double>(fi);
                             break;
                         case PrimitiveType.Decimal:
                             hasFastSetter = true;
-                            setterDecimal = EmitHelper.CreateFieldSetter<decimal>(fInfo);
+                            setterDecimal = EmitHelper.CreateFieldSetter<decimal>(fi);
                             break;
                     }
+#else
+                    fInfo = fi;
 #endif
                 }
             }

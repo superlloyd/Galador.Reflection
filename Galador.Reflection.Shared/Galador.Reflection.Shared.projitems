@@ -39,6 +39,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Utils\CollectionEx.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\EmitHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\Empty.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utils\FastMethod.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\FastType.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\ReflectionEx.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\ValueTuple.cs" />

@@ -117,7 +117,7 @@ Example:
 
     var FT = FastType.GetType(typeof(List<object>));
     var list = FT.TryConstruct();
-    FT.Members["Capacity"].SetValue(list, 42);
+    FT.DeclaredMembers["Capacity"].SetValue(list, 42);
 
     // same as
     var list = new List<object>();

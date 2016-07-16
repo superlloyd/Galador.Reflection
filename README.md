@@ -10,7 +10,6 @@ Look in the test apps for additional usage sample.
 
 Still left todo:
 - make sure it runs on **.NET Core** (some bug left still in right now...)
-- still some generic type bug left...
 
 ### Getting Started
 

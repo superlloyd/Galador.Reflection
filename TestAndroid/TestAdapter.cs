@@ -96,8 +96,11 @@ namespace TestAndroid
                         item.Success = false;
                     }
                 }
-                lock (list) list.Add(item);
-                activity.RunOnUiThread(() => base.NotifyDataSetChanged());
+                activity.RunOnUiThread(() => 
+                {
+                    list.Add(item);
+                    base.NotifyDataSetChanged();
+                });
             }
         }
 

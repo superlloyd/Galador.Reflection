@@ -74,6 +74,8 @@ namespace Galador.Reflection.Utils
 #if __NET__ || __NETCORE__
             return fastMethod(target, args);
 #else
+            if (method is ConstructorInfo)
+                return ((ConstructorInfo)method).Invoke(args);
             return method.Invoke(target, args);
 #endif
         }

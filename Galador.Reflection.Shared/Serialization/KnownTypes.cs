@@ -8,6 +8,9 @@ using System.Runtime.Serialization;
 using Galador.Reflection.Utils;
 using Galador.Reflection.Logging;
 using System.Runtime.InteropServices;
+#if __NETCORE__
+using Microsoft.Extensions.DependencyModel;
+#endif
 
 namespace Galador.Reflection.Serialization
 {
@@ -20,24 +23,12 @@ namespace Galador.Reflection.Serialization
 #elif __NETCORE__
         static KnownTypes()
         {
-            // TODO: load assemblies automatically?!
-            //PlatformServices.Default.Application.RuntimeFramework.
-            //var assemblies = DependencyContext.Default.RuntimeLibraries.SelectMany(x => x.Assemblies).Select(x => x.Name).Distinct();
-            //AssemblyLoadContext.Default.
+            var compiled =
+                from lib in DependencyContext.Default.CompileLibraries
+                let ass = Assembly.Load(new AssemblyName(lib.Name))
+                select ass;
+            Register(compiled);
         }
-
-        public static void RegisterAssemblies(params Assembly[] ass) { RegisterAssemblies((IEnumerable<Assembly>)ass); }
-        public static void RegisterAssemblies(IEnumerable<Assembly> assemblies)
-        {
-            if (assemblies == null)
-                return;
-            Register(assemblies);
-            lock (registeredAssemblies)
-                foreach (var ass in assemblies)
-                    if (ass != null && !registeredAssemblies.Contains(ass))
-                        registeredAssemblies.Add(ass);
-        }
-        static List<Assembly> registeredAssemblies = new List<Assembly>();
 #else
         static KnownTypes()
         {
@@ -81,9 +72,6 @@ namespace Galador.Reflection.Serialization
 
 #if __PCL__
 #elif __NETCORE__
-            var tass = registeredAssemblies.FirstOrDefault(x => x.GetName().Name == assemblyName);
-            if (tass != null)
-                return tass.GetType(typeName);
 #else
             var tass = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(x => x.GetName().Name == assemblyName);
             if (tass != null)
@@ -152,8 +140,15 @@ namespace Galador.Reflection.Serialization
 
         #region Register()
 
-        static void Register(params Assembly[] ass) { Register((IEnumerable<Assembly>)ass); }
-        static void Register(IEnumerable<Assembly> assemblies)
+        /// <summary>
+        /// Registers plug-ins assemblies at runtime, so that the serializer can resolve <see cref="SerializationNameAttribute"/> or <c>DataContractAttribute</c>.
+        /// </summary>
+        public static void Register(params Assembly[] ass) { Register((IEnumerable<Assembly>)ass); }
+
+        /// <summary>
+        /// Registers plug-ins assemblies at runtime, so that the serializer can resolve <see cref="SerializationNameAttribute"/> or <c>DataContractAttribute</c>.
+        /// </summary>
+        public static void Register(IEnumerable<Assembly> assemblies)
         {
             if (assemblies == null)
                 return;
@@ -263,3 +258,5 @@ namespace Galador.Reflection.Serialization
         #endregion
     }
 }
+#if __NETCORE__
+#endif

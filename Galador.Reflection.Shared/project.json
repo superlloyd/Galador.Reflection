@@ -1,6 +1,7 @@
 {
   "version": "1.0.0-*",
   "dependencies": {
+    "Microsoft.Extensions.DependencyModel": "1.0.0",
     "NETStandard.Library": "1.6.0",
     "System.ComponentModel.TypeConverter": "4.1.0",
     "System.Data.Common": "4.1.0",

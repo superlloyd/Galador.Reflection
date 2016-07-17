@@ -2,8 +2,8 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
    <metadata minClientVersion="2.8.1">
        <id>Galador.Reflection</id>
-       <version>0.9.4</version>
-       <title>Compact .NET Serializer and Registry-IoC clas</title>
+       <version>1.0.0</version>
+       <title>Compact .NET Serializer, FastType (reflection replacement) and Registry-IoC class</title>
        <authors>Lloyd Dupont</authors>
        <owners>Lloyd Dupont</owners>
        <licenseUrl>https://github.com/superlloyd/Galador.Reflection/blob/master/LICENSE.txt</licenseUrl>
@@ -14,7 +14,7 @@
 		 As well as a simple IoC (Registry) class.
        </description>
      <releaseNotes>
-       [0.9.4]
+       [1.0.0]
        First Nuget release
      </releaseNotes>
        <tags>xamarin, android, ios, windows</tags>

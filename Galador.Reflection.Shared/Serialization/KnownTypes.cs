@@ -258,5 +258,3 @@ namespace Galador.Reflection.Serialization
         #endregion
     }
 }
-#if __NETCORE__
-#endif

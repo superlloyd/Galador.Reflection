@@ -14,6 +14,9 @@ Look in the test apps for additional usage sample.
 
 The package for  *PCL (iOS, Android, .NET)*, **iOS**, **Android**, **.NET4.5** has been published.
 
+**REMARK** *.NET Core* support for now is only in source form. I could not properly name
+the project and share the .NET Core source instead of duplicating them. 
+However all test currently run successfully on .NET Core.
 
 
 ### Serializer

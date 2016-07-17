@@ -10,15 +10,17 @@
        <projectUrl>https://github.com/superlloyd/Galador.Reflection</projectUrl>
        <requireLicenseAcceptance>false</requireLicenseAcceptance>
        <description>
-         Contains a compact, binary format, strongly typed, version and type mismatch tolerant .NET serializer.
-		 As well as a simple IoC (Registry) class.
+         Contains various reflection utilities.
+         FastType (which uses emit to make member access faster).
+         A Serializer with binary format, strongly typed, version and type mismatch tolerant and easy to use .NET serializer.
+         Registry and IoC, IServiceResolver class.
        </description>
      <releaseNotes>
        [1.0.0]
-       First Nuget release
+       Stable Nuget release
      </releaseNotes>
-       <tags>xamarin, android, ios, windows</tags>
-       <dependencies>
+    <tags>xamarin, android, ios, windows</tags>
+    <dependencies>
 			<group targetFramework="net">
 			</group>
 			<group targetFramework="MonoAndroid">
@@ -29,14 +31,13 @@
 			</group>
 			<group targetFramework="portable-net45+win+wpa81+wp80">
 			</group>
-			<group targetFramework="dotnet">
-			</group>
 		</dependencies>
    </metadata>
    <files>
-     <!--Core-->
-	 <!-- TODO... -->
-     
+     <!--Core ... tooling not there -->
+     <!--<file src=".\..\Galador.Reflection.Shared\bin\Release\netstandard1.6\Galador.Reflection.dll" target="lib\portable-net45+MonoAndroid10+MonoTouch10+Xamarin.iOS10\Galador.Reflection.dll" />
+     <file src=".\..\Galador.Reflection.Shared\bin\Release\netstandard1.6\Galador.Reflection.xml" target="lib\portable-net45+MonoAndroid10+MonoTouch10+Xamarin.iOS10\Galador.Reflection.XML" />-->
+
      <!--PCL-->
      <file src=".\..\Galador.Reflection.PCL\bin\Release\Galador.Reflection.dll" target="lib\portable-net45+MonoAndroid10+MonoTouch10+Xamarin.iOS10\Galador.Reflection.dll" />
      <file src=".\..\Galador.Reflection.PCL\bin\Release\Galador.Reflection.XML" target="lib\portable-net45+MonoAndroid10+MonoTouch10+Xamarin.iOS10\Galador.Reflection.XML" />

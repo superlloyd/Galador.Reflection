@@ -18,6 +18,9 @@ The package for  *PCL (iOS, Android, .NET)*, **iOS**, **Android**, **.NET4.5** h
 the project and share the .NET Core source instead of duplicating them. 
 However all test currently run successfully on .NET Core.
 
+**REMARK** The source here is contained in a VS 2015 project. It is also required since I use some C# 6 and .NET 4.5 features.
+One can download VS2015 for free [here](https://www.visualstudio.com/products/visual-studio-community-vs)
+
 
 ### Serializer
 [Details](serializer.md)

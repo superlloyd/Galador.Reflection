@@ -19,7 +19,10 @@ the project and share the .NET Core source instead of duplicating them.
 However all test currently run successfully on .NET Core.
 
 **REMARK** The source here is contained in a VS 2015 project. It is also required since I use some C# 6 and .NET 4.5 features.
-One can download VS2015 for free [here](https://www.visualstudio.com/products/visual-studio-community-vs)
+One can download VS2015 for free [here](https://www.visualstudio.com/products/visual-studio-community-vs). 
+
+**REMARK** The minimum .NET version supported is .NET4.5. There are so many little things which don't amount to much separately,
+but all together will make porting it to earlier version of .NET just a pain I am not interested in.
 
 
 ### Serializer

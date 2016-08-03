@@ -125,7 +125,7 @@ namespace TestApp
             var t0 = new FooImpl(null);
 
             var r = new Registry();
-            r.RegisterAssemblies(GetType().GetTypeInfo().Assembly);
+            r.RegisterAssemblies<ExportAttribute>();
 
             var o = r.ResolveAll<IBar>().ToList();
             Assert.Equal(o.Count, 1);

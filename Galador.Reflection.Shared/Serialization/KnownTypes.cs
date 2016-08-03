@@ -19,24 +19,11 @@ namespace Galador.Reflection.Serialization
     /// </summary>
     public static class KnownTypes
     {
-#if __PCL__
-#elif __NETCORE__
         static KnownTypes()
         {
-            var compiled =
-                from lib in DependencyContext.Default.CompileLibraries
-                let ass = Assembly.Load(new AssemblyName(lib.Name))
-                select ass;
-            Register(compiled);
+            KnownAssemblies.AssemblyLoaded += a => Register(a);
+            Register(KnownAssemblies.Current);
         }
-#else
-        static KnownTypes()
-        {
-            var domain = AppDomain.CurrentDomain;
-            domain.AssemblyLoad += (o, e) => Register(e.LoadedAssembly);
-            Register(domain.GetAssemblies());
-        }
-#endif
 
         #region GetType()
 
@@ -156,14 +143,7 @@ namespace Galador.Reflection.Serialization
             {
                 if (ass == null)
                     return;
-                IEnumerable<TypeInfo> tInfos;
-                try { tInfos = ass.DefinedTypes; }
-                catch
-                {
-                    TraceKeys.Serialization.Warning($"Couldn't {nameof(Register)}({ass.GetName().Name})");
-                    continue;
-                }
-                foreach (var ti in tInfos)
+                foreach (var ti in ass.DefinedTypes)
                     Register(ti.AsType());
             }
         }

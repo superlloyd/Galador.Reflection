@@ -13,7 +13,7 @@ namespace Galador.Reflection
     #region ExportAttribute, ImportAttribute
 
     /// <summary>
-    /// Type marked with this attribute are the one that will be registered when one register their assembly with <see cref="Registry.RegisterAssemblies(Assembly[])"/>
+    /// Out of the box hleper attribute for automatic registration with <see cref="Registry.RegisterAssemblies(Assembly[])"/>
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
     public class ExportAttribute : Attribute
@@ -215,20 +215,31 @@ namespace Galador.Reflection
 
         #region RegisterAssemblies()
 
-        /// <summary>
-        /// Register some assembly, by registering all type they export that are marked with <see cref="ExportAttribute"/>.
-        /// </summary>
-        public void RegisterAssemblies(params Assembly[] ass) { RegisterAssemblies((IEnumerable<Assembly>)ass); }
+        public void RegisterAssemblies<T>()
+            where T: Attribute
+        {
+            RegisterAssemblies<T>(KnownAssemblies.Current);
+        }
 
         /// <summary>
         /// Register some assembly, by registering all type they export that are marked with <see cref="ExportAttribute"/>.
         /// </summary>
-        public void RegisterAssemblies(IEnumerable<Assembly> assemblies)
+        public void RegisterAssemblies<T>(params Assembly[] ass)
+            where T : Attribute
+        {
+            RegisterAssemblies<T>((IEnumerable<Assembly>)ass);
+        }
+
+        /// <summary>
+        /// Register some assembly, by registering all type they export that are marked with <see cref="ExportAttribute"/>.
+        /// </summary>
+        public void RegisterAssemblies<T>(IEnumerable<Assembly> assemblies)
+            where T : Attribute
         {
             ForEach(assemblies.Where(x => x != null).SelectMany(x => x.DefinedTypes),
             ti =>
             {
-                var ea = ti.GetCustomAttributes<ExportAttribute>(false);
+                var ea = ti.GetCustomAttributes<T>(false);
                 foreach (var export in ea)
                 {
                     var t = ti.AsType();

@@ -7,7 +7,7 @@ using System.ComponentModel;
 using System.Globalization;
 using Galador.Reflection.Utils;
 
-namespace Galador.Reflection.Serialization
+namespace Galador.Reflection.Utils
 {
     /// <summary>
     /// <see cref="TypeConverter"/> for <see cref="TypeDescription"/>
@@ -262,7 +262,7 @@ namespace Galador.Reflection.Serialization
 #if __PCL__
             throw new PlatformNotSupportedException("PCL");
 #else
-            var type = KnownTypes.GetType(Fullname, AssemblyName);
+            var type = KnownAssemblies.GetType(Fullname, AssemblyName);
             if (type == null)
                 return null;
             if (TypeArguments.Count > 0)

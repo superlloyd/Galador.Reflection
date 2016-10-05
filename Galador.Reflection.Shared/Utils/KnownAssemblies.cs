@@ -10,6 +10,9 @@ using Microsoft.Extensions.DependencyModel;
 
 namespace Galador.Reflection.Utils
 {
+    /// <summary>
+    /// A utility class to list all loaded assemblies and be notified when new one are loaded.
+    /// </summary>
     public static class KnownAssemblies
     {
         static KnownAssemblies()
@@ -36,13 +39,16 @@ namespace Galador.Reflection.Utils
                 }
                 catch
                 {
-                    TraceKeys.Serialization.Warning($"Couldn't get Type from {ass.GetName().Name})");
+                    TraceKeys.Serialization.Warning($"Couldn't get Types from {ass.GetName().Name})");
                     continue;
                 }
                 yield return ass;
             }
         }
 
+        /// <summary>
+        /// Enumerate all the currently loaded assembly.
+        /// </summary>
         public static IEnumerable<Assembly> Current
         {
             get
@@ -62,6 +68,32 @@ namespace Galador.Reflection.Utils
             }
         }
 
+#pragma warning disable 67
+        /// <summary>
+        /// Occurs when an assembly is loaded.
+        /// </summary>
         public static event Action<Assembly> AssemblyLoaded;
+#pragma warning restore 67
+
+        /// <summary>
+        /// Lookup a type by type name and assembly name.
+        /// </summary>
+        /// <param name="typeName">Name of the type.</param>
+        /// <param name="assemblyName">Name of the assembly.</param>
+        /// <returns>A type or null.</returns>
+        public static Type GetType(string typeName, string assemblyName)
+        {
+            if (assemblyName == null)
+                return Type.GetType(typeName);
+
+            var candidates =
+                from ass in Current
+                where ass.GetName().Name == assemblyName
+                let t = ass.GetType(typeName)
+                where t != null
+                select t
+                ;
+            return candidates.FirstOrDefault();
+        }
     }
 }

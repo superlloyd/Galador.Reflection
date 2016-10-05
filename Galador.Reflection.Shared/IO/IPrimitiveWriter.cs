@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Galador.Reflection.Serialization
+namespace Galador.Reflection.IO
 {
     /// <summary>
     /// An interface that know how to write all primitive type (i.e. all non object <see cref="PrimitiveType"/>) to some underlying storage.

@@ -5,7 +5,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
 
-namespace Galador.Reflection.Serialization
+namespace Galador.Reflection.IO
 {
     /// <summary>
     /// An <see cref="IPrimitiveReader"/> reading from a <see cref="TextReader"/>.

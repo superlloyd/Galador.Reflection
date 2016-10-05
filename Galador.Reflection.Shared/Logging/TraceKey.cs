@@ -1,5 +1,4 @@
-﻿using Galador.Reflection.Serialization;
-using Galador.Reflection.Utils;
+﻿using Galador.Reflection.Utils;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -16,7 +15,6 @@ namespace Galador.Reflection.Logging
     /// All its methods, but <see cref="Write(string)"/> and <see cref="WriteLine(string)"/>, 
     /// will start the line with a <see cref="Header"/>.
     /// </summary>
-    [NotSerialized]
     public sealed class TraceKey
     {
         internal TraceKey(string name)

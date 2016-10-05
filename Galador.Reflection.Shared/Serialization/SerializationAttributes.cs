@@ -118,6 +118,8 @@ namespace Galador.Reflection.Serialization
         /// <param name="assembly">The <see cref="AssemblyName"/> to use.</param>
         public SerializationNameAttribute(string type, string assembly = null)
         {
+            if (type == null)
+                throw new ArgumentNullException($"parameter {type} should not be null.");
             TypeName = type;
             AssemblyName = assembly;
         }

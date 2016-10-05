@@ -10,6 +10,7 @@ using System.Runtime.Serialization;
 using System.IO;
 using System.Runtime.CompilerServices;
 using Galador.Reflection.Logging;
+using Galador.Reflection.IO;
 
 namespace Galador.Reflection.Serialization
 {
@@ -392,7 +393,7 @@ namespace Galador.Reflection.Serialization
             }
             else
             {
-                Kind = KnownTypes.GetKind(type);
+                Kind = PrimitiveConverter.GetPrimitiveType(type);
                 if (Kind == PrimitiveType.String)
                 {
                     IsReference = true;

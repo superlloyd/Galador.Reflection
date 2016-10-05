@@ -8,9 +8,6 @@ using System.Runtime.Serialization;
 using Galador.Reflection.Utils;
 using Galador.Reflection.Logging;
 using System.Runtime.InteropServices;
-#if __NETCORE__
-using Microsoft.Extensions.DependencyModel;
-#endif
 
 namespace Galador.Reflection.Serialization
 {
@@ -57,67 +54,7 @@ namespace Galador.Reflection.Serialization
             if (t != null)
                 return t;
 
-#if __PCL__
-#elif __NETCORE__
-#else
-            var tass = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(x => x.GetName().Name == assemblyName);
-            if (tass != null)
-                return tass.GetType(typeName);
-#endif
-            return null;
-        }
-        internal static Type GetType(PrimitiveType type)
-        {
-            switch (type)
-            {
-                default:
-                case PrimitiveType.None:
-                case PrimitiveType.Object:
-                    return null;
-                case PrimitiveType.String: return typeof(string);
-                case PrimitiveType.Bytes: return typeof(byte[]);
-                case PrimitiveType.Guid: return typeof(Guid);
-                case PrimitiveType.Bool: return typeof(bool);
-                case PrimitiveType.Char: return typeof(char);
-                case PrimitiveType.Byte: return typeof(byte);
-                case PrimitiveType.SByte: return typeof(sbyte);
-                case PrimitiveType.Int16: return typeof(short);
-                case PrimitiveType.UInt16: return typeof(ushort);
-                case PrimitiveType.Int32: return typeof(int);
-                case PrimitiveType.UInt32: return typeof(uint);
-                case PrimitiveType.Int64: return typeof(long);
-                case PrimitiveType.UInt64: return typeof(ulong);
-                case PrimitiveType.Single: return typeof(float);
-                case PrimitiveType.Double: return typeof(double);
-                case PrimitiveType.Decimal: return typeof(decimal);
-            }
-        }
-
-        #endregion
-
-        #region GetKind()
-
-        internal static PrimitiveType GetKind(Type type)
-        {
-            if (type == null)
-                throw new ArgumentNullException(nameof(type));
-            if (type == typeof(string)) return PrimitiveType.String;
-            if (type == typeof(byte[])) return PrimitiveType.Bytes;
-            if (type == typeof(Guid)) return PrimitiveType.Guid;
-            if (type == typeof(bool)) return PrimitiveType.Bool;
-            if (type == typeof(char)) return PrimitiveType.Char;
-            if (type == typeof(byte)) return PrimitiveType.Byte;
-            if (type == typeof(sbyte)) return PrimitiveType.SByte;
-            if (type == typeof(short)) return PrimitiveType.Int16;
-            if (type == typeof(ushort)) return PrimitiveType.UInt16;
-            if (type == typeof(int)) return PrimitiveType.Int32;
-            if (type == typeof(uint)) return PrimitiveType.UInt32;
-            if (type == typeof(long)) return PrimitiveType.Int64;
-            if (type == typeof(ulong)) return PrimitiveType.UInt64;
-            if (type == typeof(float)) return PrimitiveType.Single;
-            if (type == typeof(double)) return PrimitiveType.Double;
-            if (type == typeof(decimal)) return PrimitiveType.Decimal;
-            return PrimitiveType.Object;
+            return KnownAssemblies.GetType(typeName, assemblyName);
         }
 
         #endregion
@@ -169,7 +106,7 @@ namespace Galador.Reflection.Serialization
             var dcattr = type.GetTypeInfo().GetCustomAttribute<DataContractAttribute>();
             if (dcattr != null)
                 lock (typeToSurrogate)
-                    sReplacementTypes[new SerializationNameAttribute(dcattr.Name, dcattr.Namespace)] = type;
+                    sReplacementTypes[new SerializationNameAttribute(dcattr.Name ?? type.Name, dcattr.Namespace)] = type;
 #endif
         }
 

@@ -1,5 +1,4 @@
-﻿using Galador.Reflection.Serialization;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
@@ -10,7 +9,6 @@ namespace Galador.Reflection.Utils
     /// Wrap a <see cref="MethodBase"/> and provide fast call with System.Emit when available,
     /// or fallback to normal reflection otherwise.
     /// </summary>
-    [NotSerialized]
     public sealed class FastMethod
     {
         ParameterInfo[] parameters;

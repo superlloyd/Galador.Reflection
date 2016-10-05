@@ -8,6 +8,7 @@ using System.IO;
 using System.Collections;
 using SRS = System.Runtime.Serialization;
 using System.Runtime.CompilerServices;
+using Galador.Reflection.IO;
 
 namespace Galador.Reflection.Serialization
 {
@@ -194,24 +195,17 @@ namespace Galador.Reflection.Serialization
                 if (possibleValue != null && ts.Type.IsInstanceOf(possibleValue))
                 {
                     var ctor = ts.Type.TryGetConstructors(info.GetType(), ctx.GetType()).FirstOrDefault();
+                    // No FastMethod(): couldn't manage to call constructor on existing instance
                     if (ctor != null)
-                    {
-                        // No FastMethod() couldn't manage to call constructor on existing instance
-                        //var fctor = new FastMethod(ctor, true);
-                        //fctor.Invoke(possibleValue, info, ctx);
                         ctor.Invoke(possibleValue, new object[] { info, ctx }); // Dare to do it! Call constructor on existing instance!!
-                        if (oid > 0)
-                            Context.Register(oid, possibleValue);
-                        return possibleValue;
-                    }
-                }
-                else
-                {
-                    var o = ts.Type.TryConstruct(info, ctx) ?? ts.FastType.TryConstruct();
                     if (oid > 0)
-                        Context.Register(oid, o);
-                    return o;
+                        Context.Register(oid, possibleValue);
+                    return possibleValue;
                 }
+                var o = ts.Type.TryConstruct(info, ctx) ?? ts.FastType.TryConstruct();
+                if (oid > 0)
+                    Context.Register(oid, o);
+                return o;
             }
             var missing = new Missing(ts);
             if (oid > 0)
@@ -364,7 +358,7 @@ namespace Galador.Reflection.Serialization
                                     Context.Register(oid, o);
                                 foreach (var m in ts.RuntimeMembers)
                                 {
-                                    if (m.RuntimeMember == null || !m.RuntimeMember.TryFastReadSet(this, o))
+                                    if (m.RuntimeMember == null || !m.RuntimeMember.TryFastReadSet(this.Reader, o))
                                     {
                                         object org = null;
                                         if (m.Type.IsReference)

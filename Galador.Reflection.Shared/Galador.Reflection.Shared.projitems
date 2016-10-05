@@ -10,32 +10,30 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)AssemblyInfo.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IO\IPrimitiveReader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IO\IPrimitiveWriter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IO\PrimitiveBinaryReader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IO\PrimitiveBinaryWriter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IO\PrimitiveTextReader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IO\PrimitiveTextWriter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IO\PrimitiveType.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IO\StreamExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IO\TokenPrimitiveWriter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logging\TraceKey.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logging\TraceKeys.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)PropertyPath.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Registry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\IDeserialized.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Serialization\IPrimitiveReader.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Serialization\IPrimitiveWriter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\KnownTypes.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\Missing.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Serialization\MemberList.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\ObjectContext.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\ObjectReader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\ObjectWriter.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Serialization\PrimitiveBinaryReader.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Serialization\PrimitiveBinaryWriter.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Serialization\PrimitiveTextReader.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Serialization\PrimitiveTextWriter.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Serialization\PrimitiveType.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\ReflectType.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\SerializationAttributes.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\SerializationSettings.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\Serializer.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Serialization\StreamExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\Surrogate.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Serialization\TokenWriter.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Serialization\TypeDescription.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TypeForwarded.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\CollectionEx.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\EmitHelper.cs" />
@@ -43,7 +41,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)Utils\FastMethod.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\FastType.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\KnownAssemblies.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utils\MemberList.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\ReflectionEx.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utils\TypeDescription.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\ValueTuple.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\WeakEvents.cs" />
   </ItemGroup>

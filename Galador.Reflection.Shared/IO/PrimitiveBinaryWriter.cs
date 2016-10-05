@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 using Galador.Reflection.Utils;
 using System.Runtime.InteropServices;
 
-namespace Galador.Reflection.Serialization
+namespace Galador.Reflection.IO
 {
     // REMARK BitConverter follow Indianness, serializer should not, hopefully this will fix it
     [StructLayout(LayoutKind.Explicit)]

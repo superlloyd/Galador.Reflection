@@ -3,11 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Galador.Reflection.Serialization
+namespace Galador.Reflection.Utils
 {
     /// <summary>
     /// Object which have a name and are used with <see cref="MemberList{T}"/>.
-    /// So far either of <see cref="Utils.FastMember"/>, <see cref="ReflectType.Member"/> and <see cref="Missing.Member"/>.
     /// </summary>
     public interface IMember
     {

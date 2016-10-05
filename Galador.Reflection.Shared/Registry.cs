@@ -215,6 +215,9 @@ namespace Galador.Reflection
 
         #region RegisterAssemblies()
 
+        /// <summary>
+        /// Registers all typed tagged with attribute <typeparamref name="T"/> within all the known assemblies.
+        /// </summary>
         public void RegisterAssemblies<T>()
             where T: Attribute
         {

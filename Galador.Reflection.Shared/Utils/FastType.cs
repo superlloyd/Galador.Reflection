@@ -1,4 +1,4 @@
-﻿using Galador.Reflection.Serialization;
+﻿using Galador.Reflection.IO;
 using Galador.Reflection.Utils;
 using System;
 using System.Collections;
@@ -13,7 +13,6 @@ namespace Galador.Reflection.Utils
     /// Each <see cref="FastType"/> instance is associate with a particular .NET <see cref="System.Type"/>.
     /// It provides access to optimized members and constructor method, using System.Emit whenever possible for top performance.
     /// </summary>
-    [NotSerialized]
     public sealed class FastType
     {
         FastType() { }
@@ -51,7 +50,7 @@ namespace Galador.Reflection.Utils
         /// </summary>
         public static FastType GetType(PrimitiveType kind)
         {
-            var type = KnownTypes.GetType(kind);
+            var type = PrimitiveConverter.GetType(kind);
             return GetType(type);
         }
 
@@ -195,7 +194,7 @@ namespace Galador.Reflection.Utils
             Type = type;
             var ti = type.GetTypeInfo();
 
-            Kind = KnownTypes.GetKind(type);
+            Kind = PrimitiveConverter.GetPrimitiveType(type);
             IsReference = !ti.IsValueType;
             BaseType = GetType(Type.GetTypeInfo().BaseType);
             IsMscorlib = IsFromMscorlib(type);
@@ -318,7 +317,6 @@ namespace Galador.Reflection.Utils
     /// Represent a member of this type, i.e. a property or field that will be serialized.
     /// Also this will use fast member accessor generated with Emit on platform supporting it.
     /// </summary>
-    [NotSerialized]
     public sealed class FastMember : IMember
     {
         internal FastMember(MemberInfo member)
@@ -649,7 +647,7 @@ namespace Galador.Reflection.Utils
         /// <param name="reader">The source of the value</param>
         /// <param name="instance">The instance which member would be set</param>
         /// <returns>Whether the value could be set. If not the <paramref name="reader"/> won't be read.</returns>
-        public bool TryFastReadSet(ObjectReader reader, object instance)
+        public bool TryFastReadSet(IPrimitiveReader reader, object instance)
         {
 #if __NET__ || __NETCORE__
             if (hasFastSetter && instance != null)
@@ -657,46 +655,46 @@ namespace Galador.Reflection.Utils
                 switch (Type.Kind)
                 {
                     case PrimitiveType.Guid:
-                        setterGuid(instance, reader.Reader.ReadGuid());
+                        setterGuid(instance, reader.ReadGuid());
                         break;
                     case PrimitiveType.Bool:
-                        setterBool(instance, reader.Reader.ReadBool());
+                        setterBool(instance, reader.ReadBool());
                         break;
                     case PrimitiveType.Char:
-                        setterChar(instance, reader.Reader.ReadChar());
+                        setterChar(instance, reader.ReadChar());
                         break;
                     case PrimitiveType.Byte:
-                        setterByte(instance, reader.Reader.ReadByte());
+                        setterByte(instance, reader.ReadByte());
                         break;
                     case PrimitiveType.SByte:
-                        setterSByte(instance, reader.Reader.ReadSByte());
+                        setterSByte(instance, reader.ReadSByte());
                         break;
                     case PrimitiveType.Int16:
-                        setterInt16(instance, reader.Reader.ReadInt16());
+                        setterInt16(instance, reader.ReadInt16());
                         break;
                     case PrimitiveType.UInt16:
-                        setterUInt16(instance, reader.Reader.ReadUInt16());
+                        setterUInt16(instance, reader.ReadUInt16());
                         break;
                     case PrimitiveType.Int32:
-                        setterInt32(instance, reader.Reader.ReadInt32());
+                        setterInt32(instance, reader.ReadInt32());
                         break;
                     case PrimitiveType.UInt32:
-                        setterUInt32(instance, reader.Reader.ReadUInt32());
+                        setterUInt32(instance, reader.ReadUInt32());
                         break;
                     case PrimitiveType.Int64:
-                        setterInt64(instance, reader.Reader.ReadInt64());
+                        setterInt64(instance, reader.ReadInt64());
                         break;
                     case PrimitiveType.UInt64:
-                        setterUInt64(instance, reader.Reader.ReadUInt64());
+                        setterUInt64(instance, reader.ReadUInt64());
                         break;
                     case PrimitiveType.Single:
-                        setterSingle(instance, reader.Reader.ReadSingle());
+                        setterSingle(instance, reader.ReadSingle());
                         break;
                     case PrimitiveType.Double:
-                        setterDouble(instance, reader.Reader.ReadDouble());
+                        setterDouble(instance, reader.ReadDouble());
                         break;
                     case PrimitiveType.Decimal:
-                        setterDecimal(instance, reader.Reader.ReadDecimal());
+                        setterDecimal(instance, reader.ReadDecimal());
                         break;
                 }
                 return true;

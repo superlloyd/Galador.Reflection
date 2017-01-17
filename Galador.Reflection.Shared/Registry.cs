@@ -580,7 +580,8 @@ namespace Galador.Reflection
             {
                 if (first)
                 {
-                    ForEach(createSession, x => x.OnRegistryCreated());
+                    for (int i = 0; i < createSession.Count; i++)
+                        ((IRegistryDelegate)createSession[i]).OnRegistryCreated();
                     createSession = null;
                 }
             }

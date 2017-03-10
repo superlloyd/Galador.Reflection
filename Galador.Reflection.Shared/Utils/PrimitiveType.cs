@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Galador.Reflection.IO
+namespace Galador.Reflection.Utils
 {
     // REMARK: works with KnownTypes.GetKind() & ObjectContext.WellKnownContext
     // it's why it starts at 1 (null is 0) and Decimal is expected to be last
@@ -45,6 +45,37 @@ namespace Galador.Reflection.IO
     /// </summary>
     public static class PrimitiveConverter
     {
+        /// <summary>
+        /// Whther this is a known structure or not.
+        /// </summary>
+        public static bool IsStruct(PrimitiveType type)
+        {
+            switch (type)
+            {
+                default:
+                case PrimitiveType.None:
+                case PrimitiveType.Object:
+                case PrimitiveType.String:
+                case PrimitiveType.Bytes:
+                    return false;
+                case PrimitiveType.Guid:
+                case PrimitiveType.Bool:
+                case PrimitiveType.Char:
+                case PrimitiveType.Byte:
+                case PrimitiveType.SByte:
+                case PrimitiveType.Int16:
+                case PrimitiveType.UInt16:
+                case PrimitiveType.Int32:
+                case PrimitiveType.UInt32:
+                case PrimitiveType.Int64:
+                case PrimitiveType.UInt64:
+                case PrimitiveType.Single:
+                case PrimitiveType.Double:
+                case PrimitiveType.Decimal:
+                    return true;
+            }
+        }
+
         /// <summary>
         /// Return the .NET <see cref="Type"/> for a <see cref="PrimitiveType"/>, or null in ambiguous case (<see cref="PrimitiveType.Object"/>).
         /// </summary>

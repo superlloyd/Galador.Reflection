@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace Galador.Reflection.Utils
@@ -341,7 +342,8 @@ namespace Galador.Reflection.Utils
                 CanSet = pi.SetMethod != null;
                 IsStatic = pi.GetMethod.IsStatic;
             }
-            SetMember(member);
+            InitializeAccessor();
+            InitializeStructAccessor();
         }
 
         /// <summary>
@@ -385,7 +387,6 @@ namespace Galador.Reflection.Utils
 #if __NET__ || __NETCORE__
         Action<object, object> setter;
         Func<object, object> getter;
-        bool hasFastSetter;
         Action<object, Guid> setterGuid;
         Action<object, bool> setterBool;
         Action<object, char> setterChar;
@@ -400,82 +401,128 @@ namespace Galador.Reflection.Utils
         Action<object, float> setterSingle;
         Action<object, double> setterDouble;
         Action<object, decimal> setterDecimal;
+        Func<object, Guid> getterGuid;
+        Func<object, bool> getterBool;
+        Func<object, char> getterChar;
+        Func<object, byte> getterByte;
+        Func<object, sbyte> getterSByte;
+        Func<object, short> getterInt16;
+        Func<object, ushort> getterUInt16;
+        Func<object, int> getterInt32;
+        Func<object, uint> getterUInt32;
+        Func<object, long> getterInt64;
+        Func<object, ulong> getterUInt64;
+        Func<object, float> getterSingle;
+        Func<object, double> getterDouble;
+        Func<object, decimal> getterDecimal;
 #else
         PropertyInfo pInfo;
         FieldInfo fInfo;
 #endif
 
-        #region SetMember()
+        #region InitializeStructAccessor() InitializeAccessor()
 
-        internal void SetMember(MemberInfo mi)
+#if __NET__ || __NETCORE__
+        void InitializeStructAccessor()
+        {
+            switch (Type.Kind)
+            {
+                default:
+                case PrimitiveType.None:
+                case PrimitiveType.Object:
+                case PrimitiveType.String:
+                case PrimitiveType.Bytes:
+                    break;
+                case PrimitiveType.Guid:
+                    InitFastGetter<Guid>(Member, ref getterGuid, ref setterGuid);
+                    break;
+                case PrimitiveType.Bool:
+                    InitFastGetter<bool>(Member, ref getterBool, ref setterBool);
+                    break;
+                case PrimitiveType.Char:
+                    InitFastGetter<char>(Member, ref getterChar, ref setterChar);
+                    break;
+                case PrimitiveType.Byte:
+                    InitFastGetter<byte>(Member, ref getterByte, ref setterByte);
+                    break;
+                case PrimitiveType.SByte:
+                    InitFastGetter<sbyte>(Member, ref getterSByte, ref setterSByte);
+                    break;
+                case PrimitiveType.Int16:
+                    InitFastGetter<short>(Member, ref getterInt16, ref setterInt16);
+                    break;
+                case PrimitiveType.UInt16:
+                    InitFastGetter<ushort>(Member, ref getterUInt16, ref setterUInt16);
+                    break;
+                case PrimitiveType.Int32:
+                    InitFastGetter<int>(Member, ref getterInt32, ref setterInt32);
+                    break;
+                case PrimitiveType.UInt32:
+                    InitFastGetter<uint>(Member, ref getterUInt32, ref setterUInt32);
+                    break;
+                case PrimitiveType.Int64:
+                    InitFastGetter<long>(Member, ref getterInt64, ref setterInt64);
+                    break;
+                case PrimitiveType.UInt64:
+                    InitFastGetter<ulong>(Member, ref getterUInt64, ref setterUInt64);
+                    break;
+                case PrimitiveType.Single:
+                    InitFastGetter<float>(Member, ref getterSingle, ref setterSingle);
+                    break;
+                case PrimitiveType.Double:
+                    InitFastGetter<double>(Member, ref getterDouble, ref setterDouble);
+                    break;
+                case PrimitiveType.Decimal:
+                    InitFastGetter<decimal>(Member, ref getterDecimal, ref setterDecimal);
+                    break;
+            }
+        }
+        static void InitFastGetter<T>(MemberInfo mi, ref Func<object, T> getter, ref Action<object, T> setter)
         {
             if (mi is PropertyInfo)
             {
-                var pi = (PropertyInfo)mi;
+                InitFastGetter<T>((PropertyInfo)mi, ref getter, ref setter);
+            }
+            else if (mi is FieldInfo)
+            {
+                InitFastGetter<T>((FieldInfo)mi, ref getter, ref setter);
+            }
+        }
+        static void InitFastGetter<T>(PropertyInfo pi, ref Func<object, T> getter, ref Action<object, T> setter)
+        {
+            getter = EmitHelper.CreatePropertyGetter<T>(pi);
+            if (pi.SetMethod != null)
+                setter = EmitHelper.CreatePropertySetter<T>(pi);
+        }
+        static void InitFastGetter<T>(FieldInfo pi, ref Func<object, T> getter, ref Action<object, T> setter)
+        {
+            if (pi.IsLiteral)
+            {
+                var value = (T)pi.GetValue(null);
+                getter = (x) => value;
+            }
+            else
+            {
+                getter = EmitHelper.CreateFieldGetter<T>(pi);
+                setter = EmitHelper.CreateFieldSetter<T>(pi);
+            }
+        }
+#else
+        void InitializeStructAccessor()
+        {
+        }
+#endif
+
+        void InitializeAccessor()
+        {
+            if (Member is PropertyInfo)
+            {
+                var pi = (PropertyInfo)Member;
 #if __NET__ || __NETCORE__
                 getter = EmitHelper.CreatePropertyGetterHandler(pi);
                 if (pi.SetMethod != null)
                 {
                     setter = EmitHelper.CreatePropertySetterHandler(pi);
-                    switch (Type.Kind)
-                    {
-                        case PrimitiveType.Guid:
-                            hasFastSetter = true;
-                            setterGuid = EmitHelper.CreatePropertySetter<Guid>(pi);
-                            break;
-                        case PrimitiveType.Bool:
-                            hasFastSetter = true;
-                            setterBool = EmitHelper.CreatePropertySetter<bool>(pi);
-                            break;
-                        case PrimitiveType.Char:
-                            hasFastSetter = true;
-                            setterChar = EmitHelper.CreatePropertySetter<char>(pi);
-                            break;
-                        case PrimitiveType.Byte:
-                            hasFastSetter = true;
-                            setterByte = EmitHelper.CreatePropertySetter<byte>(pi);
-                            break;
-                        case PrimitiveType.SByte:
-                            hasFastSetter = true;
-                            setterSByte = EmitHelper.CreatePropertySetter<sbyte>(pi);
-                            break;
-                        case PrimitiveType.Int16:
-                            hasFastSetter = true;
-                            setterInt16 = EmitHelper.CreatePropertySetter<short>(pi);
-                            break;
-                        case PrimitiveType.UInt16:
-                            hasFastSetter = true;
-                            setterUInt16 = EmitHelper.CreatePropertySetter<ushort>(pi);
-                            break;
-                        case PrimitiveType.Int32:
-                            hasFastSetter = true;
-                            setterInt32 = EmitHelper.CreatePropertySetter<int>(pi);
-                            break;
-                        case PrimitiveType.UInt32:
-                            hasFastSetter = true;
-                            setterUInt32 = EmitHelper.CreatePropertySetter<uint>(pi);
-                            break;
-                        case PrimitiveType.Int64:
-                            hasFastSetter = true;
-                            setterInt64 = EmitHelper.CreatePropertySetter<long>(pi);
-                            break;
-                        case PrimitiveType.UInt64:
-                            hasFastSetter = true;
-                            setterUInt64 = EmitHelper.CreatePropertySetter<ulong>(pi);
-                            break;
-                        case PrimitiveType.Single:
-                            hasFastSetter = true;
-                            setterSingle = EmitHelper.CreatePropertySetter<float>(pi);
-                            break;
-                        case PrimitiveType.Double:
-                            hasFastSetter = true;
-                            setterDouble = EmitHelper.CreatePropertySetter<double>(pi);
-                            break;
-                        case PrimitiveType.Decimal:
-                            hasFastSetter = true;
-                            setterDecimal = EmitHelper.CreatePropertySetter<decimal>(pi);
-                            break;
-                    }
                 }
 #else
                 pInfo = pi;
@@ -483,7 +530,7 @@ namespace Galador.Reflection.Utils
             }
             else
             {
-                var fi = (FieldInfo)mi;
+                var fi = (FieldInfo)Member;
                 if (fi.IsLiteral)
                 {
 #if __NET__ || __NETCORE__
@@ -498,65 +545,6 @@ namespace Galador.Reflection.Utils
 #if __NET__ || __NETCORE__
                     getter = EmitHelper.CreateFieldGetterHandler(fi);
                     setter = EmitHelper.CreateFieldSetterHandler(fi);
-                    switch (Type.Kind)
-                    {
-                        case PrimitiveType.Guid:
-                            hasFastSetter = true;
-                            setterGuid = EmitHelper.CreateFieldSetter<Guid>(fi);
-                            break;
-                        case PrimitiveType.Bool:
-                            hasFastSetter = true;
-                            setterBool = EmitHelper.CreateFieldSetter<bool>(fi);
-                            break;
-                        case PrimitiveType.Char:
-                            hasFastSetter = true;
-                            setterChar = EmitHelper.CreateFieldSetter<char>(fi);
-                            break;
-                        case PrimitiveType.Byte:
-                            hasFastSetter = true;
-                            setterByte = EmitHelper.CreateFieldSetter<byte>(fi);
-                            break;
-                        case PrimitiveType.SByte:
-                            hasFastSetter = true;
-                            setterSByte = EmitHelper.CreateFieldSetter<sbyte>(fi);
-                            break;
-                        case PrimitiveType.Int16:
-                            hasFastSetter = true;
-                            setterInt16 = EmitHelper.CreateFieldSetter<short>(fi);
-                            break;
-                        case PrimitiveType.UInt16:
-                            hasFastSetter = true;
-                            setterUInt16 = EmitHelper.CreateFieldSetter<ushort>(fi);
-                            break;
-                        case PrimitiveType.Int32:
-                            hasFastSetter = true;
-                            setterInt32 = EmitHelper.CreateFieldSetter<int>(fi);
-                            break;
-                        case PrimitiveType.UInt32:
-                            hasFastSetter = true;
-                            setterUInt32 = EmitHelper.CreateFieldSetter<uint>(fi);
-                            break;
-                        case PrimitiveType.Int64:
-                            hasFastSetter = true;
-                            setterInt64 = EmitHelper.CreateFieldSetter<long>(fi);
-                            break;
-                        case PrimitiveType.UInt64:
-                            hasFastSetter = true;
-                            setterUInt64 = EmitHelper.CreateFieldSetter<ulong>(fi);
-                            break;
-                        case PrimitiveType.Single:
-                            hasFastSetter = true;
-                            setterSingle = EmitHelper.CreateFieldSetter<float>(fi);
-                            break;
-                        case PrimitiveType.Double:
-                            hasFastSetter = true;
-                            setterDouble = EmitHelper.CreateFieldSetter<double>(fi);
-                            break;
-                        case PrimitiveType.Decimal:
-                            hasFastSetter = true;
-                            setterDecimal = EmitHelper.CreateFieldSetter<decimal>(fi);
-                            break;
-                    }
 #else
                     fInfo = fi;
 #endif
@@ -628,7 +616,7 @@ namespace Galador.Reflection.Utils
                 pInfo.SetValue(instance, value);
                 return true;
             }
-            else if (fInfo != null)
+            else if (fInfo != null && !fInfo.IsLiteral)
             {
                 fInfo.SetValue(instance, value);
                 return true;
@@ -639,68 +627,293 @@ namespace Galador.Reflection.Utils
 
         #endregion
 
-        #region TryFastReadSet()
+        #region typed known structs: Get/Set Guid/Bool/Char/...()
 
-        /// <summary>
-        /// Am even faster way to et known value type, using strongly typed accessor on platform supporting it.
-        /// </summary>
-        /// <param name="reader">The source of the value</param>
-        /// <param name="instance">The instance which member would be set</param>
-        /// <returns>Whether the value could be set. If not the <paramref name="reader"/> won't be read.</returns>
-        public bool TryFastReadSet(IPrimitiveReader reader, object instance)
-        {
 #if __NET__ || __NETCORE__
-            if (hasFastSetter && instance != null)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static bool FastSet<T>(object instance, T value, Action<object, T> setter)
+        {
+            if (setter != null)
             {
-                switch (Type.Kind)
-                {
-                    case PrimitiveType.Guid:
-                        setterGuid(instance, reader.ReadGuid());
-                        break;
-                    case PrimitiveType.Bool:
-                        setterBool(instance, reader.ReadBool());
-                        break;
-                    case PrimitiveType.Char:
-                        setterChar(instance, reader.ReadChar());
-                        break;
-                    case PrimitiveType.Byte:
-                        setterByte(instance, reader.ReadByte());
-                        break;
-                    case PrimitiveType.SByte:
-                        setterSByte(instance, reader.ReadSByte());
-                        break;
-                    case PrimitiveType.Int16:
-                        setterInt16(instance, reader.ReadInt16());
-                        break;
-                    case PrimitiveType.UInt16:
-                        setterUInt16(instance, reader.ReadUInt16());
-                        break;
-                    case PrimitiveType.Int32:
-                        setterInt32(instance, reader.ReadInt32());
-                        break;
-                    case PrimitiveType.UInt32:
-                        setterUInt32(instance, reader.ReadUInt32());
-                        break;
-                    case PrimitiveType.Int64:
-                        setterInt64(instance, reader.ReadInt64());
-                        break;
-                    case PrimitiveType.UInt64:
-                        setterUInt64(instance, reader.ReadUInt64());
-                        break;
-                    case PrimitiveType.Single:
-                        setterSingle(instance, reader.ReadSingle());
-                        break;
-                    case PrimitiveType.Double:
-                        setterDouble(instance, reader.ReadDouble());
-                        break;
-                    case PrimitiveType.Decimal:
-                        setterDecimal(instance, reader.ReadDecimal());
-                        break;
-                }
+                setter(instance, value);
                 return true;
             }
+            else { return false; }
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static T FastGet<T>(object instance, Func<object, T> getter)
+        {
+            if (getter != null) { return getter(instance); }
+            else { return default(T); }
+        }
+#else
+        static T As<T>(object value) { return value is T ? (T)value : default(T); }
 #endif
-            return false;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool SetGuid(object instance, Guid value)
+        {
+#if __NET__ || __NETCORE__
+            return FastSet<Guid>(instance, value, setterGuid);
+#else
+            return SetValue(instance, value);
+#endif
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Guid GetGuid(object instance)
+        {
+#if __NET__ || __NETCORE__
+            return FastGet<Guid>(instance, getterGuid);
+#else
+            return As<Guid>(GetValue(instance));
+#endif
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool SetBool(object instance, bool value)
+        {
+#if __NET__ || __NETCORE__
+            return FastSet<bool>(instance, value, setterBool);
+#else
+            return SetValue(instance, value);
+#endif
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool GetBool(object instance)
+        {
+#if __NET__ || __NETCORE__
+            return FastGet<bool>(instance, getterBool);
+#else
+            return As<bool>(GetValue(instance));
+#endif
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool SetChar(object instance, char value)
+        {
+#if __NET__ || __NETCORE__
+            return FastSet<char>(instance, value, setterChar);
+#else
+            return SetValue(instance, value);
+#endif
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public char GetChar(object instance)
+        {
+#if __NET__ || __NETCORE__
+            return FastGet<char>(instance, getterChar);
+#else
+            return As<char>(GetValue(instance));
+#endif
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool SetInt8(object instance, byte value)
+        {
+#if __NET__ || __NETCORE__
+            return FastSet<byte>(instance, value, setterByte);
+#else
+            return SetValue(instance, value);
+#endif
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public byte GetInt8(object instance)
+        {
+#if __NET__ || __NETCORE__
+            return FastGet<byte>(instance, getterByte);
+#else
+            return As<byte>(GetValue(instance));
+#endif
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool SetUInt8(object instance, sbyte value)
+        {
+#if __NET__ || __NETCORE__
+            return FastSet<sbyte>(instance, value, setterSByte);
+#else
+            return SetValue(instance, value);
+#endif
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public sbyte GetUInt8(object instance)
+        {
+#if __NET__ || __NETCORE__
+            return FastGet<sbyte>(instance, getterSByte);
+#else
+            return As<sbyte>(GetValue(instance));
+#endif
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool SetInt16(object instance, short value)
+        {
+#if __NET__ || __NETCORE__
+            return FastSet<short>(instance, value, setterInt16);
+#else
+            return SetValue(instance, value);
+#endif
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public short GetInt16(object instance)
+        {
+#if __NET__ || __NETCORE__
+            return FastGet<short>(instance, getterInt16);
+#else
+            return As<short>(GetValue(instance));
+#endif
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool SetUInt16(object instance, ushort value)
+        {
+#if __NET__ || __NETCORE__
+            return FastSet<ushort>(instance, value, setterUInt16);
+#else
+            return SetValue(instance, value);
+#endif
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ushort GetUInt16(object instance)
+        {
+#if __NET__ || __NETCORE__
+            return FastGet<ushort>(instance, getterUInt16);
+#else
+            return As<ushort>(GetValue(instance));
+#endif
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool SetInt32(object instance, int value)
+        {
+#if __NET__ || __NETCORE__
+            return FastSet<int>(instance, value, setterInt32);
+#else
+            return SetValue(instance, value);
+#endif
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int GetInt32(object instance)
+        {
+#if __NET__ || __NETCORE__
+            return FastGet<int>(instance, getterInt32);
+#else
+            return As<int>(GetValue(instance));
+#endif
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool SetUInt32(object instance, uint value)
+        {
+#if __NET__ || __NETCORE__
+            return FastSet<uint>(instance, value, setterUInt32);
+#else
+            return SetValue(instance, value);
+#endif
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public uint GetUInt32(object instance)
+        {
+#if __NET__ || __NETCORE__
+            return FastGet<uint>(instance, getterUInt32);
+#else
+            return As<uint>(GetValue(instance));
+#endif
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool SetInt64(object instance, long value)
+        {
+#if __NET__ || __NETCORE__
+            return FastSet<long>(instance, value, setterInt64);
+#else
+            return SetValue(instance, value);
+#endif
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public long GetInt64(object instance)
+        {
+#if __NET__ || __NETCORE__
+            return FastGet<long>(instance, getterInt64);
+#else
+            return As<long>(GetValue(instance));
+#endif
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool SetUInt64(object instance, ulong value)
+        {
+#if __NET__ || __NETCORE__
+            return FastSet<ulong>(instance, value, setterUInt64);
+#else
+            return SetValue(instance, value);
+#endif
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ulong GetUInt64(object instance)
+        {
+#if __NET__ || __NETCORE__
+            return FastGet<ulong>(instance, getterUInt64);
+#else
+            return As<ulong>(GetValue(instance));
+#endif
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool SetSingle(object instance, float value)
+        {
+#if __NET__ || __NETCORE__
+            return FastSet<float>(instance, value, setterSingle);
+#else
+            return SetValue(instance, value);
+#endif
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public float GetSingle(object instance)
+        {
+#if __NET__ || __NETCORE__
+            return FastGet<float>(instance, getterSingle);
+#else
+            return As<float>(GetValue(instance));
+#endif
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool SetDouble(object instance, double value)
+        {
+#if __NET__ || __NETCORE__
+            return FastSet<double>(instance, value, setterDouble);
+#else
+            return SetValue(instance, value);
+#endif
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public double GetDouble(object instance)
+        {
+#if __NET__ || __NETCORE__
+            return FastGet<double>(instance, getterDouble);
+#else
+            return As<double>(GetValue(instance));
+#endif
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool SetDecimal(object instance, decimal value)
+        {
+#if __NET__ || __NETCORE__
+            return FastSet<decimal>(instance, value, setterDecimal);
+#else
+            return SetValue(instance, value);
+#endif
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public decimal GetDecimal(object instance)
+        {
+#if __NET__ || __NETCORE__
+            return FastGet<decimal>(instance, getterDecimal);
+#else
+            return As<decimal>(GetValue(instance));
+#endif
         }
 
         #endregion

@@ -166,6 +166,8 @@ namespace Galador.Reflection.Serialization
             throw new PlatformNotSupportedException("PCL");
 #elif __NETCORE__
             var missing = new Missing(ts);
+            if (oid > 0)
+                Context.Register(oid, missing);
             var list = new List<Tuple<object, object>>();
             missing.Collection = list;
             var N = Reader.ReadVInt();
@@ -358,7 +360,7 @@ namespace Galador.Reflection.Serialization
                                     Context.Register(oid, o);
                                 foreach (var m in ts.RuntimeMembers)
                                 {
-                                    if (m.RuntimeMember == null || !m.RuntimeMember.TryFastReadSet(this.Reader, o))
+                                    if (m.RuntimeMember == null || !TryFastReadSet(m.RuntimeMember, o))
                                     {
                                         object org = null;
                                         if (m.Type.IsReference)
@@ -428,6 +430,58 @@ namespace Galador.Reflection.Serialization
                     return RETURN_REGISTER(this.Reader.ReadDecimal());
             }
         }
+        bool TryFastReadSet(FastMember member, object instance)
+        {
+            if (instance == null)
+                return false;
+            switch (member.Type.Kind)
+            {
+                case PrimitiveType.Guid:
+                    member.SetGuid(instance, this.Reader.ReadGuid());
+                    return true;
+                case PrimitiveType.Bool:
+                    member.SetBool(instance, this.Reader.ReadBool());
+                    return true;
+                case PrimitiveType.Char:
+                    member.SetChar(instance, this.Reader.ReadChar());
+                    return true;
+                case PrimitiveType.Byte:
+                    member.SetInt8(instance, this.Reader.ReadByte());
+                    return true;
+                case PrimitiveType.SByte:
+                    member.SetUInt8(instance, this.Reader.ReadSByte());
+                    return true;
+                case PrimitiveType.Int16:
+                    member.SetInt16(instance, this.Reader.ReadInt16());
+                    return true;
+                case PrimitiveType.UInt16:
+                    member.SetUInt16(instance, this.Reader.ReadUInt16());
+                    return true;
+                case PrimitiveType.Int32:
+                    member.SetInt32(instance, this.Reader.ReadInt32());
+                    return true;
+                case PrimitiveType.UInt32:
+                    member.SetUInt32(instance, this.Reader.ReadUInt32());
+                    return true;
+                case PrimitiveType.Int64:
+                    member.SetInt64(instance, this.Reader.ReadInt64());
+                    return true;
+                case PrimitiveType.UInt64:
+                    member.SetUInt64(instance, this.Reader.ReadUInt64());
+                    return true;
+                case PrimitiveType.Single:
+                    member.SetSingle(instance, this.Reader.ReadSingle());
+                    return true;
+                case PrimitiveType.Double:
+                    member.SetDouble(instance, this.Reader.ReadDouble());
+                    return true;
+                case PrimitiveType.Decimal:
+                    member.SetDecimal(instance, this.Reader.ReadDecimal());
+                    return true;
+                default:
+                    return false;
+            }
+        }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void ReadList(IList o)
         {
@@ -442,6 +496,7 @@ namespace Galador.Reflection.Serialization
                     o.Add(value);
             }
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void ReadDict(IDictionary o)
         {
             var isRO = Reader.ReadBool();

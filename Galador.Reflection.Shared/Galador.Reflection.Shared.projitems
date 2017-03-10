@@ -16,7 +16,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)IO\PrimitiveBinaryWriter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IO\PrimitiveTextReader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IO\PrimitiveTextWriter.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)IO\PrimitiveType.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IO\StreamExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IO\TokenPrimitiveWriter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logging\TraceKey.cs" />
@@ -42,6 +41,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Utils\FastType.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\KnownAssemblies.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\MemberList.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utils\PrimitiveType.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\ReflectionEx.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\TypeDescription.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\ValueTuple.cs" />

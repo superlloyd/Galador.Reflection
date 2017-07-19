@@ -10,7 +10,6 @@ using System.Runtime.Serialization;
 using System.IO;
 using System.Runtime.CompilerServices;
 using Galador.Reflection.Logging;
-using Galador.Reflection.IO;
 
 namespace Galador.Reflection.Serialization
 {
@@ -421,7 +420,7 @@ namespace Galador.Reflection.Serialization
                     }
                     if (!IsGeneric || IsGenericTypeDefinition)
                     {
-                        var att = ti.GetCustomAttribute<SerializationNameAttribute>();
+                        var att = SerializationNameAttribute.GetNameAttribute(ti);
                         if (att == null)
                         {
                             TypeName = ti.FullName;
@@ -587,6 +586,8 @@ namespace Galador.Reflection.Serialization
                 return true;
             var o = obj as ReflectType;
             if (o == null)
+                return false;
+            if (hashcode != o.hashcode)
                 return false;
             if (Type != null || o.Type != null)
                 return Type == o.Type;

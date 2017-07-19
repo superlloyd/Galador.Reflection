@@ -217,9 +217,37 @@ namespace Galador.Reflection.Utils
 #if __PCL__
 
         internal static Type GetEnumUnderlyingType(this TypeInfo ti) { throw new PlatformNotSupportedException(); }
-        internal static IEnumerable<PropertyInfo> GetRuntimeProperties(this TypeInfo ti) { throw new PlatformNotSupportedException(); }
-        internal static IEnumerable<MethodInfo> GetRuntimeMethods(this TypeInfo ti) { throw new PlatformNotSupportedException(); }
-        internal static IEnumerable<FieldInfo> GetRuntimeFields(this TypeInfo ti) { throw new PlatformNotSupportedException(); }
+
+        public static IEnumerable<PropertyInfo> GetRuntimeProperties(this TypeInfo ti)
+        {
+            while (ti != null)
+            {
+                foreach (var p in ti.DeclaredProperties)
+                    yield return p;
+                ti = ti.BaseType?.GetTypeInfo();
+            }
+        }
+        public static IEnumerable<MethodInfo> GetRuntimeMethods(this TypeInfo ti)
+        {
+            while (ti != null)
+            {
+                foreach (var p in ti.DeclaredMethods)
+                    yield return p;
+                ti = ti.BaseType?.GetTypeInfo();
+            }
+        }
+        public static IEnumerable<FieldInfo> GetRuntimeFields(this TypeInfo ti)
+        {
+            while (ti != null)
+            {
+                foreach (var p in ti.DeclaredFields)
+                    yield return p;
+                ti = ti.BaseType?.GetTypeInfo();
+            }
+        }
+
+        public static PropertyInfo GetProperty(this Type ti, string name) { return GetProperty(ti.GetTypeInfo(), name); }
+        public static PropertyInfo GetProperty(this TypeInfo ti, string name) { return GetRuntimeProperties(ti).FirstOrDefault(x => x.Name == name); }
 
 #endif
 

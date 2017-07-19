@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
 
 namespace Galador.Reflection.Serialization
@@ -159,6 +160,19 @@ namespace Galador.Reflection.Serialization
             if (AssemblyName != null)
                 result ^= AssemblyName.GetHashCode();
             return result;
+        }
+
+        public static SerializationNameAttribute GetNameAttribute(TypeInfo ti)
+        {
+            var att = ti.GetCustomAttribute<SerializationNameAttribute>();
+            if (att != null)
+                return att;
+
+            var gatt = ti.GetCustomAttribute<System.Runtime.InteropServices.GuidAttribute>();
+            if (gatt != null)
+                return new SerializationNameAttribute(gatt.Value);
+
+            return null;
         }
     }
 

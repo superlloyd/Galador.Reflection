@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Galador.Reflection.IO
+namespace Galador.Reflection.Serialization.IO
 {
     /// <summary>
     /// An <see cref="IPrimitiveWriter"/> that write data to an object list. It is faster for cloning and also make it easier to debug serialization.

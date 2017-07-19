@@ -1,6 +1,4 @@
-﻿using Galador.Reflection.IO;
-using Galador.Reflection.Utils;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -383,6 +381,15 @@ namespace Galador.Reflection.Utils
         /// </summary>
         public MemberInfo Member { get; private set; }
 
+        public IEnumerable<Attribute> GetAttributes()
+        {
+            if (pInfo != null)
+                return pInfo.GetCustomAttributes();
+            if (fInfo != null)
+                return fInfo.GetCustomAttributes();
+            throw new InvalidOperationException("Should not be there");
+        }
+
         // performance fields, depends on platform
 #if __NET__ || __NETCORE__
         Action<object, object> setter;
@@ -415,12 +422,11 @@ namespace Galador.Reflection.Utils
         Func<object, float> getterSingle;
         Func<object, double> getterDouble;
         Func<object, decimal> getterDecimal;
-#else
+#endif
         PropertyInfo pInfo;
         FieldInfo fInfo;
-#endif
 
-        #region InitializeStructAccessor() InitializeAccessor()
+#region InitializeStructAccessor() InitializeAccessor()
 
 #if __NET__ || __NETCORE__
         void InitializeStructAccessor()
@@ -517,44 +523,38 @@ namespace Galador.Reflection.Utils
         {
             if (Member is PropertyInfo)
             {
-                var pi = (PropertyInfo)Member;
+                pInfo = (PropertyInfo)Member;
 #if __NET__ || __NETCORE__
-                getter = EmitHelper.CreatePropertyGetterHandler(pi);
-                if (pi.SetMethod != null)
+                getter = EmitHelper.CreatePropertyGetterHandler(pInfo);
+                if (pInfo.SetMethod != null)
                 {
-                    setter = EmitHelper.CreatePropertySetterHandler(pi);
+                    setter = EmitHelper.CreatePropertySetterHandler(pInfo);
                 }
-#else
-                pInfo = pi;
 #endif
             }
             else
             {
-                var fi = (FieldInfo)Member;
-                if (fi.IsLiteral)
+                fInfo = (FieldInfo)Member;
+                if (fInfo.IsLiteral)
                 {
 #if __NET__ || __NETCORE__
-                    var value = fi.GetValue(null);
+                    var value = fInfo.GetValue(null);
                     getter = (x) => value;
-#else
-                    fInfo = fi;
 #endif
                 }
                 else
                 {
 #if __NET__ || __NETCORE__
-                    getter = EmitHelper.CreateFieldGetterHandler(fi);
-                    setter = EmitHelper.CreateFieldSetterHandler(fi);
-#else
-                    fInfo = fi;
+                    getter = EmitHelper.CreateFieldGetterHandler(fInfo);
+                    setter = EmitHelper.CreateFieldSetterHandler(fInfo);
 #endif
                 }
             }
         }
 
-        #endregion
+#endregion
 
-        #region public: GetValue() SetValue()
+#region public: GetValue() SetValue()
 
         /// <summary>
         /// Gets the value of this member for the given instance.
@@ -625,9 +625,9 @@ namespace Galador.Reflection.Utils
             return false;
         }
 
-        #endregion
+#endregion
 
-        #region typed known structs: Get/Set Guid/Bool/Char/...()
+#region typed known structs: Get/Set Guid/Bool/Char/...()
 
 #if __NET__ || __NETCORE__
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -647,6 +647,7 @@ namespace Galador.Reflection.Utils
             else { return default(T); }
         }
 #else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static T As<T>(object value) { return value is T ? (T)value : default(T); }
 #endif
 
@@ -916,8 +917,8 @@ namespace Galador.Reflection.Utils
 #endif
         }
 
-        #endregion
+#endregion
     }
 
-    #endregion
+#endregion
 }

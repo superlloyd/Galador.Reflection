@@ -17,7 +17,7 @@ namespace TestAndroid
         {
             base.OnCreate(bundle);
 
-            var tadapter = new TestAdapter(this, typeof(RegistryTests), typeof(PathTests),typeof(SerializationTests));
+            var tadapter = new TestAdapter(this, typeof(RegistryTests), typeof(PathTests),typeof(SerializationTests), typeof(StreamTests));
 
             SetContentView(Resource.Layout.Main);
             var list = FindViewById<ListView>(Resource.Id.listView1);

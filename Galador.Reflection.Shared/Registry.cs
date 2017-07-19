@@ -406,6 +406,34 @@ namespace Galador.Reflection
 
         #endregion
 
+        #region public FindRegistrations()
+
+        /// <summary>
+        /// Find and resolve all registration that fit an arbitrary predicate
+        /// </summary>
+        /// <param name="matching">Whether this type myst be resolve</param>
+        /// <param name="cache">Where newly create instance that are not service are cached for reuse.</param>
+        /// <returns>Al registered service which implement or are subclass of <paramref name="type"/> or a newly create one.</returns>
+        /// <returns>Al registered service whose type matched the criteria.</returns>
+        public IEnumerable<object> FindRegistrations(Predicate<Type> matching, RequestCache cache = null)
+        {
+            EnsureAlive();
+
+            if (cache != null)
+                foreach (var type in cache.Keys)
+                    if (matching(type))
+                        yield return cache[type];
+
+            if (cache == null)
+                cache = new RequestCache();
+
+            foreach (var vault in exact.Values)
+                if (matching(vault.Type))
+                    yield return Resolve(vault, cache);
+        }
+
+        #endregion
+
         #region ResolveProperties()
 
         /// <summary>
@@ -636,7 +664,7 @@ namespace Galador.Reflection
 
         #endregion
 
-        #region FindRegistrations()
+        #region private FindRegistrations()
 
         IEnumerable<TypeVault> FindRegistrations(Type type, RequestCache cache)
         {

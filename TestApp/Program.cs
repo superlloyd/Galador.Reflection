@@ -25,7 +25,7 @@ namespace TestApp
                 , typeof(SerializationTests.Generic01<int, string>)
                 );
 
-            tSer.WinFormTest();
+            //tSer.WinFormTest();
         }
 
     }

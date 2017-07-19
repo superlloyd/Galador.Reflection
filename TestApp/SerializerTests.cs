@@ -1,5 +1,5 @@
-﻿using Galador.Reflection.IO;
-using Galador.Reflection.Serialization;
+﻿using Galador.Reflection.Serialization;
+using Galador.Reflection.Serialization.IO;
 using Galador.Reflection.Utils;
 using Newtonsoft.Json;
 using System;
@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
@@ -379,6 +380,7 @@ namespace TestApp
             Assert.Equal(b.Name, c.Name);
         }
 
+        [Guid("685697F6-028C-4E7A-A0F6-540D87B88746")]
         public class BigClass
         {
             public int ID { get; set; }

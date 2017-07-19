@@ -8,7 +8,7 @@ using System.Collections;
 using SRS = System.Runtime.Serialization;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using Galador.Reflection.IO;
+using Galador.Reflection.Serialization.IO;
 
 namespace Galador.Reflection.Serialization
 {

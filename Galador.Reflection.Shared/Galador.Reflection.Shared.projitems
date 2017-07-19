@@ -10,14 +10,14 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)AssemblyInfo.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)IO\IPrimitiveReader.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)IO\IPrimitiveWriter.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)IO\PrimitiveBinaryReader.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)IO\PrimitiveBinaryWriter.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)IO\PrimitiveTextReader.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)IO\PrimitiveTextWriter.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)IO\StreamExtensions.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)IO\TokenPrimitiveWriter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Serialization\IO\IPrimitiveReader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Serialization\IO\IPrimitiveWriter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Serialization\IO\PrimitiveBinaryReader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Serialization\IO\PrimitiveBinaryWriter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Serialization\IO\PrimitiveTextReader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Serialization\IO\PrimitiveTextWriter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utils\StreamExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Serialization\IO\TokenPrimitiveWriter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logging\TraceKey.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logging\TraceKeys.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)PropertyPath.cs" />
@@ -44,7 +44,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Utils\PrimitiveType.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\ReflectionEx.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\TypeDescription.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Utils\ValueTuple.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ValueTuple.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\WeakEvents.cs" />
   </ItemGroup>
 </Project>

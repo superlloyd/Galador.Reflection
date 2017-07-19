@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Galador.Reflection.Utils;
 
-namespace Galador.Reflection.IO
+namespace Galador.Reflection.Utils
 {
     /// <summary>
     /// A utility class helping write base .NET value to a stream

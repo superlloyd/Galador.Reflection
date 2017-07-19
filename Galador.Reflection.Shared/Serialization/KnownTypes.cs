@@ -97,7 +97,7 @@ namespace Galador.Reflection.Serialization
                     typeToSurrogate[t] = type;
                 }
             }
-            var nattr = type.GetTypeInfo().GetCustomAttribute<SerializationNameAttribute>();
+            var nattr = SerializationNameAttribute.GetNameAttribute(type.GetTypeInfo());
             if (nattr != null)
                 lock (typeToSurrogate)
                     sReplacementTypes[nattr] = type;

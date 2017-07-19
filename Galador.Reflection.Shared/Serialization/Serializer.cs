@@ -1,8 +1,9 @@
-﻿using Galador.Reflection.IO;
+﻿using Galador.Reflection.Serialization.IO;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.IO.Compression;
 using System.Text;
 
 namespace Galador.Reflection.Serialization
@@ -34,6 +35,28 @@ namespace Galador.Reflection.Serialization
             var pr = new PrimitiveTextReader(new StringReader(source));
             var or = new ObjectReader(pr);
             return or.Read();
+        }
+
+        /// <summary>
+        /// Serializes the specified object <paramref name="o"/> to a compressed gzip stream.
+        /// </summary>
+        /// <param name="o">The object to serialize.</param>
+        /// <param name="target">The target where the serialized version will be written.</param>
+        /// <param name="settings">The serialization settings to use</param>
+        public static void ZipSerialize(object o, Stream stream, SerializationSettings settings = null)
+        {
+            using (var gzStream = new GZipStream(stream, CompressionMode.Compress, true))
+                Serialize(o, gzStream, settings);
+        }
+        /// <summary>
+        /// Deserialize an object from a compressed gzip stream.
+        /// </summary>
+        /// <param name="source">The stream to read as a serialized object.</param>
+        /// <returns>A newly deserialized object.</returns>
+        public static object ZipDeserialize(Stream stream)
+        {
+            using (var gzStream = new GZipStream(stream, CompressionMode.Decompress, true))
+                return Deserialize(gzStream);
         }
 
         /// <summary>

@@ -12,12 +12,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="1.1.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="1.1.2" />
     <PackageReference Include="xunit" Version="2.2.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Galador.Reflection.NETStandard\Galador.Reflection.NETStandard.csproj" />
+    <ProjectReference Include="..\Galador.Reflection.NETCore\Galador.Reflection.NETCore.csproj" />
   </ItemGroup>
 
 </Project>

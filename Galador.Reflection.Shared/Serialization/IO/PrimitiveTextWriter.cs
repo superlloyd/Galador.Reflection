@@ -5,7 +5,7 @@ using System.IO;
 using System.Text;
 using System.Runtime.CompilerServices;
 
-namespace Galador.Reflection.IO
+namespace Galador.Reflection.Serialization.IO
 {
     enum TextPrimitiveSeparator
     {

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Galador.Reflection.IO
+namespace Galador.Reflection.Serialization.IO
 {
     /// <summary>
     /// An interface that know how to read all primitive type (i.e. all non object <see cref="PrimitiveType"/>) from some underlying storage.

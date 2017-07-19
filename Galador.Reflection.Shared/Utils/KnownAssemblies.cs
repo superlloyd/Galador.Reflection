@@ -56,9 +56,15 @@ namespace Galador.Reflection.Utils
 #if __PCL__
                 throw new PlatformNotSupportedException("PCL");
 #elif __NETCORE__
+                Assembly LoadAssembly(string name)
+                {
+                    try { return Assembly.Load(new AssemblyName(name)); }
+                    catch { return null; }
+                }
                 var compiled =
                     from lib in DependencyContext.Default.CompileLibraries
-                    let ass = Assembly.Load(new AssemblyName(lib.Name))
+                    let ass = LoadAssembly(lib.Name)
+                    where ass != null
                     select ass;
                 return FilterOk(compiled);
 #else

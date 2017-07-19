@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 
 #pragma warning disable 1591 // code comments
 namespace Galador.Reflection.Logging
@@ -77,6 +78,27 @@ namespace Galador.Reflection.Logging
 #endif
         }
 
+        public void Write(string msg)
+        {
+            if (!IsEnabled)
+                return;
+#if !__PCL__
+            Trace.Write(string.Format(msg));
+#else
+            throw new PlatformNotSupportedException("PCL");
+#endif
+        }
+        public void WriteLine(string msg)
+        {
+            if (!IsEnabled)
+                return;
+#if !__PCL__
+            Trace.Write(string.Format(msg));
+#else
+            throw new PlatformNotSupportedException("PCL");
+#endif
+        }
+
         [Conditional("DEBUG")]
         public void Debug(object o)
         {
@@ -117,70 +139,30 @@ namespace Galador.Reflection.Logging
         {
             if (!IsEnabled || o == null)
                 return;
-#if !__PCL__
-            Trace.Write(o);
-#else
-            throw new PlatformNotSupportedException("PCL");
-#endif
+            Write(o?.ToString());
         }
-        public void Write(string msg)
-        {
-            if (!IsEnabled)
-                return;
-#if !__PCL__
-            Trace.Write(string.Format(msg));
-#else
-            throw new PlatformNotSupportedException("PCL");
-#endif
-        }
+
         public void Write(string format, params object[] args)
         {
             if (!IsEnabled)
                 return;
-#if !__PCL__
-            Trace.Write(string.Format(format, args));
-#else
-            throw new PlatformNotSupportedException("PCL");
-#endif
+            Write(string.Format(format, args));
         }
 
         public void WriteLine(object o)
         {
             if (!IsEnabled || o == null)
                 return;
-#if !__PCL__
-            Trace.WriteLine(o);
-#else
-            throw new PlatformNotSupportedException("PCL");
-#endif
-        }
-        public void WriteLine(string msg)
-        {
-            if (!IsEnabled)
-                return;
-#if !__PCL__
-            Trace.WriteLine(msg);
-#else
-            throw new PlatformNotSupportedException("PCL");
-#endif
+            WriteLine(o?.ToString());
         }
         public void WriteLine(string format, params object[] args)
         {
             if (!IsEnabled)
                 return;
-#if !__PCL__
-            Trace.WriteLine(string.Format(format, args));
-#else
-            throw new PlatformNotSupportedException("PCL");
-#endif
+            WriteLine(string.Format(format, args));
         }
 
-        string GetHeader()
-        {
-            if (Header != null)
-                return Header();
-            return null;
-        }
+        string GetHeader() { return Header?.Invoke(); }
 
         /// <summary>
         /// Additional header for <see cref="Error(object)"/> methods.

@@ -7,6 +7,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 
+[assembly: TypeForwardedTo(typeof(System.ICloneable))]
 [assembly: TypeForwardedTo(typeof(System.DBNull))]
 [assembly: TypeForwardedTo(typeof(System.Runtime.Serialization.ISerializable))]
 [assembly: TypeForwardedTo(typeof(System.Runtime.Serialization.SerializationInfo))]
@@ -26,6 +27,13 @@ using System.Runtime.Serialization;
 [assembly: TypeForwardedTo(typeof(System.ComponentModel.TypeConverterAttribute))]
 [assembly: TypeForwardedTo(typeof(System.ComponentModel.TypeConverter))]
 
+namespace System
+{
+    public interface ICloneable
+    {
+        object Clone();
+    }
+}
 namespace System.Runtime.Serialization
 {
     public interface ISerializable
@@ -43,6 +51,10 @@ namespace System.Runtime.Serialization
 
 namespace System
 {
+    public interface ICloneable
+    {
+        object Clone();
+    }
     public sealed class DBNull
     {
         public static readonly DBNull Value = new DBNull();

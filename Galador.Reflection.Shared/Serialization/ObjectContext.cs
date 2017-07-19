@@ -1,10 +1,9 @@
-﻿using Galador.Reflection.IO;
-using Galador.Reflection.Utils;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Galador.Reflection.Utils;
 
 namespace Galador.Reflection.Serialization
 {
@@ -263,7 +262,14 @@ namespace Galador.Reflection.Serialization
                 w.WriteLine("\t}");
                 w.WriteLine($"\t[TypeConverter({ToCSharp(type.TypeName)}Converter)]");
             }
-            w.WriteLine($"\t[{nameof(SerializationNameAttribute)}({ToCSharp(type.TypeName)}, {ToCSharp(type.AssemblyName)})]");
+            if (type.AssemblyName == null && Guid.TryParse(type.TypeName, out var g))
+            {
+                w.WriteLine($"\t[{nameof(System.Runtime.InteropServices.GuidAttribute)}({ToCSharp(type.TypeName)})]");
+            }
+            else
+            {
+                w.WriteLine($"\t[{nameof(SerializationNameAttribute)}({ToCSharp(type.TypeName)}, {ToCSharp(type.AssemblyName)})]");
+            }
             if (type.IsEnum)
             {
                 w.WriteLine($"\tpublic enum Type{objectsToIds[type]} : {type.Element}");

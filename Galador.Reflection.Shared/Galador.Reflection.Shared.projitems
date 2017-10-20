@@ -44,7 +44,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Utils\PrimitiveType.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\ReflectionEx.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\TypeDescription.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)ValueTuple.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\WeakEvents.cs" />
   </ItemGroup>
 </Project>

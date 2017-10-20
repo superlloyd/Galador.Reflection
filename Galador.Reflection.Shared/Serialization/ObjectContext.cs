@@ -257,10 +257,10 @@ namespace Galador.Reflection.Serialization
         {
             if (type.HasConverter && type.IsGeneric) // TODO: IsGeneric only... because not sure...
             {
-                w.WriteLine($"\tpublic class {ToCSharp(type.TypeName)}Converter : TypeConverter {{");
+                w.WriteLine($"\tpublic class {ToTypeName(type)}Converter : TypeConverter {{");
                 w.WriteLine("\t\t// TODO ...");
                 w.WriteLine("\t}");
-                w.WriteLine($"\t[TypeConverter({ToCSharp(type.TypeName)}Converter)]");
+                w.WriteLine($"\t[TypeConverter(typeof({ToTypeName(type)}Converter))]");
             }
             if (type.AssemblyName == null && Guid.TryParse(type.TypeName, out var g))
             {
@@ -272,7 +272,7 @@ namespace Galador.Reflection.Serialization
             }
             if (type.IsEnum)
             {
-                w.WriteLine($"\tpublic enum Type{objectsToIds[type]} : {type.Element}");
+                w.WriteLine($"\tpublic enum {ToTypeName(type)} : {type.Element}");
                 w.WriteLine("\t{");
                 w.WriteLine("\t\t// TODO: Values need be entered manually ...");
                 w.WriteLine("\t}");
@@ -346,10 +346,10 @@ namespace Galador.Reflection.Serialization
             }
             w.WriteLine();
             w.WriteLine("\t{");
-            w.WriteLine($"\t\tpublic Type{objectsToIds[type]}() {{ }}");
             if (type.IsISerializable)
             {
-                w.WriteLine($"\t\tType{objectsToIds[type]}(SerializationInfo info, StreamingContext context) {{ throw new NotImplementedException(\"TODO\"); }}");
+                w.WriteLine($"\t\tpublic {ToTypeName(type)}() {{ }}");
+                w.WriteLine($"\t\t{ToTypeName(type)}(SerializationInfo info, StreamingContext context) {{ throw new NotImplementedException(\"TODO\"); }}");
                 w.WriteLine("\t\tvoid ISerializable.GetObjectData(SerializationInfo info, StreamingContext context) { throw new NotImplementedException(\"TODO\"); }");
             }
             if (isSurrogateFor != null)
@@ -373,21 +373,54 @@ namespace Galador.Reflection.Serialization
         string ToTypeName(ReflectType type)
         {
             var sb = new StringBuilder();
-            ToTypeName(sb, type);
+            var sb2 = new StringBuilder();
+            ToTypeName(sb, sb2, type);
             return sb.ToString();
         }
-        void ToTypeName(StringBuilder sb, ReflectType type)
+        void ToTypeName(StringBuilder sb, StringBuilder sb2, ReflectType type)
         {
-            if (type.IsArray)
+            string getFriendlyName()
             {
-                ToTypeName(sb, type.Element);
+                if (string.IsNullOrWhiteSpace(type.TypeName))
+                    return "Type_";
+                if (Guid.TryParse(type.TypeName, out var _))
+                    return "Type_";
+                var i = type.TypeName.LastIndexOfAny(new char[] { '.', '+' });
+                if (i + 1 == type.TypeName.Length)
+                    return "Type_";
+                var s = type.TypeName.Substring(i + 1);
+                sb2.Clear();
+                for (i++; i < type.TypeName.Length; i++)
+                {
+                    var c = type.TypeName[i];
+                    if (c == '`')
+                        break;
+                    if (char.IsLetterOrDigit(c))
+                    {
+                        if (sb2.Length == 0 && char.IsDigit(c))
+                            sb2.Append('T');
+                        sb2.Append(c);
+                    }
+                }
+                if (sb2.Length == 0)
+                    return "Type_";
+                sb2.Append("_");
+                return sb2.ToString();
+            }
+            if (type.IsEnum)
+            {
+                sb.Append(getFriendlyName()).Append(objectsToIds[type]);
+            }
+            else if (type.IsArray)
+            {
+                ToTypeName(sb, sb2, type.Element);
                 for (int i = 1; i < type.ArrayRank; i++)
                     sb.Append(',');
                 sb.Append(']');
             }
             else if (type.IsPointer)
             {
-                ToTypeName(sb, type.Element);
+                ToTypeName(sb, sb2, type.Element);
                 sb.Append('*');
             }
             else if (type.IsGenericParameter)
@@ -411,18 +444,18 @@ namespace Galador.Reflection.Serialization
                         }
                         else
                         {
-                            sb.Append("Type").Append(objectsToIds[type]);
+                            sb.Append(getFriendlyName()).Append(objectsToIds[type]);
                         }
                     }
                     else
                     {
-                        ToTypeName(sb, type.Element);
+                        ToTypeName(sb, sb2, type.Element);
                         sb.Append('<');
                         for (int i = 0; i < type.GenericArguments.Count; i++)
                         {
                             if (i > 0)
                                 sb.Append(",");
-                            ToTypeName(sb, type.GenericArguments[i]);
+                            ToTypeName(sb, sb2, type.GenericArguments[i]);
                         }
                         sb.Append('>');
                     }
@@ -431,7 +464,7 @@ namespace Galador.Reflection.Serialization
                 {
                     if (type.Type != null && type.Type == typeof(object)) sb.Append("object");
                     else if (type.FastType != null && type.FastType.IsMscorlib) sb.Append(type.TypeName);
-                    else sb.Append("Type").Append(objectsToIds[type]);
+                    else sb.Append(getFriendlyName()).Append(objectsToIds[type]);
                 }
             }
             else

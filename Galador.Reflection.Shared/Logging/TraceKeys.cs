@@ -75,7 +75,10 @@ namespace Galador.Reflection.Logging
                         TraceKey result;
                         traces.TryGetValue(name, out result);
                         if (result == null)
+                        {
                             traces[name] = result = new TraceKey(name);
+                            result.IsEnabled = IsEnabled(name);
+                        }
                         return result;
                     }
                 }
@@ -90,13 +93,15 @@ namespace Galador.Reflection.Logging
             /// </summary>
             public void Enable(string prefix, bool enable)
             {
-                lock (enabledList)
+                lock (traces)
                 {
                     int i = enabledList.FindIndex(x => x.name == prefix);
                     if (i > -1)
                         enabledList[i] = (prefix, enable);
                     else
                         enabledList.Add((prefix, enable));
+                    foreach (var trace in traces.Values.Where(x => x.Name.StartsWith(prefix)))
+                        trace.IsEnabled = IsEnabled(trace.Name);
                 }
             }
 
@@ -107,7 +112,7 @@ namespace Galador.Reflection.Logging
             /// <returns>whether argument namespace is enabled or not</returns>
             public bool IsEnabled(string name)
             {
-                lock (enabledList)
+                lock (traces)
                 {
                     var matches = from row in enabledList
                                     where name.StartsWith(row.name)
@@ -117,20 +122,6 @@ namespace Galador.Reflection.Logging
                     return matches.FirstOrDefault();
                 }
             }
-        }
-
-        /// <summary>
-        /// Gets a <see cref="TraceKey"/> by <paramref name="name"/> and set its enabled state.
-        /// </summary>
-        /// <param name="name">The name of the trace.</param>
-        /// <param name="enable">whether or not it's enabled.</param>
-        /// <returns>The <see cref="TraceKey"/> with the <paramref name="name"/></returns>
-        public static TraceKey GetTrace(string name, bool enable = false)
-        {
-            var result = Traces[name];
-            if (enable)
-                Traces.Enable(name, true);
-            return result;
         }
 
         /// <summary>
@@ -154,6 +145,39 @@ namespace Galador.Reflection.Logging
         public static bool TraceError { get; set; } = true;
 
         /// <summary>
+        /// A predefined trace, which is enabled by default.
+        /// Use that for your main application.
+        /// </summary>
+        public static TraceKey Application { get; } = GetTrace(nameof(Application), true); /* only one enabled by default */
+
+
+        /// <summary>
+        /// Gets a <see cref="TraceKey"/> by <paramref name="name"/> and set its enabled state.
+        /// </summary>
+        /// <param name="name">The name of the trace.</param>
+        /// <param name="enable">whether or not it's enabled.</param>
+        /// <returns>The <see cref="TraceKey"/> with the <paramref name="name"/></returns>
+        public static TraceKey GetTrace(string name, bool enable = false)
+        {
+            var result = Traces[name];
+            Traces.Enable(name, enable);
+            return result;
+        }
+
+        /// <summary>
+        /// Gets a <see cref="TraceKey"/> by <paramref name="type"/> and set its enabled state.
+        /// </summary>
+        /// <param name="name">The name of the trace.</param>
+        /// <param name="enable">whether or not it's enabled.</param>
+        /// <returns>The <see cref="TraceKey"/> with the <paramref name="name"/></returns>
+        public static TraceKey GetTrace(Type type, bool enable = false)
+        {
+            var result = Traces[type];
+            Traces.Enable(type.FullName, enable);
+            return result;
+        }
+
+        /// <summary>
         /// Get a trace for a class. Its key will be the type full name, i.e. including namespace.
         /// </summary>
         public static TraceKey Get<T>() { return Traces[typeof(T)]; }
@@ -162,11 +186,5 @@ namespace Galador.Reflection.Logging
         /// Get a trace for an object. Its key will be the object's type full name, i.e. including namespace.
         /// </summary>
         public static TraceKey Get(object o) { return Traces[o.GetType()]; }
-
-        /// <summary>
-        /// A predefined trace, which is enabled by default.
-        /// Use that for your main application.
-        /// </summary>
-        public static TraceKey Application { get; } = GetTrace(nameof(Application), true); /* only one enabled by default */
     }
 }

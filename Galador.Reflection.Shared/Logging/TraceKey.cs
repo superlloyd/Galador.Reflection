@@ -72,32 +72,36 @@ namespace Galador.Reflection.Logging
         const string HeaderError = "ERROR";
         const string HeaderWarning = "WARNING";
         const string HeaderInfo = "INFO";
-        bool IsEnabled { get { return TraceKeys.Traces.IsEnabled(Name); } }
-        bool TraceDebug { get { return TraceKeys.TraceDebug; } }
-        bool TraceInfo { get { return TraceKeys.TraceInfo; } }
-        bool TraceWarning { get { return TraceKeys.TraceInfo; } }
-        bool TraceError { get { return TraceKeys.TraceInfo; } }
+        internal bool IsEnabled { get; set; }
+        bool TraceDebug { get { return IsEnabled && TraceKeys.TraceDebug; } }
+        bool TraceInfo { get { return IsEnabled && TraceKeys.TraceInfo; } }
+        bool TraceWarning { get { return IsEnabled && TraceKeys.TraceInfo; } }
+        bool TraceError { get { return IsEnabled && TraceKeys.TraceInfo; } }
 
         public void Write(object o)
         {
-            if (o == null)
+            if (!IsEnabled || o == null)
                 return;
             Write(o?.ToString());
         }
 
         public void Write(string format, params object[] args)
         {
-            if (string.IsNullOrEmpty(format))
+            if (!IsEnabled || string.IsNullOrEmpty(format))
                 return;
             Write(string.Format(format, args));
         }
 
         public void WriteLine(object o)
         {
+            if (!IsEnabled)
+                return;
             WriteLine(o?.ToString());
         }
         public void WriteLine(string format, params object[] args)
         {
+            if (!IsEnabled)
+                return;
             WriteLine(string.Format(format, args));
         }
 

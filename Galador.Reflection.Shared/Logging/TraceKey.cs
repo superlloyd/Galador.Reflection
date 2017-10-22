@@ -72,7 +72,10 @@ namespace Galador.Reflection.Logging
         const string HeaderError = "ERROR";
         const string HeaderWarning = "WARNING";
         const string HeaderInfo = "INFO";
-        internal bool IsEnabled { get; set; }
+        /// <summary>
+        /// Whether this trace is enabled. Enabled it with <see cref="TraceKeys.TracesProperty.Enable(string, bool)"/>.
+        /// </summary>
+        public bool IsEnabled { get; internal set; }
         bool TraceDebug { get { return IsEnabled && TraceKeys.TraceDebug; } }
         bool TraceInfo { get { return IsEnabled && TraceKeys.TraceInfo; } }
         bool TraceWarning { get { return IsEnabled && TraceKeys.TraceInfo; } }

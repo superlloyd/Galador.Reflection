@@ -57,6 +57,12 @@ namespace Galador.Reflection.Logging
             ConcurrentDictionary<string, TraceKey> traces = new ConcurrentDictionary<string, TraceKey>();
             List<(string name, bool enable)> enabledList = new List<(string name, bool enable)>();
 
+
+            /// <summary>
+            /// Gets a <see cref="TraceKey"/> by <paramref name="type"/>.
+            /// </summary>
+            public TraceKey this[Type type] { get { return this[type.FullName]; } }
+
             /// <summary>
             /// Gets a <see cref="TraceKey"/> by <paramref name="name"/>.
             /// </summary>
@@ -150,12 +156,12 @@ namespace Galador.Reflection.Logging
         /// <summary>
         /// Get a trace for a class. Its key will be the type full name, i.e. including namespace.
         /// </summary>
-        public static TraceKey Get<T>() { return Traces[typeof(T).FullName]; }
+        public static TraceKey Get<T>() { return Traces[typeof(T)]; }
 
         /// <summary>
         /// Get a trace for an object. Its key will be the object's type full name, i.e. including namespace.
         /// </summary>
-        public static TraceKey Get(object o) { return Traces[o.GetType().FullName]; }
+        public static TraceKey Get(object o) { return Traces[o.GetType()]; }
 
         /// <summary>
         /// A predefined trace, which is enabled by default.

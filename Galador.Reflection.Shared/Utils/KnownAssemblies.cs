@@ -39,7 +39,7 @@ namespace Galador.Reflection.Utils
                 }
                 catch
                 {
-                    TraceKeys.Traces[typeof(KnownAssemblies).FullName].Warning($"Couldn't get Types from {ass.GetName().Name})");
+                    TraceKeys.Traces[typeof(KnownAssemblies)].Warning($"Couldn't get Types from {ass.GetName().Name})");
                     continue;
                 }
                 yield return ass;

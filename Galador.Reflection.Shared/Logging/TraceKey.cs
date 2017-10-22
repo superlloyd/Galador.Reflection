@@ -21,17 +21,13 @@ namespace Galador.Reflection.Logging
         internal TraceKey(string name)
         {
             Name = name;
-            IsEnabled = true;
-            TraceInfo = true;
-            TraceWarning = true;
-            TraceError = true;
-            Header = () => $"{Name}({DateTime.Now:yyyy/MM/dd HH:mm:ss.f}, {Environment.CurrentManagedThreadId:000}): ";
+            Header = (level) => $"{Name}({DateTime.Now:yyyy/MM/dd HH:mm:ss.f}, {Environment.CurrentManagedThreadId:000}, {level}): ";
         }
 
         /// <summary>
         /// Header written at the start of each line. By default output trace's <see cref="Name"/>, date, time and current thread ID.
         /// </summary>
-        public Func<string> Header { get; set; }
+        public Func<string, string> Header { get; set; }
 
         /// <summary>
         /// Name of the trace
@@ -39,36 +35,8 @@ namespace Galador.Reflection.Logging
         public string Name { get; private set; }
 
         /// <summary>
-        /// Whether the trace is enabled or not. Disabled trace do not write anything.
+        /// Will flush the traces now
         /// </summary>
-        /// <remarks>
-        /// All <see cref="TraceKey.IsEnabled"/> state can be initialized in th <c>App.config</c> file on the full .NET framework.
-        /// With the key <c>"TraceKeys." + trace.Name</c>, and value <c>true, false, on, off</c>
-        /// </remarks>
-        public bool IsEnabled { get; set; }
-
-        /// <summary>
-        /// Whether to disable the <see cref="Information(object)"/> methods and overrides.
-        /// </summary>
-        public bool TraceInfo { get; set; }
-
-        /// <summary>
-        /// Whether to disable the <see cref="Warning(object)"/> methods and overrides.
-        /// </summary>
-        public bool TraceWarning { get; set; }
-
-        /// <summary>
-        /// Whether to disable the <see cref="Error(object)"/> method and override.
-        /// </summary>
-        public bool TraceError { get; set; }
-
-        public void Assert(bool condition, string message) { WriteLineIf(!condition, message); }
-        public void Assert(bool condition, string format, params object[] args) { WriteLineIf(!condition, format, args); }
-        public void WriteIf(bool condition, string msg) { if (condition) Write(msg); }
-        public void WriteIf(bool condition, string format, params object[] args) { if (condition) Write(format, args); }
-        public void WriteLineIf(bool condition, string msg) { if (condition) WriteLine(msg); }
-        public void WriteLineIf(bool condition, string format, params object[] args) { if (condition) WriteLine(format, args); }
-
         public static void Flush()
         {
 #if !__PCL__
@@ -80,7 +48,7 @@ namespace Galador.Reflection.Logging
 
         public void Write(string msg)
         {
-            if (!IsEnabled)
+            if (!IsEnabled || string.IsNullOrEmpty(msg))
                 return;
 #if !__PCL__
             Trace.Write(string.Format(msg));
@@ -99,141 +67,138 @@ namespace Galador.Reflection.Logging
 #endif
         }
 
-        [Conditional("DEBUG")]
-        public void Debug(object o)
-        {
-            if (!IsEnabled || o == null)
-                return;
-            WriteLine(GetHeader() + "DEBUG " + o);
-        }
-        [Conditional("DEBUG")]
-        public void Debug(string msg)
-        {
-            if (!IsEnabled)
-                return;
-            WriteLine(GetHeader() + "DEBUG " + msg);
-        }
-        [Conditional("DEBUG")]
-        public void Debug(string format, params object[] args)
-        {
-            if (!IsEnabled)
-                return;
-            WriteLine(GetHeader() + "DEBUG " + format, args);
-        }
-        [Conditional("DEBUG")]
-        public void DebugIf(bool condition, string msg)
-        {
-            if (!condition || !IsEnabled)
-                return;
-            WriteLine(GetHeader() + "DEBUG " + msg);
-        }
-        [Conditional("DEBUG")]
-        public void DebugIf(bool condition, string format, params object[] args)
-        {
-            if (!condition || !IsEnabled)
-                return;
-            WriteLine(GetHeader() + "DEBUG " + format, args);
-        }
+        string GetHeader(string level) { return Header?.Invoke(level); }
+        const string HeaderDebug = "DEBUG";
+        const string HeaderError = "ERROR";
+        const string HeaderWarning = "WARNING";
+        const string HeaderInfo = "INFO";
+        bool IsEnabled { get { return TraceKeys.Traces.IsEnabled(Name); } }
+        bool TraceDebug { get { return TraceKeys.TraceDebug; } }
+        bool TraceInfo { get { return TraceKeys.TraceInfo; } }
+        bool TraceWarning { get { return TraceKeys.TraceInfo; } }
+        bool TraceError { get { return TraceKeys.TraceInfo; } }
 
         public void Write(object o)
         {
-            if (!IsEnabled || o == null)
+            if (o == null)
                 return;
             Write(o?.ToString());
         }
 
         public void Write(string format, params object[] args)
         {
-            if (!IsEnabled)
+            if (string.IsNullOrEmpty(format))
                 return;
             Write(string.Format(format, args));
         }
 
         public void WriteLine(object o)
         {
-            if (!IsEnabled || o == null)
-                return;
             WriteLine(o?.ToString());
         }
         public void WriteLine(string format, params object[] args)
         {
-            if (!IsEnabled)
-                return;
             WriteLine(string.Format(format, args));
         }
 
-        string GetHeader() { return Header?.Invoke(); }
+        public void Assert(bool condition, string message) { WriteLineIf(!condition, message); }
+        public void Assert(bool condition, string format, params object[] args) { WriteLineIf(!condition, format, args); }
+        public void WriteIf(bool condition, string msg) { if (condition) Write(msg); }
+        public void WriteIf(bool condition, string format, params object[] args) { if (condition) Write(format, args); }
+        public void WriteLineIf(bool condition, string msg) { if (condition) WriteLine(msg); }
+        public void WriteLineIf(bool condition, string format, params object[] args) { if (condition) WriteLine(format, args); }
 
-        /// <summary>
-        /// Additional header for <see cref="Error(object)"/> methods.
-        /// </summary>
-        public const string HeaderError = "ERROR ";
-
-        /// <summary>
-        /// Additional header for <see cref="Warning(object)"/> methods
-        /// </summary>
-        public const string HeaderWarning = "WARNING ";
-
-        /// <summary>
-        /// Additional header for <see cref="Information(object)"/> methods.
-        /// </summary>
-        public const string HeaderInfo = "INFO ";
+        [Conditional("DEBUG")]
+        public void Debug(object o)
+        {
+            if (!TraceDebug || o == null)
+                return;
+            WriteLine(GetHeader(HeaderDebug) + o);
+        }
+        [Conditional("DEBUG")]
+        public void Debug(string msg)
+        {
+            if (!TraceDebug || string.IsNullOrWhiteSpace(msg))
+                return;
+            WriteLine(GetHeader(HeaderDebug) + msg);
+        }
+        [Conditional("DEBUG")]
+        public void Debug(string format, params object[] args)
+        {
+            if (!TraceDebug || string.IsNullOrWhiteSpace(format))
+                return;
+            WriteLine(GetHeader(HeaderDebug) + format, args);
+        }
+        [Conditional("DEBUG")]
+        public void DebugIf(bool condition, string msg)
+        {
+            if (!condition || !TraceDebug || string.IsNullOrWhiteSpace(msg))
+                return;
+            WriteLine(GetHeader(HeaderDebug) + msg);
+        }
+        [Conditional("DEBUG")]
+        public void DebugIf(bool condition, string format, params object[] args)
+        {
+            if (!condition || !TraceDebug || string.IsNullOrWhiteSpace(format))
+                return;
+            WriteLine(GetHeader(HeaderDebug) + format, args);
+        }
 
         public void Error(object o)
         {
-            if (!IsEnabled || !TraceError || o == null)
+            if (!TraceError || o == null)
                 return;
-            WriteLine(GetHeader() + HeaderError + o);
+            WriteLine(GetHeader(HeaderError) + o);
         }
         public void Error(string msg)
         {
-            if (!IsEnabled || !TraceError)
+            if (!TraceError || string.IsNullOrWhiteSpace(msg))
                 return;
-            WriteLine(GetHeader() + HeaderError + msg);
+            WriteLine(GetHeader(HeaderError) + msg);
         }
         public void Error(string format, params object[] args)
         {
-            if (!IsEnabled || !TraceError)
+            if (!TraceError || string.IsNullOrWhiteSpace(format))
                 return;
-            WriteLine(GetHeader() + HeaderError + format, args);
+            WriteLine(GetHeader(HeaderError) + format, args);
         }
 
         public void Warning(object o)
         {
-            if (!IsEnabled || !TraceWarning || o == null)
+            if (!TraceWarning || o == null)
                 return;
-            WriteLine(GetHeader() + HeaderWarning + o);
+            WriteLine(GetHeader(HeaderWarning) + o);
         }
         public void Warning(string msg)
         {
-            if (!IsEnabled || !TraceWarning)
+            if (!TraceWarning || string.IsNullOrWhiteSpace(msg))
                 return;
-            WriteLine(GetHeader() + HeaderWarning + msg);
+            WriteLine(GetHeader(HeaderWarning) + msg);
         }
         public void Warning(string format, params object[] args)
         {
-            if (!IsEnabled || !TraceWarning)
+            if (!TraceWarning || string.IsNullOrWhiteSpace(format))
                 return;
-            WriteLine(GetHeader() + HeaderWarning + format, args);
+            WriteLine(GetHeader(HeaderWarning) + format, args);
         }
 
         public void Information(object o)
         {
-            if (!IsEnabled || !TraceInfo || o == null)
+            if (!TraceInfo || o == null)
                 return;
-            WriteLine(GetHeader() + HeaderInfo + o);
+            WriteLine(GetHeader(HeaderInfo) + o);
         }
         public void Information(string msg)
         {
-            if (!IsEnabled || !TraceInfo)
+            if (!TraceInfo || string.IsNullOrWhiteSpace(msg))
                 return;
-            WriteLine(GetHeader() + HeaderInfo + msg);
+            WriteLine(GetHeader(HeaderInfo) + msg);
         }
         public void Information(string format, params object[] args)
         {
-            if (!IsEnabled || !TraceInfo)
+            if (!TraceInfo || string.IsNullOrWhiteSpace(format))
                 return;
-            WriteLine(GetHeader() + HeaderInfo + format, args);
+            WriteLine(GetHeader(HeaderInfo) + format, args);
         }
     }
 }

@@ -1066,7 +1066,7 @@ namespace Galador.Reflection.Serialization
         {
             if (Element == null)
             {
-                TraceKeys.Serialization.Error($"Type {this} is a generic type without Element");
+                TraceKeys.Get(this).Error($"Type {this} is a generic type without Element");
                 return;
             }
             try
@@ -1077,12 +1077,12 @@ namespace Galador.Reflection.Serialization
                 }
                 else
                 {
-                    TraceKeys.Serialization.Error($"Couldn't create concrete {Element.Type}");
+                    TraceKeys.Get(this).Error($"Couldn't create concrete {Element.Type}");
                 }
             }
             catch (Exception ex)
             {
-                TraceKeys.Serialization.Error($"Couldn't create concrete {Element.Type}: {ex.Message}\r\n{ex.StackTrace}");
+                TraceKeys.Get(this).Error($"Couldn't create concrete {Element.Type}: {ex.Message}\r\n{ex.StackTrace}");
             }
 
             if (IsDefaultSave)

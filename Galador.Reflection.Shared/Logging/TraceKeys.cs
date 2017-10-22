@@ -39,10 +39,15 @@ namespace Galador.Reflection.Logging
                     || string.Compare(svalue, "enabled", true) == 0
                     || string.Compare(svalue, "1", true) == 0
                     ;
-                TraceKeys.Traces[name].IsEnabled = value;
+                TraceKeys.Traces.Enable(name, value);
             }
         }
 #endif
+
+        /// <summary>
+        /// Gets all the traces already in use.
+        /// </summary>
+        public static TracesProperty Traces { get; } = new TracesProperty();
 
         /// <summary>
         /// The list of existing traces (i.e. <see cref="TraceKey"/>).
@@ -50,69 +55,112 @@ namespace Galador.Reflection.Logging
         public class TracesProperty : IEnumerable<TraceKey>
         {
             ConcurrentDictionary<string, TraceKey> traces = new ConcurrentDictionary<string, TraceKey>();
+            List<(string name, bool enable)> enabledList = new List<(string name, bool enable)>();
 
             /// <summary>
             /// Gets a <see cref="TraceKey"/> by <paramref name="name"/>.
             /// </summary>
             public TraceKey this[string name]
             {
-                get { return GetTrace(name, null); }
-            }
-
-            /// <summary>
-            /// Gets a <see cref="TraceKey"/> by <paramref name="name"/> and run some code (<paramref name="init"/>) against it.
-            /// </summary>
-            /// <param name="name">The name of the trace.</param>
-            /// <param name="init">Initialization or updating code to run on the <see cref="TraceKey"/>.</param>
-            /// <returns>The <see cref="TraceKey"/> with the <paramref name="name"/></returns>
-            public TraceKey GetTrace(string name, Action<TraceKey> init)
-            {
-                lock (traces)
+                get
                 {
-                    TraceKey result;
-                    traces.TryGetValue(name, out result);
-                    if (result == null)
+                    lock (traces)
                     {
-                        // REMARK disabled by default! specifically enable for debugging / diagnostic purpose!...
-                        traces[name] = result = new TraceKey(name) { IsEnabled = false };
-                        if (init != null)
-                            init(result);
+                        TraceKey result;
+                        traces.TryGetValue(name, out result);
+                        if (result == null)
+                            traces[name] = result = new TraceKey(name);
+                        return result;
                     }
-                    else
-                    {
-                        if (init != null)
-                            init(result);
-                    }
-                    return result;
                 }
             }
 
             /// <inheritdoc cref="IEnumerable{T}"/>
             public IEnumerator<TraceKey> GetEnumerator() { return traces.Values.GetEnumerator(); }
             IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
+
+            /// <summary>
+            /// Enable (or disable, depending on <paramref name="enable"/>) by default all traces which start with <paramref name="prefix"/>.
+            /// </summary>
+            public void Enable(string prefix, bool enable)
+            {
+                lock (enabledList)
+                {
+                    int i = enabledList.FindIndex(x => x.name == prefix);
+                    if (i > -1)
+                        enabledList[i] = (prefix, enable);
+                    else
+                        enabledList.Add((prefix, enable));
+                }
+            }
+
+            /// <summary>
+            /// Whether or not traces in argument namespace are enabled.
+            /// </summary>
+            /// <param name="name">namespace to test</param>
+            /// <returns>whether argument namespace is enabled or not</returns>
+            public bool IsEnabled(string name)
+            {
+                lock (enabledList)
+                {
+                    var matches = from row in enabledList
+                                    where name.StartsWith(row.name)
+                                    orderby name.Length descending
+                                    select row.enable
+                                    ;
+                    return matches.FirstOrDefault();
+                }
+            }
         }
 
         /// <summary>
-        /// Gets all the traces.
+        /// Gets a <see cref="TraceKey"/> by <paramref name="name"/> and set its enabled state.
         /// </summary>
-        public static TracesProperty Traces { get; } = new TracesProperty();
+        /// <param name="name">The name of the trace.</param>
+        /// <param name="enable">whether or not it's enabled.</param>
+        /// <returns>The <see cref="TraceKey"/> with the <paramref name="name"/></returns>
+        public static TraceKey GetTrace(string name, bool enable = false)
+        {
+            var result = Traces[name];
+            if (enable)
+                Traces.Enable(name, true);
+            return result;
+        }
 
         /// <summary>
-        /// A predefined trace, with <see cref="TraceKey.IsEnabled"/> <c>true</c> by default.
+        /// Whether to disable the <see cref="TraceKey.Debug(object)"/> methods and overrides.
+        /// </summary>
+        public static bool TraceDebug { get; set; } = true;
+
+        /// <summary>
+        /// Whether to disable the <see cref="TraceKey.Information(object)"/> methods and overrides.
+        /// </summary>
+        public static bool TraceInfo { get; set; } = true;
+
+        /// <summary>
+        /// Whether to disable the <see cref="TraceKey.Warning(object)"/> methods and overrides.
+        /// </summary>
+        public static bool TraceWarning { get; set; } = true;
+
+        /// <summary>
+        /// Whether to disable the <see cref="TraceKey.Error(object)"/> method and override.
+        /// </summary>
+        public static bool TraceError { get; set; } = true;
+
+        /// <summary>
+        /// Get a trace for a class. Its key will be the type full name, i.e. including namespace.
+        /// </summary>
+        public static TraceKey Get<T>() { return Traces[typeof(T).FullName]; }
+
+        /// <summary>
+        /// Get a trace for an object. Its key will be the object's type full name, i.e. including namespace.
+        /// </summary>
+        public static TraceKey Get(object o) { return Traces[o.GetType().FullName]; }
+
+        /// <summary>
+        /// A predefined trace, which is enabled by default.
         /// Use that for your main application.
         /// </summary>
-        public static TraceKey Application { get; } = Traces.GetTrace(nameof(Application), x => x.IsEnabled = true); /* only one enabled by default */
-
-        /// <summary>
-        /// A predefined trace, with <see cref="TraceKey.IsEnabled"/> <c>false</c> by default.
-        /// Used by the serialization code to log information.
-        /// </summary>
-        public static TraceKey Serialization { get; } = Traces[nameof(Serialization)];
-
-        /// <summary>
-        /// A predefined trace, with <see cref="TraceKey.IsEnabled"/> <c>false</c> by default.
-        /// Used by the <see cref="Galador.Reflection.Registry"/> code to log information.
-        /// </summary>
-        public static TraceKey Registry { get; } = Traces[nameof(Registry)];
+        public static TraceKey Application { get; } = GetTrace(nameof(Application), true); /* only one enabled by default */
     }
 }

@@ -10,6 +10,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)AssemblyInfo.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Log.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\IO\IPrimitiveReader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\IO\IPrimitiveWriter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\IO\PrimitiveBinaryReader.cs" />
@@ -18,8 +19,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\IO\PrimitiveTextWriter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\StreamExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\IO\TokenPrimitiveWriter.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Logging\TraceKey.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Logging\TraceKeys.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)PropertyPath.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Registry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\IDeserialized.cs" />

@@ -9,7 +9,6 @@ using System.ComponentModel;
 using System.Runtime.Serialization;
 using System.IO;
 using System.Runtime.CompilerServices;
-using Galador.Reflection.Logging;
 
 namespace Galador.Reflection.Serialization
 {
@@ -1066,7 +1065,7 @@ namespace Galador.Reflection.Serialization
         {
             if (Element == null)
             {
-                TraceKeys.Get(this).Error($"Type {this} is a generic type without Element");
+                Log.Error(this, $"Type {this} is a generic type without Element");
                 return;
             }
             try
@@ -1077,12 +1076,12 @@ namespace Galador.Reflection.Serialization
                 }
                 else
                 {
-                    TraceKeys.Get(this).Error($"Couldn't create concrete {Element.Type}");
+                    Log.Error(this, $"Couldn't create concrete {Element.Type}");
                 }
             }
             catch (Exception ex)
             {
-                TraceKeys.Get(this).Error($"Couldn't create concrete {Element.Type}: {ex.Message}\r\n{ex.StackTrace}");
+                Log.Error(this, $"Couldn't create concrete {Element.Type}: {ex.Message}\r\n{ex.StackTrace}");
             }
 
             if (IsDefaultSave)

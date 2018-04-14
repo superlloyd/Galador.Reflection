@@ -1,5 +1,4 @@
-﻿using Galador.Reflection.Logging;
-using Galador.Reflection.Utils;
+﻿using Galador.Reflection.Utils;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;

@@ -6,7 +6,6 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Runtime.Serialization;
 using Galador.Reflection.Utils;
-using Galador.Reflection.Logging;
 using System.Runtime.InteropServices;
 
 namespace Galador.Reflection.Serialization

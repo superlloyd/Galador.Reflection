@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Linq;
-using Galador.Reflection.Logging;
 
 #if __NETCORE__
 using Microsoft.Extensions.DependencyModel;
@@ -39,7 +38,7 @@ namespace Galador.Reflection.Utils
                 }
                 catch
                 {
-                    TraceKeys.Traces[typeof(KnownAssemblies)].Warning($"Couldn't get Types from {ass.GetName().Name})");
+                    Log.Warning(typeof(KnownAssemblies).FullName, $"Couldn't get Types from {ass.GetName().Name})");
                     continue;
                 }
                 yield return ass;

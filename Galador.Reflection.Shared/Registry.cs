@@ -5,7 +5,6 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Reflection;
 using System.Collections;
-using Galador.Reflection.Logging;
 using Galador.Reflection.Utils;
 
 namespace Galador.Reflection
@@ -248,7 +247,7 @@ namespace Galador.Reflection
                     var t = ti.AsType();
                     if (!CanBeInstantiated(t))
                     {
-                        TraceKeys.Get(this).Warning($"[Registry]: Type {t.Name} can't be exported, it is not Resolvable.");
+                        Log.Warning(this, $"[Registry]: Type {t.Name} can't be exported, it is not Resolvable.");
                         continue;
                     }
                     Register(t);

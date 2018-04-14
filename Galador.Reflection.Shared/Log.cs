@@ -32,19 +32,19 @@ namespace Galador.Reflection
             }
 #endif
         }
-        static List<string> enabledList = new List<string>();
+        static List<(string key, bool enabled)> enabledList = new List<(string, bool)>();
 
-        public static void Enable<T>(bool enable) { Enable(typeof(T).FullName, enable); }
-        public static void Enable<T>(T key, bool enable) { Enable(typeof(T).FullName, enable); }
-        public static void Enable(string key, bool enable)
+        public static void Enable<T>(bool enabled) { Enable(typeof(T).FullName, enabled); }
+        public static void Enable<T>(T key, bool enabled) { Enable(typeof(T).FullName, enabled); }
+        public static void Enable(string key, bool enabled)
         {
             if (string.IsNullOrEmpty(key))
                 return;
             lock (enabledList)
             {
-                int i = enabledList.IndexOf(key);
-                if (enable && i == -1) enabledList.Add(key);
-                else if (!enable && i > -1) enabledList.RemoveAt(i);
+                int i = enabledList.FindIndex(kv => kv.key == key);
+                if (i == -1) enabledList.Add((key, enabled));
+                else if (enabledList[i].enabled != enabled) enabledList[i] = (key, enabled);
             }
         }
 
@@ -57,9 +57,9 @@ namespace Galador.Reflection
             lock (enabledList)
             {
                 var matches = from row in enabledList
-                              where key.StartsWith(row)
-                              orderby key.Length descending
-                              select true
+                              where key.StartsWith(row.key)
+                              orderby row.key.Length descending
+                              select row.enabled
                                 ;
                 return matches.FirstOrDefault();
             }

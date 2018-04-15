@@ -1110,6 +1110,7 @@ namespace Galador.Reflection.Serialization
             }
         }
 
+        ReflectType MakeGenericType(params ReflectType[] parameters) { return MakeGenericType((IReadOnlyList<ReflectType>)parameters); }
         ReflectType MakeGenericType(IReadOnlyList<ReflectType> parameters)
         {
             if (IsGenericParameter)

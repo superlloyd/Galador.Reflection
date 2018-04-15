@@ -32,8 +32,15 @@ namespace Galador.Reflection
             }
 #endif
         }
+
+        public static void Write(string msg) { Trace.Write(msg); }
+        public static void WriteLine(string msg) { Trace.WriteLine(msg); }
+        public static void Flush() { Trace.Flush(); }
+
         static List<(string key, bool enabled)> enabledList = new List<(string, bool)>();
 
+        public static void EnableNamespace<T>(bool enabled) { Enable(typeof(T).Namespace, enabled); }
+        public static void EnableNamespace<T>(T key, bool enabled) { Enable(typeof(T).Namespace, enabled); }
         public static void Enable<T>(bool enabled) { Enable(typeof(T).FullName, enabled); }
         public static void Enable<T>(T key, bool enabled) { Enable(typeof(T).FullName, enabled); }
         public static void Enable(string key, bool enabled)
@@ -67,33 +74,21 @@ namespace Galador.Reflection
 
         public static void Write<T>(string msg) { if (IsEnabled<T>()) Write(msg); }
         public static void Write<T>(T key, string msg) { if (IsEnabled<T>()) Write(msg); }
+        public static void Write<T>(T key, string format, params object[] args) { if (IsEnabled<T>()) Write(string.Format(format, args)); }
         public static void Write(string key, string msg) { if (IsEnabled(key)) Write(msg); }
-        public static void Write(string msg)
-        {
-#if !__PCL__
-            Trace.Write(msg);
-#else
-            throw new PlatformNotSupportedException("PCL");
-#endif
-        }
         public static void WriteIf<T>(bool condition, string msg) { if (condition) Write<T>(msg); }
         public static void WriteIf<T>(T key, bool condition, string msg) { if (condition && IsEnabled<T>()) Write(msg); }
+        public static void WriteIf<T>(T key, bool condition, string format, params object[] args) { if (IsEnabled<T>()) Write(string.Format(format, args)); }
         public static void WriteIf(string key, bool condition, string msg) { if (condition && IsEnabled(key)) Write(msg); }
         public static void WriteIf(bool condition, string msg) { if (condition) Write(msg); }
 
         public static void WriteLine<T>(string msg) { if (IsEnabled<T>()) WriteLine(msg); }
         public static void WriteLine<T>(T key, string msg) { if (IsEnabled(key)) WriteLine(msg); }
+        public static void WriteLine<T>(T key, string format, params object[] args) { if (IsEnabled<T>()) WriteLine(string.Format(format, args)); }
         public static void WriteLine(string key, string msg) { if (IsEnabled(key)) WriteLine(msg); }
-        public static void WriteLine(string msg)
-        {
-#if !__PCL__
-            Trace.WriteLine(msg);
-#else
-            throw new PlatformNotSupportedException("PCL");
-#endif
-        }
         public static void WriteLineIf<T>(bool condition, string msg) { if (condition && IsEnabled<T>()) WriteLine(msg); }
         public static void WriteLineIf<T>(T key, bool condition, string msg) { if (condition && IsEnabled<T>()) WriteLine(msg); }
+        public static void WriteLineIf<T>(T key, bool condition, string format, params object[] args) { if (condition && IsEnabled<T>()) WriteLine(string.Format(format, args)); }
         public static void WriteLineIf(string key, bool condition, string msg) { if (condition && IsEnabled(key)) WriteLine(msg); }
         public static void WriteLineIf(bool condition, string msg) { if (condition) WriteLine(msg); }
 
@@ -105,52 +100,51 @@ namespace Galador.Reflection
         }
 
         public static bool IsDebugEnabled { get; set; } = true;
+        [Conditional("DEBUG")] public static void Debug(object o) { if (IsDebugEnabled) WriteLine(LineHeader() + o); }
+        [Conditional("DEBUG")] public static void Debug<T>(object o) { if (IsDebugEnabled && IsEnabled<T>()) WriteLine(LineHeader() + o); }
+        [Conditional("DEBUG")] public static void Debug<T>(T key, object o) { if (IsDebugEnabled && IsEnabled<T>()) WriteLine(LineHeader() + o); }
+        [Conditional("DEBUG")] public static void Debug<T>(T key, string format, params object[] args) { if (IsDebugEnabled && IsEnabled<T>()) WriteLine(LineHeader() + string.Format(format, args)); }
+        [Conditional("DEBUG")] public static void Debug(string key, object o) { if (IsDebugEnabled && IsEnabled(key)) WriteLine(LineHeader() + o); }
+        [Conditional("DEBUG")] public static void DebugIf(bool condition, object o) { if (IsDebugEnabled && condition) WriteLine(LineHeader() + o); }
+        [Conditional("DEBUG")] public static void DebugIf<T>(bool condition, object o) { if (IsDebugEnabled && condition && IsEnabled<T>()) WriteLine(LineHeader() + o); }
+        [Conditional("DEBUG")] public static void DebugIf<T>(T key, bool condition, object o) { if (IsDebugEnabled && condition && IsEnabled<T>()) WriteLine(LineHeader() + o); }
+        [Conditional("DEBUG")] public static void DebugIf(string key, bool condition, object o) { if (IsDebugEnabled && condition && IsEnabled(key)) WriteLine(LineHeader() + o); }
+        [Conditional("DEBUG")] public static void DebugIf<T>(T key, bool condition, string format, params object[] args) { if (IsDebugEnabled && condition && IsEnabled<T>()) WriteLine(LineHeader() + string.Format(format, args)); }
+
         public static bool IsErrorEnabled { get; set; } = true;
-        public static bool IsWarningEnabled { get; set; } = true;
-        public static bool IsInfoEnabled { get; set; } = true;
-
-        [Conditional("DEBUG")]
-        public static void Debug(object o) { if (IsDebugEnabled) WriteLine(LineHeader() + o); }
-        [Conditional("DEBUG")]
-        public static void Debug<T>(object o) { if (IsDebugEnabled && IsEnabled<T>()) WriteLine(LineHeader() + o); }
-        [Conditional("DEBUG")]
-        public static void Debug<T>(T key, object o) { if (IsDebugEnabled && IsEnabled<T>()) WriteLine(LineHeader() + o); }
-        [Conditional("DEBUG")]
-        public static void Debug(string key, object o) { if (IsDebugEnabled && IsEnabled(key)) WriteLine(LineHeader() + o); }
-        [Conditional("DEBUG")]
-        public static void DebugIf(bool condition, object o) { if (IsDebugEnabled && condition) WriteLine(LineHeader() + o); }
-        [Conditional("DEBUG")]
-        public static void DebugIf<T>(bool condition, object o) { if (IsDebugEnabled && condition && IsEnabled<T>()) WriteLine(LineHeader() + o); }
-        [Conditional("DEBUG")]
-        public static void DebugIf<T>(T key, bool condition, object o) { if (IsDebugEnabled && condition && IsEnabled<T>()) WriteLine(LineHeader() + o); }
-        [Conditional("DEBUG")]
-        public static void DebugIf(string key, bool condition, object o) { if (IsDebugEnabled && condition && IsEnabled(key)) WriteLine(LineHeader() + o); }
-
         public static void Error(object o) { if (IsErrorEnabled) WriteLine(LineHeader() + o); }
         public static void Error<T>(object o) { if (IsErrorEnabled && IsEnabled<T>()) WriteLine(LineHeader() + o); }
         public static void Error<T>(T key, object o) { if (IsErrorEnabled && IsEnabled<T>()) WriteLine(LineHeader() + o); }
+        public static void Error<T>(T key, string format, params object[] args) { if (IsErrorEnabled && IsEnabled<T>()) WriteLine(LineHeader() + string.Format(format, args)); }
         public static void Error(string key, object o) { if (IsErrorEnabled && IsEnabled(key)) WriteLine(LineHeader() + o); }
         public static void ErrorIf(bool condition, object o) { if (IsErrorEnabled && condition) WriteLine(LineHeader() + o); }
         public static void ErrorIf<T>(bool condition, object o) { if (IsErrorEnabled && condition && IsEnabled<T>()) WriteLine(LineHeader() + o); }
         public static void ErrorIf<T>(T key, bool condition, object o) { if (IsErrorEnabled && condition && IsEnabled<T>()) WriteLine(LineHeader() + o); }
         public static void ErrorIf(string key, bool condition, object o) { if (IsErrorEnabled && condition && IsEnabled(key)) WriteLine(LineHeader() + o); }
+        public static void ErrorIf<T>(T key, bool condition, string format, params object[] args) { if (IsErrorEnabled && condition && IsEnabled<T>()) WriteLine(LineHeader() + string.Format(format, args)); }
 
+        public static bool IsWarningEnabled { get; set; } = true;
         public static void Warning(object o) { if (IsWarningEnabled) WriteLine(LineHeader() + o); }
         public static void Warning<T>(object o) { if (IsWarningEnabled && IsEnabled<T>()) WriteLine(LineHeader() + o); }
         public static void Warning<T>(T key, object o) { if (IsWarningEnabled && IsEnabled<T>()) WriteLine(LineHeader() + o); }
+        public static void Warning<T>(T key, string format, params object[] args) { if (IsWarningEnabled && IsEnabled<T>()) WriteLine(LineHeader() + string.Format(format, args)); }
         public static void Warning(string key, object o) { if (IsWarningEnabled && IsEnabled(key)) WriteLine(LineHeader() + o); }
         public static void WarningIf(bool condition, object o) { if (IsWarningEnabled && condition) WriteLine(LineHeader() + o); }
         public static void WarningIf<T>(bool condition, object o) { if (IsWarningEnabled && condition && IsEnabled<T>()) WriteLine(LineHeader() + o); }
         public static void WarningIf<T>(T key, bool condition, object o) { if (IsWarningEnabled && condition && IsEnabled<T>()) WriteLine(LineHeader() + o); }
         public static void WarningIf(string key, bool condition, object o) { if (IsWarningEnabled && condition && IsEnabled(key)) WriteLine(LineHeader() + o); }
+        public static void WarningIf<T>(T key, bool condition, string format, params object[] args) { if (IsWarningEnabled && condition && IsEnabled<T>()) WriteLine(LineHeader() + string.Format(format, args)); }
 
+        public static bool IsInfoEnabled { get; set; } = true;
         public static void Info(object o) { if (IsInfoEnabled) WriteLine(LineHeader() + o); }
         public static void Info<T>(object o) { if (IsInfoEnabled && IsEnabled<T>()) WriteLine(LineHeader() + o); }
         public static void Info<T>(T key, object o) { if (IsInfoEnabled && IsEnabled<T>()) WriteLine(LineHeader() + o); }
+        public static void Info<T>(T key, string format, params object[] args) { if (IsInfoEnabled && IsEnabled<T>()) WriteLine(LineHeader() + string.Format(format, args)); }
         public static void Info(string key, object o) { if (IsInfoEnabled && IsEnabled(key)) WriteLine(LineHeader() + o); }
         public static void InfoIf(bool condition, object o) { if (IsInfoEnabled && condition) WriteLine(LineHeader() + o); }
         public static void InfoIf<T>(bool condition, object o) { if (IsInfoEnabled && condition && IsEnabled<T>()) WriteLine(LineHeader() + o); }
         public static void InfoIf<T>(T key, bool condition, object o) { if (IsInfoEnabled && condition && IsEnabled<T>()) WriteLine(LineHeader() + o); }
         public static void InfoIf(string key, bool condition, object o) { if (IsInfoEnabled && condition && IsEnabled(key)) WriteLine(LineHeader() + o); }
+        public static void InfoIf<T>(T key, bool condition, string format, params object[] args) { if (IsInfoEnabled && condition && IsEnabled<T>()) WriteLine(LineHeader() + string.Format(format, args)); }
     }
 }

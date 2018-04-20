@@ -77,7 +77,7 @@ namespace TestApp
             Assert.Equal("Albert", values[0]);
             Assert.Equal("Fubar", values[1]);
             Assert.Equal("ugh?", values[2]);
-            Assert.Equal(null, values[3]);
+            Assert.Null(values[3]);
 
 
             GC.KeepAlive(m);

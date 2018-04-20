@@ -108,7 +108,7 @@ namespace TestApp
             r.Register<Bar2>();
 
             var o = r.ResolveAll<IFoo>().ToList();
-            Assert.Equal(o.Count, 1);
+            Assert.Equal(1, o.Count);
             Assert.NotNull(o[0]);
             var oo = o[0];
             Assert.NotNull(oo.MyToo);
@@ -128,7 +128,7 @@ namespace TestApp
             r.RegisterAssemblies<ExportAttribute>();
 
             var o = r.ResolveAll<IBar>().ToList();
-            Assert.Equal(o.Count, 1);
+            Assert.Equal(1, o.Count);
         }
     }
 }

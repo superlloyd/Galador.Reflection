@@ -63,10 +63,10 @@ namespace TestApp
             var csharp = w.Context.GenerateCSharpCode("Generated");
             var t1 = w.Context.Objects.OfType<ReflectType>().First(x => x.Type == typeof(Serial1));
             var t2 = w.Context.Objects.OfType<ReflectType>().First(x => x.Type == typeof(Serial2));
-            Assert.Equal(t1.TypeName, "TEST-NAME");
-            Assert.Equal(t1.AssemblyName, null);
-            Assert.Equal(t2.TypeName, "TEST-NAME");
-            Assert.Equal(t2.AssemblyName, "TEST Assembly");
+            Assert.Equal("TEST-NAME", t1.TypeName);
+            Assert.Null(t1.AssemblyName);
+            Assert.Equal("TEST-NAME", t2.TypeName);
+            Assert.Equal("TEST Assembly", t2.AssemblyName);
         }
 
         [Fact]
@@ -647,7 +647,7 @@ namespace TestApp
         public void CheckReaderWriter()
         {
             var ms = new MemoryStream(256);
-            CheckReaderWriter(
+            CheckReaderWriterImpl(
                 () => new PrimitiveBinaryWriter(ms),
                 () => {
                     ms.Position = 0;
@@ -655,18 +655,18 @@ namespace TestApp
                 });
 
             var sb = new StringBuilder(256);
-            CheckReaderWriter(
+            CheckReaderWriterImpl(
                 () => new PrimitiveTextWriter(new StringWriter(sb)),
                 () => new PrimitiveTextReader(new StringReader(sb.ToString()))
                 );
 
             var os = new List<object>(256);
-            CheckReaderWriter(
+            CheckReaderWriterImpl(
                 () => new TokenPrimitiveWriter(os),
                 () => new TokenPrimitiveReader(os)
                 );
         }
-        void CheckReaderWriter(Func<IPrimitiveWriter> getW, Func<IPrimitiveReader> getR)
+        void CheckReaderWriterImpl(Func<IPrimitiveWriter> getW, Func<IPrimitiveReader> getR)
         {
             var w = getW();
             foreach (var rw in GetCheckers())
@@ -710,11 +710,11 @@ namespace TestApp
             );
             yield return Tuple.Create(
                 (Action<IPrimitiveWriter>)(w => w.Write(true)),
-                (Action<IPrimitiveReader>)(r => Assert.Equal(true, r.ReadBool()))
+                (Action<IPrimitiveReader>)(r => Assert.True(r.ReadBool()))
             );
             yield return Tuple.Create(
                 (Action<IPrimitiveWriter>)(w => w.Write(false)),
-                (Action<IPrimitiveReader>)(r => Assert.Equal(false, r.ReadBool()))
+                (Action<IPrimitiveReader>)(r => Assert.False(r.ReadBool()))
             );
             yield return Tuple.Create(
                 (Action<IPrimitiveWriter>)(w => w.Write('a')),

@@ -38,6 +38,7 @@ namespace Galador.Reflection
         public static void Flush() { Trace.Flush(); }
 
         static List<(string key, bool enabled)> enabledList = new List<(string, bool)>();
+        static Dictionary<string, bool> enabledCache = new Dictionary<string, bool>();
 
         public static void EnableNamespace<T>(bool enabled) { Enable(typeof(T).Namespace, enabled); }
         public static void EnableNamespace<T>(T key, bool enabled) { Enable(typeof(T).Namespace, enabled); }
@@ -49,6 +50,7 @@ namespace Galador.Reflection
                 return;
             lock (enabledList)
             {
+                enabledCache.Clear();
                 int i = enabledList.FindIndex(kv => kv.key == key);
                 if (i == -1) enabledList.Add((key, enabled));
                 else if (enabledList[i].enabled != enabled) enabledList[i] = (key, enabled);
@@ -63,12 +65,17 @@ namespace Galador.Reflection
                 return true;
             lock (enabledList)
             {
-                var matches = from row in enabledList
-                              where key.StartsWith(row.key)
-                              orderby row.key.Length descending
-                              select row.enabled
-                                ;
-                return matches.FirstOrDefault();
+                if (!enabledCache.TryGetValue(key, out var result))
+                {
+                    var matches = from row in enabledList
+                                  where key.StartsWith(row.key)
+                                  orderby row.key.Length descending
+                                  select row.enabled
+                                    ;
+                    result = matches.FirstOrDefault();
+                    enabledCache[key] = result;
+                }
+                return result;
             }
         }
 

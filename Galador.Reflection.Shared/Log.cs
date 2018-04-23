@@ -37,6 +37,11 @@ namespace Galador.Reflection
         public static void WriteLine(string msg) { Trace.WriteLine(msg); }
         public static void Flush() { Trace.Flush(); }
 
+        public static string Location([CallerFilePath]string path = null, [CallerMemberName]string method = null, [CallerLineNumber]int line = 0)
+        {
+            return $"{System.IO.Path.GetFileName(path)}:{line}, {method}";
+        }
+
         static List<(string key, bool enabled)> enabledList = new List<(string, bool)>();
         static Dictionary<string, bool> enabledCache = new Dictionary<string, bool>();
 
@@ -129,6 +134,30 @@ namespace Galador.Reflection
         public static void ErrorIf<T>(T key, bool condition, object o) { if (IsErrorEnabled && condition && IsEnabled<T>()) WriteLine(LineHeader() + o); }
         public static void ErrorIf(string key, bool condition, object o) { if (IsErrorEnabled && condition && IsEnabled(key)) WriteLine(LineHeader() + o); }
         public static void ErrorIf<T>(T key, bool condition, string format, params object[] args) { if (IsErrorEnabled && condition && IsEnabled<T>()) WriteLine(LineHeader() + string.Format(format, args)); }
+        public static void Error(Exception e, [CallerFilePath]string path = null, [CallerMemberName]string method = null, [CallerLineNumber]int line = 0)
+        {
+            if (IsErrorEnabled) WriteLine(LineHeader() + Location(path, method, line) + ", " + e);
+        }
+        public static void Error<T>(Exception e, [CallerFilePath]string path = null, [CallerMemberName]string method = null, [CallerLineNumber]int line = 0)
+        {
+            if (IsErrorEnabled && IsEnabled<T>()) WriteLine(LineHeader() + Location(path, method, line) + ", " + e);
+        }
+        public static void Error<T>(T key, Exception e, [CallerFilePath]string path = null, [CallerMemberName]string method = null, [CallerLineNumber]int line = 0)
+        {
+            if (IsErrorEnabled && IsEnabled<T>()) WriteLine(LineHeader() + Location(path, method, line) + ", " + e);
+        }
+        public static void ErrorIf(Exception e, bool condition, [CallerFilePath]string path = null, [CallerMemberName]string method = null, [CallerLineNumber]int line = 0)
+        {
+            if (IsErrorEnabled && condition) WriteLine(LineHeader() + Location(path, method, line) + ", " + e);
+        }
+        public static void ErrorIf<T>(Exception e, bool condition, [CallerFilePath]string path = null, [CallerMemberName]string method = null, [CallerLineNumber]int line = 0)
+        {
+            if (IsErrorEnabled && condition && IsEnabled<T>()) WriteLine(LineHeader() + Location(path, method, line) + ", " + e);
+        }
+        public static void ErrorIf<T>(T key, bool condition, Exception e, [CallerFilePath]string path = null, [CallerMemberName]string method = null, [CallerLineNumber]int line = 0)
+        {
+            if (IsErrorEnabled && condition && IsEnabled<T>()) WriteLine(LineHeader() + Location(path, method, line) + ", " + e);
+        }
 
         public static bool IsWarningEnabled { get; set; } = true;
         public static void Warning(object o) { if (IsWarningEnabled) WriteLine(LineHeader() + o); }

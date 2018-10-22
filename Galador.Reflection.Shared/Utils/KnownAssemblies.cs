@@ -3,10 +3,6 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Linq;
 
-#if __NETCORE__
-using Microsoft.Extensions.DependencyModel;
-#endif
-
 namespace Galador.Reflection.Utils
 {
     /// <summary>
@@ -16,12 +12,8 @@ namespace Galador.Reflection.Utils
     {
         static KnownAssemblies()
         {
-#if __PCL__
-#elif __NETCORE__
-#else
             var domain = AppDomain.CurrentDomain;
             domain.AssemblyLoad += (o, e) => AssemblyLoaded?.Invoke(e.LoadedAssembly);
-#endif
         }
 
         static IEnumerable<Assembly> FilterOk(IEnumerable<Assembly> source)
@@ -52,24 +44,8 @@ namespace Galador.Reflection.Utils
         {
             get
             {
-#if __PCL__
-                throw new PlatformNotSupportedException("PCL");
-#elif __NETCORE__
-                Assembly LoadAssembly(string name)
-                {
-                    try { return Assembly.Load(new AssemblyName(name)); }
-                    catch { return null; }
-                }
-                var compiled =
-                    from lib in DependencyContext.Default.CompileLibraries
-                    let ass = LoadAssembly(lib.Name)
-                    where ass != null
-                    select ass;
-                return FilterOk(compiled);
-#else
                 var domain = AppDomain.CurrentDomain;
                 return FilterOk(domain.GetAssemblies());
-#endif
             }
         }
 

@@ -41,6 +41,8 @@ namespace Galador.Reflection
         {
             return $"{System.IO.Path.GetFileName(path)}:{line}, {method}";
         }
+        [Conditional("DEBUG")]
+        public static void Cation([CallerFilePath]string path = null, [CallerMemberName]string method = null, [CallerLineNumber]int line = 0) => WriteLine(Location(path, method, line));
 
         static List<(string key, bool enabled)> enabledList = new List<(string, bool)>();
         static Dictionary<string, bool> enabledCache = new Dictionary<string, bool>();
@@ -134,9 +136,14 @@ namespace Galador.Reflection
         public static void ErrorIf<T>(T key, bool condition, object o) { if (IsErrorEnabled && condition && IsEnabled<T>()) WriteLine(LineHeader() + o); }
         public static void ErrorIf(string key, bool condition, object o) { if (IsErrorEnabled && condition && IsEnabled(key)) WriteLine(LineHeader() + o); }
         public static void ErrorIf<T>(T key, bool condition, string format, params object[] args) { if (IsErrorEnabled && condition && IsEnabled<T>()) WriteLine(LineHeader() + string.Format(format, args)); }
+
         public static void Error(Exception e, [CallerFilePath]string path = null, [CallerMemberName]string method = null, [CallerLineNumber]int line = 0)
         {
             if (IsErrorEnabled) WriteLine(LineHeader() + Location(path, method, line) + ", " + e);
+        }
+        public static void Error(string key, Exception e, [CallerFilePath]string path = null, [CallerMemberName]string method = null, [CallerLineNumber]int line = 0)
+        {
+            if (IsErrorEnabled && IsEnabled(key)) WriteLine(LineHeader() + Location(path, method, line) + ", " + e);
         }
         public static void Error<T>(Exception e, [CallerFilePath]string path = null, [CallerMemberName]string method = null, [CallerLineNumber]int line = 0)
         {
@@ -149,6 +156,10 @@ namespace Galador.Reflection
         public static void ErrorIf(Exception e, bool condition, [CallerFilePath]string path = null, [CallerMemberName]string method = null, [CallerLineNumber]int line = 0)
         {
             if (IsErrorEnabled && condition) WriteLine(LineHeader() + Location(path, method, line) + ", " + e);
+        }
+        public static void ErrorIf(string key, Exception e, bool condition, [CallerFilePath]string path = null, [CallerMemberName]string method = null, [CallerLineNumber]int line = 0)
+        {
+            if (IsErrorEnabled && condition && IsEnabled(key)) WriteLine(LineHeader() + Location(path, method, line) + ", " + e);
         }
         public static void ErrorIf<T>(Exception e, bool condition, [CallerFilePath]string path = null, [CallerMemberName]string method = null, [CallerLineNumber]int line = 0)
         {

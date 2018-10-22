@@ -88,7 +88,7 @@ namespace Galador.Reflection.Utils
 
         FastMethod emtpy_constructor;
         object[] empty_params;
-#if __NET__ || __NETCORE__
+#if !__STD__
         Func<object> fastCtor;
 #endif
         void SetConstructor()
@@ -96,7 +96,7 @@ namespace Galador.Reflection.Utils
             var ctor = Type.TryGetConstructors().OrderBy(x => x.GetParameters().Length).FirstOrDefault();
             if (ctor == null)
             {
-#if __NET__ || __NETCORE__
+#if !__STD__
                 if (Type.GetTypeInfo().IsValueType)
                     fastCtor = EmitHelper.CreateParameterlessConstructorHandler(Type);
 #endif
@@ -391,7 +391,7 @@ namespace Galador.Reflection.Utils
         }
 
         // performance fields, depends on platform
-#if __NET__ || __NETCORE__
+#if !__STD__
         Action<object, object> setter;
         Func<object, object> getter;
         Action<object, Guid> setterGuid;
@@ -426,9 +426,9 @@ namespace Galador.Reflection.Utils
         PropertyInfo pInfo;
         FieldInfo fInfo;
 
-#region InitializeStructAccessor() InitializeAccessor()
+        #region InitializeStructAccessor() InitializeAccessor()
 
-#if __NET__ || __NETCORE__
+#if !__STD__
         void InitializeStructAccessor()
         {
             switch (Type.Kind)
@@ -524,7 +524,7 @@ namespace Galador.Reflection.Utils
             if (Member is PropertyInfo)
             {
                 pInfo = (PropertyInfo)Member;
-#if __NET__ || __NETCORE__
+#if !__STD__
                 getter = EmitHelper.CreatePropertyGetterHandler(pInfo);
                 if (pInfo.SetMethod != null)
                 {
@@ -537,14 +537,14 @@ namespace Galador.Reflection.Utils
                 fInfo = (FieldInfo)Member;
                 if (fInfo.IsLiteral)
                 {
-#if __NET__ || __NETCORE__
+#if !__STD__
                     var value = fInfo.GetValue(null);
                     getter = (x) => value;
 #endif
                 }
                 else
                 {
-#if __NET__ || __NETCORE__
+#if !__STD__
                     getter = EmitHelper.CreateFieldGetterHandler(fInfo);
                     setter = EmitHelper.CreateFieldSetterHandler(fInfo);
 #endif

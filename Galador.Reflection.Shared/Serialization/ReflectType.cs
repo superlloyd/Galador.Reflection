@@ -1153,9 +1153,6 @@ namespace Galador.Reflection.Serialization
         /// </summary>
         public TypeConverter GetTypeConverter()
         {
-#if __PCL__
-            throw new PlatformNotSupportedException("PCL");
-#else
             if (converter != null)
                 return converter;
             if (Type == null)
@@ -1173,11 +1170,8 @@ namespace Galador.Reflection.Serialization
                 return converter;
             }
             return null;
-#endif
         }
-#if !__PCL__
         TypeConverter converter;
-#endif
 
         #endregion
 

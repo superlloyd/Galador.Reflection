@@ -540,6 +540,7 @@ namespace Galador.Reflection
         /// <exception cref="InvalidOperationException">If no appropriate constructor can be found.</exception>
         public T Create<T>(RequestCache cache = null) { return (T)Create(typeof(T), cache); }
 
+        public T Create<T>(params object[] parameters) { return (T)Create(typeof(T), null, parameters); }
 
         /// <summary>
         /// Create that object from scratch regardless of registration
@@ -548,7 +549,7 @@ namespace Galador.Reflection
         /// <param name="cache">A cache of possible instance to use as property, constructor argument and the like, on top of registered services.</param>
         /// <returns>A newly created instance</returns>
         /// <exception cref="InvalidOperationException">If no appropriate constructor can be found.</exception>
-        public object Create(Type type, RequestCache cache = null)
+        public object Create(Type type, RequestCache cache, params object[] parameters)
         {
             bool first = createSession == null;
             if (first)
@@ -576,7 +577,12 @@ namespace Galador.Reflection
                     var impa = p.GetCustomAttribute<ImportAttribute>();
                     var t = (impa != null ? impa.ImportedType : null) ?? p.ParameterType;
                     var vault = FindRegistrations(t, cache).FirstOrDefault(x => x.Instance != null || x.Type != type);
-                    if (vault != null)
+                    var val = parameters != null ? parameters.FirstOrDefault(x => p.ParameterType.IsInstanceOfType(x)) : null;
+                    if (val != null)
+                    {
+                        cargs[i] = val;
+                    }
+                    else if (vault != null)
                     {
                         Resolve(vault, cache);
                         cargs[i] = vault.Instance;

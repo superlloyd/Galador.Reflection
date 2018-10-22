@@ -9,7 +9,6 @@
     <Import_RootNamespace>Galador.Reflection</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="$(MSBuildThisFileDirectory)AssemblyInfo.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Log.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\IO\IPrimitiveReader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\IO\IPrimitiveWriter.cs" />
@@ -32,7 +31,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\SerializationSettings.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\Serializer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\Surrogate.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)TypeForwarded.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\CollectionEx.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\EmitHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\Empty.cs" />

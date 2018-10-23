@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26430.15
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Galador.Reflection.PCL", "Galador.Reflection.PCL\Galador.Reflection.PCL.csproj", "{70E036D3-B37D-474C-A786-43A8FFAF7BFF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Galador.Reflection.PCL", "Galador.Reflection.PCL\Galador.Reflection.NetStd.csproj", "{70E036D3-B37D-474C-A786-43A8FFAF7BFF}"
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Galador.Reflection.Shared", "Galador.Reflection.Shared\Galador.Reflection.Shared.shproj", "{D9A212A5-3E6C-427B-BC19-0AD1D9911DB6}"
 EndProject

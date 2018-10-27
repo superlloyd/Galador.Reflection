@@ -214,44 +214,6 @@ namespace Galador.Reflection.Utils
             }
         }
 
-#if __PCL__
-
-        internal static Type GetEnumUnderlyingType(this TypeInfo ti) { throw new PlatformNotSupportedException(); }
-
-        public static IEnumerable<PropertyInfo> GetRuntimeProperties(this TypeInfo ti)
-        {
-            while (ti != null)
-            {
-                foreach (var p in ti.DeclaredProperties)
-                    yield return p;
-                ti = ti.BaseType?.GetTypeInfo();
-            }
-        }
-        public static IEnumerable<MethodInfo> GetRuntimeMethods(this TypeInfo ti)
-        {
-            while (ti != null)
-            {
-                foreach (var p in ti.DeclaredMethods)
-                    yield return p;
-                ti = ti.BaseType?.GetTypeInfo();
-            }
-        }
-        public static IEnumerable<FieldInfo> GetRuntimeFields(this TypeInfo ti)
-        {
-            while (ti != null)
-            {
-                foreach (var p in ti.DeclaredFields)
-                    yield return p;
-                ti = ti.BaseType?.GetTypeInfo();
-            }
-        }
-
-        public static PropertyInfo GetProperty(this Type ti, string name) { return GetProperty(ti.GetTypeInfo(), name); }
-        public static PropertyInfo GetProperty(this TypeInfo ti, string name) { return GetRuntimeProperties(ti).FirstOrDefault(x => x.Name == name); }
-
-#endif
-
-#if __NETCORE__
         internal static IEnumerable<MethodInfo> GetRuntimeMethods(this TypeInfo ti)
         {
             var aTi = ti;
@@ -262,7 +224,6 @@ namespace Galador.Reflection.Utils
                 aTi = aTi.BaseType?.GetTypeInfo();
             }
         }
-#endif
 
         /// <summary>
         /// Return an uninitialized object (by passing constructor).
@@ -271,13 +232,7 @@ namespace Galador.Reflection.Utils
         /// <returns>An uninitialized object</returns>
         internal static object GetUninitializedObject(this Type type)
         {
-#if __PCL__
-            throw new PlatformNotSupportedException(); 
-#elif __NETCORE__
-            return null;
-#else
             return System.Runtime.Serialization.FormatterServices.GetUninitializedObject(type);
-#endif
         }
 
     }

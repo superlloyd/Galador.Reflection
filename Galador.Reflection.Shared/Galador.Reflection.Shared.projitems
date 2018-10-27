@@ -16,13 +16,13 @@
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\IO\PrimitiveBinaryWriter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\IO\PrimitiveTextReader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\IO\PrimitiveTextWriter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Serialization\ReflectObject.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\StreamExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\IO\TokenPrimitiveWriter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)PropertyPath.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Registry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\IDeserialized.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\KnownTypes.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Serialization\Missing.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\ObjectContext.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\ObjectReader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\ObjectWriter.cs" />

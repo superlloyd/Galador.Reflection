@@ -13,7 +13,7 @@ namespace Galador.Reflection.Utils
     {
         ParameterInfo[] parameters;
         MethodBase method;
-#if !__STD__
+#if !__STD__ && !__IOS__
         MethodHandler fastMethod;
 #else
 #endif
@@ -42,7 +42,7 @@ namespace Galador.Reflection.Utils
         {
             parameters = method.GetParameters();
             this.method = method;
-#if !__STD__
+#if !__STD__ && !__IOS__
             fastMethod = EmitHelper.CreateMethodHandler(method);
 #else
 #endif
@@ -71,7 +71,7 @@ namespace Galador.Reflection.Utils
         {
             parameters = method.GetParameters();
             this.method = method;
-#if !__STD__
+#if !__STD__ && !__IOS__
             fastMethod = EmitHelper.CreateMethodHandler(method, doNotCreate);
 #else
 #endif

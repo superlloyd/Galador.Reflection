@@ -62,7 +62,7 @@ namespace Galador.Reflection.Serialization
         /// Reads the next object from the <see cref="Reader"/>.
         /// </summary>
         /// <returns>The next object in the stream.</returns>
-        public object Read()
+        public object Read() 
         {
             if (recurseDepth++ == 0)
             {
@@ -79,10 +79,8 @@ namespace Galador.Reflection.Serialization
                 {
                     foreach (var item in Context.Objects.OfType<IDeserialized>())
                         item.Deserialized();
-#if !__PCL__ && !__NETCORE__
                     foreach (var item in Context.Objects.OfType<SRS.IDeserializationCallback>())
                         item.OnDeserialization(this.Context);
-#endif
                 }
             }
         }
@@ -110,7 +108,7 @@ namespace Galador.Reflection.Serialization
             {
                 o = null;
                 if (oid > 0)
-                    Context.Register(oid, null);
+                    Context.Register(oid, null, false);
             }
             else if (actual == ReflectType.RReflectType)
             {
@@ -137,10 +135,10 @@ namespace Galador.Reflection.Serialization
             {
                 o = ReadObject(actual.Surrogate, 0, null);
                 object o2 = o;
-                if (!(o is Missing) && !actual.TryGetOriginal(o, out o2))
+                if (!(o is ReflectObject) && !actual.TryGetOriginal(o, out o2))
                     throw new InvalidOperationException("surrogate failure: couldn't get normal instance");
                 if (oid != 0)
-                    Context.Register(oid, o2);
+                    Context.Register(oid, o2, false);
                 o = o2;
             }
             else
@@ -152,37 +150,14 @@ namespace Galador.Reflection.Serialization
             {
                 if (o is IDeserialized)
                     ((IDeserialized)o).Deserialized();
-#if !__PCL__ && !__NETCORE__
                 if (o is SRS.IDeserializationCallback)
                     ((SRS.IDeserializationCallback)o).OnDeserialization(null);
-#endif
             }
             return o;
         }
 
         object ReadISerializable(ReflectType ts, ulong oid, object possibleValue)
         {
-#if __PCL__
-            throw new PlatformNotSupportedException("PCL");
-#elif __NETCORE__
-            var missing = new Missing(ts);
-            if (oid > 0)
-                Context.Register(oid, missing);
-            var list = new List<Tuple<object, object>>();
-            missing.Collection = list;
-            var N = Reader.ReadVInt();
-            for (int i = 0; i < N; i++)
-            {
-                var s = (string)Read(ReflectType.RString, null);
-                var o = Read(ReflectType.RObject, null);
-                list.Add(Tuple.Create<object, object>(s, o));
-            }
-            if (ts.Type != null)
-            {
-                return possibleValue;
-            }
-            return missing;
-#else
             var info = new SRS.SerializationInfo(typeof(object), new SRS.FormatterConverter());
             var ctx = new SRS.StreamingContext(SRS.StreamingContextStates.Persistence);
             var N = (int)Reader.ReadVInt();
@@ -201,45 +176,40 @@ namespace Galador.Reflection.Serialization
                     if (ctor != null)
                         ctor.Invoke(possibleValue, new object[] { info, ctx }); // Dare to do it! Call constructor on existing instance!!
                     if (oid > 0)
-                        Context.Register(oid, possibleValue);
+                        Context.Register(oid, possibleValue, false);
                     return possibleValue;
                 }
                 var o = ts.Type.TryConstruct(info, ctx) ?? ts.FastType.TryConstruct();
                 if (oid > 0)
-                    Context.Register(oid, o);
+                    Context.Register(oid, o, false);
                 return o;
             }
-            var missing = new Missing(ts);
+            var missing = new ReflectObject(ts);
             if (oid > 0)
-                Context.Register(oid, missing);
+                Context.Register(oid, missing, false);
             var list = new List<Tuple<object, object>>();
             missing.Collection = list;
             foreach (var kv in info)
                 list.Add(Tuple.Create<object, object>(kv.Name, kv.Value));
             return missing;
-#endif
         }
 
         object ReadConverter(ReflectType ts, ulong oid)
         {
-#if __PCL__
-            throw new PlatformNotSupportedException("PCL");
-#else
             var s = (string)Read(ReflectType.RString, null);
             var tc = ts.GetTypeConverter();
             if (tc != null)
             {
                 var o = tc.ConvertFromInvariantString(s);
                 if (oid > 0)
-                    Context.Register(oid, o);
+                    Context.Register(oid, o, false);
                 return o;
             }
-            var missing = new Missing(ts);
+            var missing = new ReflectObject(ts);
             if (oid > 0)
-                Context.Register(oid, missing);
+                Context.Register(oid, missing, false);
             missing.ConverterString = s;
             return missing;
-#endif
         }
 
         static bool Inc(int[] indices, int[] rank)
@@ -259,7 +229,7 @@ namespace Galador.Reflection.Serialization
             {
                 // register everything, value types might have been written as objects!
                 if (oid > 0)
-                    Context.Register(oid, value);
+                    Context.Register(oid, value, false);
                 return value;
             };
             switch (ts.Kind)
@@ -270,9 +240,9 @@ namespace Galador.Reflection.Serialization
                         if (ts.IsArray)
                         {
                             var ranks = Enumerable.Range(0, ts.ArrayRank).Select(x => (int)Reader.ReadVInt()).ToArray();
-                            var array = Array.CreateInstance(ts.Element.Type ?? typeof(Missing), ranks);
+                            var array = Array.CreateInstance(ts.Element.Type ?? typeof(ReflectObject), ranks);
                             if (oid != 0)
-                                Context.Register(oid, array);
+                                Context.Register(oid, array, false);
                             if (ranks.All(x => x > 0))
                             {
                                 var indices = new int[ranks.Length];
@@ -292,7 +262,7 @@ namespace Galador.Reflection.Serialization
                             if (isThere)
                                 o = Read(ts.GenericArguments[0], null);
                             if (oid != 0)
-                                Context.Register(oid, o);
+                                Context.Register(oid, o, false);
                             return o;
                         }
                         else if (ts.IsEnum)
@@ -300,7 +270,7 @@ namespace Galador.Reflection.Serialization
                             var eoVal = Read(ts.Element, null);
                             var eVal = ts.Type != null ? Enum.ToObject(ts.Type, eoVal) : eoVal;
                             if (oid != 0)
-                                Context.Register(oid, eVal);
+                                Context.Register(oid, eVal, false);
                             return eVal;
                         }
                         else
@@ -308,10 +278,10 @@ namespace Galador.Reflection.Serialization
                             object o = null;
                             if (ts.Type == null)
                             {
-                                var missing = new Missing(ts);
+                                var missing = new ReflectObject(ts);
                                 o = missing;
                                 if (oid != 0)
-                                    Context.Register(oid, missing);
+                                    Context.Register(oid, missing, false);
                                 foreach (var p in ts.Members)
                                 {
                                     var value = Read(p.Type, null);
@@ -323,30 +293,38 @@ namespace Galador.Reflection.Serialization
                                     case ReflectCollectionType.IList:
                                     case ReflectCollectionType.ICollectionT:
                                         {
-                                            var list = new List<Tuple<object, object>>();
-                                            missing.Collection = list;
-                                            var N = (int)Reader.ReadVInt();
-                                            var coll = colt.Collection1 ?? ReflectType.RObject;
-                                            for (int i = 0; i < N; i++)
+                                            var isRO = Reader.ReadBool();
+                                            if (!isRO)
                                             {
-                                                var value = Read(coll, null);
-                                                list.Add(Tuple.Create<object, object>(value, null));
+                                                var list = new List<Tuple<object, object>>();
+                                                missing.Collection = list;
+                                                var N = (int)Reader.ReadVInt();
+                                                var coll = colt.Collection1 ?? ReflectType.RObject;
+                                                for (int i = 0; i < N; i++)
+                                                {
+                                                    var value = Read(coll, null);
+                                                    list.Add(Tuple.Create<object, object>(value, null));
+                                                }
                                             }
                                         }
                                         break;
                                     case ReflectCollectionType.IDictionary:
                                     case ReflectCollectionType.IDictionaryKV:
                                         {
-                                            var list = new List<Tuple<object, object>>();
-                                            missing.Collection = list;
-                                            var N = (int)Reader.ReadVInt();
-                                            var coll1 = colt.Collection1 ?? ReflectType.RObject;
-                                            var coll2 = colt.Collection2 ?? ReflectType.RObject;
-                                            for (int i = 0; i < N; i++)
+                                            var isRO = Reader.ReadBool();
+                                            if (!isRO)
                                             {
-                                                var key = Read(coll1, null);
-                                                var value = Read(coll2, null);
-                                                list.Add(Tuple.Create<object, object>(key, value));
+                                                var list = new List<Tuple<object, object>>();
+                                                missing.Collection = list;
+                                                var N = (int)Reader.ReadVInt();
+                                                var coll1 = colt.Collection1 ?? ReflectType.RObject;
+                                                var coll2 = colt.Collection2 ?? ReflectType.RObject;
+                                                for (int i = 0; i < N; i++)
+                                                {
+                                                    var key = Read(coll1, null);
+                                                    var value = Read(coll2, null);
+                                                    list.Add(Tuple.Create<object, object>(key, value));
+                                                }
                                             }
                                         }
                                         break;
@@ -357,7 +335,7 @@ namespace Galador.Reflection.Serialization
                             {
                                 o = possibleValue ?? ts.FastType.TryConstruct();
                                 if (oid != 0)
-                                    Context.Register(oid, o);
+                                    Context.Register(oid, o, false);
                                 foreach (var m in ts.RuntimeMembers)
                                 {
                                     if (m.RuntimeMember == null || !TryFastReadSet(m.RuntimeMember, o))

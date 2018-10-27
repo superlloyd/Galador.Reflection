@@ -10,9 +10,9 @@ namespace Galador.Reflection.Serialization
     /// <summary>
     /// Instance returned when the original type cannot be found.
     /// </summary>
-    public sealed class Missing
+    public sealed class ReflectObject
     {
-        internal Missing(ReflectType type)
+        internal ReflectObject(ReflectType type)
         {
             this.Type = type;
             foreach (var m in type.RuntimeMembers)

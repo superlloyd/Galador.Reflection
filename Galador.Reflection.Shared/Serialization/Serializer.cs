@@ -99,6 +99,7 @@ namespace Galador.Reflection.Serialization
             {
                 Settings = settings,
             };
+            ow.Settings.SkipMetaData = true;
 
             ow.Write(instance);
 

@@ -17,8 +17,9 @@ namespace Galador.Reflection.Serialization
     {
         static KnownTypes()
         {
-            KnownAssemblies.AssemblyLoaded += a => Register(a);
             Register(KnownAssemblies.Current);
+            // IMPORTANT: add the callback after Register() to avoid deadlock
+            KnownAssemblies.AssemblyLoaded += a => Register(a);
         }
 
         #region GetType()
@@ -101,7 +102,7 @@ namespace Galador.Reflection.Serialization
                 lock (typeToSurrogate)
                     sReplacementTypes[nattr] = type;
 
-#if __NET__ || __NETCORE__
+#if !__ANDROID__ && !__IOS__
             var dcattr = type.GetTypeInfo().GetCustomAttribute<DataContractAttribute>();
             if (dcattr != null)
                 lock (typeToSurrogate)
@@ -139,9 +140,9 @@ namespace Galador.Reflection.Serialization
             }
         }
 
-        #endregion
+#endregion
 
-        #region TryGetSurrogate()
+#region TryGetSurrogate()
 
         /// <summary>
         /// Tries the get the surrogate for a given type.
@@ -171,6 +172,6 @@ namespace Galador.Reflection.Serialization
             return false;
         }
 
-        #endregion
+#endregion
     }
 }

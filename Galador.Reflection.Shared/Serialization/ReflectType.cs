@@ -63,8 +63,8 @@ namespace Galador.Reflection.Serialization
                 return RType;
             if (o is ReflectType)
                 return RReflectType;
-            if (o is Missing)
-                return ((Missing)o).Type;
+            if (o is ReflectObject)
+                return ((ReflectObject)o).Type;
             return GetType(o.GetType());
         }
 
@@ -245,7 +245,7 @@ namespace Galador.Reflection.Serialization
         /// <summary>
         /// The .NET <see cref="System.Type"/> that this <see cref="ReflectType"/> represent, if it can be found.
         /// <see cref="ReflectType"/> created by the <see cref="ObjectReader"/> might have a null value there if the type
-        /// can't be found. In which case instance of this type will be deserialized as <see cref="Missing"/>.
+        /// can't be found. In which case instance of this type will be deserialized as <see cref="ReflectObject"/>.
         /// </summary>
         /// <remarks>This property can be null when deserializing and no matching type can be found.</remarks>
         public Type Type { get; private set; }
@@ -376,9 +376,6 @@ namespace Galador.Reflection.Serialization
             }
             else if (type.IsGenericParameter)
             {
-#if __PCL__
-                throw new NotSupportedException("PCL");
-#else
                 IsGenericParameter = true;
                 var pargs = type.DeclaringType.GetTypeInfo().GetGenericArguments();
                 for (int i = 0; i < pargs.Length; i++)
@@ -387,7 +384,6 @@ namespace Galador.Reflection.Serialization
                         GenericParameterIndex = i;
                         break;
                     }
-#endif
             }
             else
             {
@@ -410,12 +406,8 @@ namespace Galador.Reflection.Serialization
                             Element = GetType(ti.GetGenericTypeDefinition());
                             IsNullable = Element == RNullable;
                         }
-#if __PCL__
-                        throw new NotSupportedException("PCL");
-#else
                         GenericArguments = ti.GetGenericArguments().Select(x => GetType(x)).ToArray();
                         IsIgnored = GenericArguments.Any(x => x.IsIgnored);
-#endif
                     }
                     if (!IsGeneric || IsGenericTypeDefinition)
                     {
@@ -455,9 +447,7 @@ namespace Galador.Reflection.Serialization
                         {
                             BaseType = GetType(ti.BaseType);
                         }
-#if !__PCL__
                         IsSurrogateType = Type.GetTypeHierarchy().Any(x => x.GetTypeInfo().IsInterface && x.GetTypeInfo().IsGenericType && x.GetTypeInfo().GetGenericTypeDefinition() == typeof(ISurrogate<>));
-#endif
                         Type tSurrogate;
                         if (KnownTypes.TryGetSurrogate(type, out tSurrogate))
                         {

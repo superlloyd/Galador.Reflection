@@ -14,7 +14,6 @@ namespace Galador.Reflection.Utils
     /// </summary>
     public class TypeDescriptionConverter : System.ComponentModel.TypeConverter
     {
-#if !__PCL__
         /// <summary>
         /// Determines whether this instance [can convert from] the specified context.
         /// </summary>
@@ -59,7 +58,6 @@ namespace Galador.Reflection.Utils
             var ts = (TypeDescription)value;
             return ts.ToString();
         }
-#endif
     }
 
     /// <summary>
@@ -141,9 +139,6 @@ namespace Galador.Reflection.Utils
         /// </summary>
         public TypeDescription(Type type)
         {
-#if __PCL__
-            throw new PlatformNotSupportedException("PCL");
-#else
             while (type.IsArray)
             {
                 var rank = type.GetArrayRank();
@@ -170,7 +165,6 @@ namespace Galador.Reflection.Utils
             {
                 AssemblyName = ass.GetName().Name;
             }
-#endif
         }
 
         /// <summary>
@@ -259,9 +253,6 @@ namespace Galador.Reflection.Utils
         /// </summary>
         public Type Resolve()
         {
-#if __PCL__
-            throw new PlatformNotSupportedException("PCL");
-#else
             var type = KnownAssemblies.GetType(Fullname, AssemblyName);
             if (type == null)
                 return null;
@@ -286,7 +277,6 @@ namespace Galador.Reflection.Utils
                 else type = type.MakeArrayType(rank);
             }
             return type;
-#endif
         }
         /// <summary>
         /// Returns a <see cref="System.String" /> that represents this instance.

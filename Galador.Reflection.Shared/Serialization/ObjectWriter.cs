@@ -181,9 +181,9 @@ namespace Galador.Reflection.Serialization
 
         void WriteISerializable(ReflectType ots, object o)
         {
-            if (o is Missing)
+            if (o is ReflectObject)
             {
-                var m = (Missing)o;
+                var m = (ReflectObject)o;
                 Writer.WriteVInt(m.Collection.Count);
                 foreach (var item in m.Collection)
                 {
@@ -193,9 +193,6 @@ namespace Galador.Reflection.Serialization
             }
             else
             {
-#if __NETCORE__
-                throw new PlatformNotSupportedException(".NETCore + ISerializable");
-#elif !__PCL__
                 var serial = (SRS.ISerializable)o;
                 var info = new SRS.SerializationInfo(typeof(object), new SRS.FormatterConverter());
                 var ctx = new SRS.StreamingContext(SRS.StreamingContextStates.Persistence);
@@ -206,26 +203,23 @@ namespace Galador.Reflection.Serialization
                     Write(ReflectType.RString, item.Name);
                     Write(ReflectType.RObject, item.Value);
                 }
-#endif
             }
         }
 
         void WriteConverter(ReflectType ots, object value)
         {
-            if (value is Missing)
+            if (value is ReflectObject)
             {
-                var m = (Missing)value;
+                var m = (ReflectObject)value;
                 Write(ReflectType.RString, m.ConverterString);
             }
             else
             {
-#if !__PCL__
                 var tc = ots.GetTypeConverter();
                 if (tc == null)
                     throw new InvalidOperationException("Failed to get converter.");
                 var s = tc.ConvertToInvariantString(value);
                 Write(ReflectType.RString, s);
-#endif
             }
         }
 
@@ -261,9 +255,9 @@ namespace Galador.Reflection.Serialization
                     }
                     else
                     {
-                        if (o is Missing)
+                        if (o is ReflectObject)
                         {
-                            var miss = (Missing)o;
+                            var miss = (ReflectObject)o;
                             foreach (var f in miss.Members)
                             {
                                 Write(f.Type, f.Value);

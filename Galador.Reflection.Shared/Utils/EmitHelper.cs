@@ -1,4 +1,4 @@
-﻿#if !__STD__
+﻿#if !__STD__ && !__IOS__
 
 using System;
 using System.Collections.Generic;

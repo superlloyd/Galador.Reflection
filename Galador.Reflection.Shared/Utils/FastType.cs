@@ -67,7 +67,7 @@ namespace Galador.Reflection.Utils
             if (IsGenericMeta || IsAbstract || IsIgnored)
                 return null;
 
-#if __NET__ || __NETCORE__
+#if !__STD__ && !__IOS__
             if (fastCtor != null)
                 return fastCtor();
 #endif
@@ -77,18 +77,12 @@ namespace Galador.Reflection.Utils
             if (!IsReference)
                 return Activator.CreateInstance(Type);
 
-#if __PCL__
-            throw new PlatformNotSupportedException("PCL"); 
-#elif __NETCORE__
-            return null;
-#else
             return System.Runtime.Serialization.FormatterServices.GetUninitializedObject(Type);
-#endif
         }
 
         FastMethod emtpy_constructor;
         object[] empty_params;
-#if !__STD__
+#if !__STD__ && !__IOS__
         Func<object> fastCtor;
 #endif
         void SetConstructor()
@@ -96,7 +90,7 @@ namespace Galador.Reflection.Utils
             var ctor = Type.TryGetConstructors().OrderBy(x => x.GetParameters().Length).FirstOrDefault();
             if (ctor == null)
             {
-#if !__STD__
+#if !__STD__ && !__IOS__
                 if (Type.GetTypeInfo().IsValueType)
                     fastCtor = EmitHelper.CreateParameterlessConstructorHandler(Type);
 #endif
@@ -174,14 +168,10 @@ namespace Galador.Reflection.Utils
         {
             if (type.IsGenericParameter)
                 return true;
-#if __PCL__
-                throw new PlatformNotSupportedException("PCL");
-#else
             var ti = type.GetTypeInfo();
             if (!ti.IsGenericType)
                 return false;
             return ti.GetGenericArguments().Any(x => x.GetTypeInfo().IsGenericParameter);
-#endif
         }
 
         #endregion
@@ -391,7 +381,7 @@ namespace Galador.Reflection.Utils
         }
 
         // performance fields, depends on platform
-#if !__STD__
+#if !__STD__ && !__IOS__
         Action<object, object> setter;
         Func<object, object> getter;
         Action<object, Guid> setterGuid;
@@ -428,7 +418,7 @@ namespace Galador.Reflection.Utils
 
         #region InitializeStructAccessor() InitializeAccessor()
 
-#if !__STD__
+#if !__STD__ && !__IOS__
         void InitializeStructAccessor()
         {
             switch (Type.Kind)
@@ -524,7 +514,7 @@ namespace Galador.Reflection.Utils
             if (Member is PropertyInfo)
             {
                 pInfo = (PropertyInfo)Member;
-#if !__STD__
+#if !__STD__ && !__IOS__
                 getter = EmitHelper.CreatePropertyGetterHandler(pInfo);
                 if (pInfo.SetMethod != null)
                 {
@@ -537,14 +527,14 @@ namespace Galador.Reflection.Utils
                 fInfo = (FieldInfo)Member;
                 if (fInfo.IsLiteral)
                 {
-#if !__STD__
+#if !__STD__ && !__IOS__
                     var value = fInfo.GetValue(null);
                     getter = (x) => value;
 #endif
                 }
                 else
                 {
-#if !__STD__
+#if !__STD__ && !__IOS__
                     getter = EmitHelper.CreateFieldGetterHandler(fInfo);
                     setter = EmitHelper.CreateFieldSetterHandler(fInfo);
 #endif
@@ -572,7 +562,7 @@ namespace Galador.Reflection.Utils
                 if (instance == null)
                     return null;
             }
-#if __NET__ || __NETCORE__
+#if !__STD__ && !__IOS__
             if (getter != null)
                 return getter(instance);
 #else
@@ -604,7 +594,7 @@ namespace Galador.Reflection.Utils
                     return false;
             }
 
-#if __NET__ || __NETCORE__
+#if !__STD__ && !__IOS__
             if (setter != null)
             {
                 setter(instance, value);
@@ -625,11 +615,11 @@ namespace Galador.Reflection.Utils
             return false;
         }
 
-#endregion
+        #endregion
 
-#region typed known structs: Get/Set Guid/Bool/Char/...()
+        #region typed known structs: Get/Set Guid/Bool/Char/...()
 
-#if __NET__ || __NETCORE__
+#if !__STD__ && !__IOS__
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static bool FastSet<T>(object instance, T value, Action<object, T> setter)
         {
@@ -654,7 +644,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetGuid(object instance, Guid value)
         {
-#if __NET__ || __NETCORE__
+#if !__STD__ && !__IOS__
             return FastSet<Guid>(instance, value, setterGuid);
 #else
             return SetValue(instance, value);
@@ -663,7 +653,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Guid GetGuid(object instance)
         {
-#if __NET__ || __NETCORE__
+#if !__STD__ && !__IOS__
             return FastGet<Guid>(instance, getterGuid);
 #else
             return As<Guid>(GetValue(instance));
@@ -673,7 +663,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetBool(object instance, bool value)
         {
-#if __NET__ || __NETCORE__
+#if !__STD__ && !__IOS__
             return FastSet<bool>(instance, value, setterBool);
 #else
             return SetValue(instance, value);
@@ -682,7 +672,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool GetBool(object instance)
         {
-#if __NET__ || __NETCORE__
+#if !__STD__ && !__IOS__
             return FastGet<bool>(instance, getterBool);
 #else
             return As<bool>(GetValue(instance));
@@ -692,7 +682,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetChar(object instance, char value)
         {
-#if __NET__ || __NETCORE__
+#if !__STD__ && !__IOS__
             return FastSet<char>(instance, value, setterChar);
 #else
             return SetValue(instance, value);
@@ -701,7 +691,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public char GetChar(object instance)
         {
-#if __NET__ || __NETCORE__
+#if !__STD__ && !__IOS__
             return FastGet<char>(instance, getterChar);
 #else
             return As<char>(GetValue(instance));
@@ -711,7 +701,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetInt8(object instance, byte value)
         {
-#if __NET__ || __NETCORE__
+#if !__STD__ && !__IOS__
             return FastSet<byte>(instance, value, setterByte);
 #else
             return SetValue(instance, value);
@@ -720,7 +710,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public byte GetInt8(object instance)
         {
-#if __NET__ || __NETCORE__
+#if !__STD__ && !__IOS__
             return FastGet<byte>(instance, getterByte);
 #else
             return As<byte>(GetValue(instance));
@@ -730,7 +720,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetUInt8(object instance, sbyte value)
         {
-#if __NET__ || __NETCORE__
+#if !__STD__ && !__IOS__
             return FastSet<sbyte>(instance, value, setterSByte);
 #else
             return SetValue(instance, value);
@@ -739,7 +729,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public sbyte GetUInt8(object instance)
         {
-#if __NET__ || __NETCORE__
+#if !__STD__ && !__IOS__
             return FastGet<sbyte>(instance, getterSByte);
 #else
             return As<sbyte>(GetValue(instance));
@@ -749,7 +739,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetInt16(object instance, short value)
         {
-#if __NET__ || __NETCORE__
+#if !__STD__ && !__IOS__
             return FastSet<short>(instance, value, setterInt16);
 #else
             return SetValue(instance, value);
@@ -758,7 +748,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public short GetInt16(object instance)
         {
-#if __NET__ || __NETCORE__
+#if !__STD__ && !__IOS__
             return FastGet<short>(instance, getterInt16);
 #else
             return As<short>(GetValue(instance));
@@ -768,7 +758,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetUInt16(object instance, ushort value)
         {
-#if __NET__ || __NETCORE__
+#if !__STD__ && !__IOS__
             return FastSet<ushort>(instance, value, setterUInt16);
 #else
             return SetValue(instance, value);
@@ -777,7 +767,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ushort GetUInt16(object instance)
         {
-#if __NET__ || __NETCORE__
+#if !__STD__ && !__IOS__
             return FastGet<ushort>(instance, getterUInt16);
 #else
             return As<ushort>(GetValue(instance));
@@ -787,7 +777,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetInt32(object instance, int value)
         {
-#if __NET__ || __NETCORE__
+#if !__STD__ && !__IOS__
             return FastSet<int>(instance, value, setterInt32);
 #else
             return SetValue(instance, value);
@@ -796,7 +786,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int GetInt32(object instance)
         {
-#if __NET__ || __NETCORE__
+#if !__STD__ && !__IOS__
             return FastGet<int>(instance, getterInt32);
 #else
             return As<int>(GetValue(instance));
@@ -806,7 +796,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetUInt32(object instance, uint value)
         {
-#if __NET__ || __NETCORE__
+#if !__STD__ && !__IOS__
             return FastSet<uint>(instance, value, setterUInt32);
 #else
             return SetValue(instance, value);
@@ -815,7 +805,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint GetUInt32(object instance)
         {
-#if __NET__ || __NETCORE__
+#if !__STD__ && !__IOS__
             return FastGet<uint>(instance, getterUInt32);
 #else
             return As<uint>(GetValue(instance));
@@ -825,7 +815,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetInt64(object instance, long value)
         {
-#if __NET__ || __NETCORE__
+#if !__STD__ && !__IOS__
             return FastSet<long>(instance, value, setterInt64);
 #else
             return SetValue(instance, value);
@@ -834,7 +824,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public long GetInt64(object instance)
         {
-#if __NET__ || __NETCORE__
+#if !__STD__ && !__IOS__
             return FastGet<long>(instance, getterInt64);
 #else
             return As<long>(GetValue(instance));
@@ -844,7 +834,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetUInt64(object instance, ulong value)
         {
-#if __NET__ || __NETCORE__
+#if !__STD__ && !__IOS__
             return FastSet<ulong>(instance, value, setterUInt64);
 #else
             return SetValue(instance, value);
@@ -853,7 +843,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ulong GetUInt64(object instance)
         {
-#if __NET__ || __NETCORE__
+#if !__STD__ && !__IOS__
             return FastGet<ulong>(instance, getterUInt64);
 #else
             return As<ulong>(GetValue(instance));
@@ -863,7 +853,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetSingle(object instance, float value)
         {
-#if __NET__ || __NETCORE__
+#if !__STD__ && !__IOS__
             return FastSet<float>(instance, value, setterSingle);
 #else
             return SetValue(instance, value);
@@ -872,7 +862,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float GetSingle(object instance)
         {
-#if __NET__ || __NETCORE__
+#if !__STD__ && !__IOS__
             return FastGet<float>(instance, getterSingle);
 #else
             return As<float>(GetValue(instance));
@@ -882,7 +872,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetDouble(object instance, double value)
         {
-#if __NET__ || __NETCORE__
+#if !__STD__ && !__IOS__
             return FastSet<double>(instance, value, setterDouble);
 #else
             return SetValue(instance, value);
@@ -891,7 +881,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double GetDouble(object instance)
         {
-#if __NET__ || __NETCORE__
+#if !__STD__ && !__IOS__
             return FastGet<double>(instance, getterDouble);
 #else
             return As<double>(GetValue(instance));
@@ -901,7 +891,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetDecimal(object instance, decimal value)
         {
-#if __NET__ || __NETCORE__
+#if !__STD__ && !__IOS__
             return FastSet<decimal>(instance, value, setterDecimal);
 #else
             return SetValue(instance, value);
@@ -910,7 +900,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public decimal GetDecimal(object instance)
         {
-#if __NET__ || __NETCORE__
+#if !__STD__ && !__IOS__
             return FastGet<decimal>(instance, getterDecimal);
 #else
             return As<decimal>(GetValue(instance));

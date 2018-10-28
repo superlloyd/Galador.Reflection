@@ -19,21 +19,20 @@ namespace Galador.Reflection.Serialization
         /// <param name="o">The object to serialize.</param>
         /// <param name="target">The target where the serialized version will be written.</param>
         /// <param name="settings">The serialization settings to use</param>
-        public static void Serialize(object o, StringBuilder target, SerializationSettings settings = null)
+        public static void Serialize(object o, IPrimitiveWriter target, SerializationSettings settings = null)
         {
-            var pw = new PrimitiveTextWriter(new StringWriter(target, CultureInfo.InvariantCulture));
-            var ow = new ObjectWriter(pw) { Settings = settings };
+            var ow = new ObjectWriter(target) { Settings = settings };
             ow.Write(o);
         }
+
         /// <summary>
         /// Deserialize an object from a string.
         /// </summary>
         /// <param name="source">The string to read as a serialized object.</param>
         /// <returns>A newly deserialized object.</returns>
-        public static object Deserialize(string source)
+        public static object Deserialize(IPrimitiveReader source)
         {
-            var pr = new PrimitiveTextReader(new StringReader(source));
-            var or = new ObjectReader(pr);
+            var or = new ObjectReader(source);
             return or.Read();
         }
 
@@ -46,7 +45,7 @@ namespace Galador.Reflection.Serialization
         public static void ZipSerialize(object o, Stream stream, SerializationSettings settings = null)
         {
             using (var gzStream = new GZipStream(stream, CompressionMode.Compress, true))
-                Serialize(o, gzStream, settings);
+                Serialize(o, new PrimitiveBinaryWriter(gzStream), settings);
         }
         /// <summary>
         /// Deserialize an object from a compressed gzip stream.
@@ -56,31 +55,7 @@ namespace Galador.Reflection.Serialization
         public static object ZipDeserialize(Stream stream)
         {
             using (var gzStream = new GZipStream(stream, CompressionMode.Decompress, true))
-                return Deserialize(gzStream);
-        }
-
-        /// <summary>
-        /// Serializes the specified object <paramref name="o"/> to a stream.
-        /// </summary>
-        /// <param name="o">The object to serialize.</param>
-        /// <param name="target">The target where the serialized version will be written.</param>
-        /// <param name="settings">The serialization settings to use</param>
-        public static void Serialize(object o, Stream target, SerializationSettings settings = null)
-        {
-            var pw = new PrimitiveBinaryWriter(target);
-            var ow = new ObjectWriter(pw) { Settings = settings };
-            ow.Write(o);
-        }
-        /// <summary>
-        /// Deserialize an object from a stream.
-        /// </summary>
-        /// <param name="source">The stream to read as a serialized object.</param>
-        /// <returns>A newly deserialized object.</returns>
-        public static object Deserialize(Stream source)
-        {
-            var pr = new PrimitiveBinaryReader(source);
-            var or = new ObjectReader(pr);
-            return or.Read();
+                return Deserialize(new PrimitiveBinaryReader(gzStream));
         }
 
         /// <summary>
@@ -119,7 +94,7 @@ namespace Galador.Reflection.Serialization
         public static string ToSerializedString(object instance, SerializationSettings settings = null)
         {
             var sb = new StringBuilder(256);
-            Serialize(instance, sb, settings);
+            Serialize(instance, new PrimitiveTextWriter(new StringWriter(sb, CultureInfo.InvariantCulture)), settings);
             return sb.ToString();
         }
     }

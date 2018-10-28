@@ -251,8 +251,7 @@ namespace TestApp
             bDT.Start();
             for (int i = 0; i < N2; i++)
             {
-                var ms = new MemoryStream(256);
-                Serializer.Serialize(list, ms);
+                Serializer.Serialize(list, new PrimitiveBinaryWriter(new MemoryStream()));
             }
             bDT.Stop();
 
@@ -289,14 +288,14 @@ namespace TestApp
             mDT.Start();
             for (int i = 0; i < N2; i++)
             {
-                var o = Serializer.Deserialize(mtext);
+                var o = Serializer.Deserialize(new PrimitiveTextReader(new StringReader(mtext)));
             }
             mDT.Stop();
 
             var mem = new MemoryStream(256);
-            Serializer.Serialize(list, mem);
+            Serializer.Serialize(list, new PrimitiveBinaryWriter(mem));
             mem.Position = 0;
-            Serializer.Deserialize(mem);
+            Serializer.Deserialize(new PrimitiveBinaryReader(mem));
             System.Threading.Thread.Sleep(200);
 
             var bDT = new Stopwatch();
@@ -304,7 +303,7 @@ namespace TestApp
             for (int i = 0; i < N2; i++)
             {
                 mem.Position = 0;
-                Serializer.Deserialize(mem);
+                Serializer.Deserialize(new PrimitiveBinaryReader(mem));
             }
             bDT.Stop();
 

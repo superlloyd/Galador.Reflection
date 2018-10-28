@@ -118,7 +118,7 @@ namespace TestApp
             {
                 Other = new Model(),
             };
-            var b = Binding.Create(m, x => x.Name, x => x.Other.Name);
+            var b = PropertyBinding.Create(m, x => x.Name, x => x.Other.Name);
 
             m.Name = "Albert";
             Assert.Equal(m.Name, m.Other.Name);
@@ -126,7 +126,7 @@ namespace TestApp
             Assert.Equal(m.Name, m.Other.Name);
 
             var m2 = new Model();
-            var b2 = Binding.Create(() => m.Name, () => m2.Name);
+            var b2 = PropertyBinding.Create(() => m.Name, () => m2.Name);
 
             Assert.Equal(m.Name, m2.Name);
             m.Name = "Landau";
@@ -154,7 +154,7 @@ namespace TestApp
         }
         void ForgetfulBind(Model m1, Model m2)
         {
-            Binding.Create(() => m1.Name, () => m2.Name);
+            PropertyBinding.Create(() => m1.Name, () => m2.Name);
         }
     }
 }

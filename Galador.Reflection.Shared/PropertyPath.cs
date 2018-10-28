@@ -12,13 +12,13 @@ using System.Threading.Tasks;
 
 namespace Galador.Reflection
 {
-    #region Binding
+    #region PropertyBinding
 
-    public class Binding
+    public class PropertyBinding
     {
         PropertyPath From, To;
 
-        private Binding(PropertyPath from, PropertyPath to, bool twoWays)
+        private PropertyBinding(PropertyPath from, PropertyPath to, bool twoWays)
         {
             From = from;
             To = to;
@@ -56,14 +56,14 @@ namespace Galador.Reflection
             }
         }
 
-        public static Binding Create<T, TP>(T root, Expression<Func<T, TP>> from, Expression<Func<T, TP>> to, bool twoWays = false)
+        public static PropertyBinding Create<T, TP>(T root, Expression<Func<T, TP>> from, Expression<Func<T, TP>> to, bool twoWays = false)
         {
-            return new Binding(PropertyPath.Create(root, from), PropertyPath.Create(root, to), twoWays);
+            return new PropertyBinding(PropertyPath.Create(root, from), PropertyPath.Create(root, to), twoWays);
         }
 
-        public static Binding Create<TP>(Expression<Func<TP>> from, Expression<Func<TP>> to, bool twoWays = false)
+        public static PropertyBinding Create<TP>(Expression<Func<TP>> from, Expression<Func<TP>> to, bool twoWays = false)
         {
-            return new Binding(PropertyPath.Create(from), PropertyPath.Create(to), twoWays);
+            return new PropertyBinding(PropertyPath.Create(from), PropertyPath.Create(to), twoWays);
         }
     } 
 

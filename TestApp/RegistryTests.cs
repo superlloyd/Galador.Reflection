@@ -29,9 +29,9 @@ namespace TestApp
             var reg = new Registry();
             reg.Register(typeof(Disp1), typeof(Disp2), typeof(Disp3));
             var h = reg.Resolve<HasDispose>();
-            Assert.Equal(3, h.Disposables.Length);
-            Assert.Equal(3, h.DisposableList.Count);
-            for (int i = 0; i < 3; i++)
+            Assert.True(h.Disposables.Length > 3);
+            Assert.Equal(h.Disposables.Length, h.DisposableList.Count);
+            for (int i = 0; i < h.Disposables.Length; i++)
                 Assert.Equal(h.Disposables[i], h.DisposableList[i]);
         }
 

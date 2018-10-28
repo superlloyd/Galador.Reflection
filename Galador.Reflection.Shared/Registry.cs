@@ -157,50 +157,30 @@ namespace Galador.Reflection
         /// Initializes a new instance of the <see cref="Registry"/> class.
         /// </summary>
         public Registry()
-            : this(false)
         {
+            Register(this);
         }
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Registry"/> class.
-        /// </summary>
-        /// <param name="registerSelf">if set to <c>true</c> the registry will register itself and can be injected as a dependency.</param>
-        public Registry(bool registerSelf)
-        {
-            if (registerSelf)
-                Register(this);
-        }
-#pragma warning disable 1591 // XML Comments
-        ~Registry() { Dispose(false); }
-#pragma warning restore 1591 // XML Comments
 
         /// <summary>
         /// Dispose of all <see cref="IDisposable"/> object registered with the registry and make it unusable.
         /// </summary>
         public void Dispose()
         {
-            GC.SuppressFinalize(this);
-            Dispose(true);
-        }
-        void Dispose(bool disposing)
-        {
             if (disposed)
                 return;
             disposed = true;
-            if (disposing)
+            List<TypeVault> disposables;
+            if (reverseInheritance.TryGetValue(typeof(IDisposable), out disposables))
             {
-                List<TypeVault> disposables;
-                if (reverseInheritance.TryGetValue(typeof(IDisposable), out disposables))
+                foreach (var item in disposables)
                 {
-                    foreach (var item in disposables)
-                    {
-                        var instance = (IDisposable)item.Instance;
-                        if (instance != null)
-                            instance.Dispose();
-                    }
+                    var instance = (IDisposable)item.Instance;
+                    if (instance != null)
+                        instance.Dispose();
                 }
-                exact = null;
-                reverseInheritance = null;
             }
+            exact = null;
+            reverseInheritance = null;
         }
         bool disposed;
         void EnsureAlive() { if (disposed) throw new ObjectDisposedException(GetType().Name); }

@@ -12,6 +12,63 @@ using System.Threading.Tasks;
 
 namespace Galador.Reflection
 {
+    #region Binding
+
+    public class Binding
+    {
+        PropertyPath From, To;
+
+        private Binding(PropertyPath from, PropertyPath to, bool twoWays)
+        {
+            From = from;
+            To = to;
+            To.Value = From.Value;
+
+            bool changing = false;
+            void NoRentry(Action a)
+            {
+                if (changing)
+                    return;
+                changing = true;
+                try
+                {
+                    a();
+                }
+                finally { changing = false; }
+            }
+
+            From.PropertyChanged += (o, e) =>
+            {
+                NoRentry(() =>
+                {
+                    To.Value = From.Value;
+                });
+            };
+            if (twoWays)
+            {
+                To.PropertyChanged += (o, e) =>
+                {
+                    NoRentry(() =>
+                    {
+                        From.Value = To.Value;
+                    });
+                };
+            }
+        }
+
+        public static Binding Create<T, TP>(T root, Expression<Func<T, TP>> from, Expression<Func<T, TP>> to, bool twoWays = false)
+        {
+            return new Binding(PropertyPath.Create(root, from), PropertyPath.Create(root, to), twoWays);
+        }
+
+        public static Binding Create<TP>(Expression<Func<TP>> from, Expression<Func<TP>> to, bool twoWays = false)
+        {
+            return new Binding(PropertyPath.Create(from), PropertyPath.Create(to), twoWays);
+        }
+    } 
+
+    #endregion
+
     #region PropertyPath<T>
 
     /// <summary>
@@ -268,7 +325,7 @@ namespace Galador.Reflection
             {
                 if (Object == null)
                     return;
-                if (!Member.SetValue(Object, Value))
+                if (!Member.SetValue(Object, value))
                     throw new InvalidOperationException();
             }
             object GetMemberValue()

@@ -108,5 +108,53 @@ namespace TestApp
                 counter[0]++;
             });
         }
+
+
+
+        [Fact]
+        public void BindingWorks()
+        {
+            var m = new Model()
+            {
+                Other = new Model(),
+            };
+            var b = Binding.Create(m, x => x.Name, x => x.Other.Name);
+
+            m.Name = "Albert";
+            Assert.Equal(m.Name, m.Other.Name);
+            m.Name = "Einstein";
+            Assert.Equal(m.Name, m.Other.Name);
+
+            var m2 = new Model();
+            var b2 = Binding.Create(() => m.Name, () => m2.Name);
+
+            Assert.Equal(m.Name, m2.Name);
+            m.Name = "Landau";
+            Assert.Equal(m.Name, m2.Name);
+
+            GC.KeepAlive(m);
+        }
+
+
+        [Fact]
+        public void WeakRefBindingWorks()
+        {
+            var m = new Model();
+            var m2 = new Model();
+            ForgetfulBind(m, m2);
+
+            var s1 = m.Name = "Albert";
+            Assert.Equal(s1, m2.Name);
+
+            GC.Collect();
+            m.Name = "ugh?";
+            m.Other = null;
+
+            Assert.Equal(s1, m2.Name);
+        }
+        void ForgetfulBind(Model m1, Model m2)
+        {
+            Binding.Create(() => m1.Name, () => m2.Name);
+        }
     }
 }

@@ -176,6 +176,44 @@ namespace Galador.Reflection.Serialization
         }
     }
 
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false, Inherited = false)]
+    public class SerializationMemberNameAttribute : Attribute
+    {
+        public SerializationMemberNameAttribute()
+        {
+        }
+        public SerializationMemberNameAttribute(string name)
+        {
+            if (string.IsNullOrEmpty(name))
+                throw new ArgumentNullException($"parameter {name} should not be null.");
+            MemberName = name;
+        }
+
+        public string MemberName { get; set; }
+
+        /// <summary>
+        /// Determines <paramref name="obj"/> is another <see cref="SerializationNameAttribute"/> with the same property values.
+        /// </summary>
+        /// <param name="obj">The <see cref="System.Object" /> to compare with this instance.</param>
+        /// <returns>
+        ///   <c>true</c> if the specified <see cref="System.Object" /> is equal to this instance; otherwise, <c>false</c>.
+        /// </returns>
+        public override bool Equals(object obj)
+        {
+            var o = obj as SerializationMemberNameAttribute;
+            if (o == null)
+                return false;
+            return MemberName == o.MemberName;
+        }
+        /// <summary>
+        /// Returns a hash code for this instance.
+        /// </summary>
+        /// <returns>
+        /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table. 
+        /// </returns>
+        public override int GetHashCode() => MemberName?.GetHashCode() ?? 0;
+    }
+
     /// <summary>
     /// Property or Field with this attribute will be serialized regardless of the <see cref="SerializationSettingsAttribute"/> of their class.
     /// </summary>

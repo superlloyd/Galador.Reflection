@@ -496,12 +496,13 @@ namespace Galador.Reflection.Serialization
                                 }
                                 if (!rm.CanSet && !rm.Type.IsReference)
                                     continue;
-                                if (skip(rm.Name))
+                                var mName = rm.Member.GetCustomAttribute<SerializationMemberNameAttribute>()?.MemberName ?? rm.Name;
+                                if (skip(mName))
                                     continue;
                                 var mType = GetType(rm.Type.Type);
                                 var m = new Member
                                 {
-                                    Name = rm.Name,
+                                    Name = mName,
                                     Type = GetType(rm.Type.Type),
                                     RuntimeMember = rm,
                                 };

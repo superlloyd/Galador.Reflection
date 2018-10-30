@@ -318,6 +318,7 @@ namespace Galador.Reflection.Utils
                 IsField = true;
                 Type = FastType.GetType(pi.FieldType);
                 IsPublic = pi.IsPublic;
+                IsPublicSetter = pi.IsPublic;
                 CanSet = !pi.IsLiteral;
                 IsStatic = pi.IsStatic;
             }
@@ -326,6 +327,7 @@ namespace Galador.Reflection.Utils
                 var pi = (PropertyInfo)member;
                 Type = FastType.GetType(pi.PropertyType);
                 IsPublic = pi.GetMethod.IsPublic;
+                IsPublicSetter = pi.SetMethod?.IsPublic ?? false;
                 IsField = false;
                 CanSet = pi.SetMethod != null;
                 IsStatic = pi.GetMethod.IsStatic;
@@ -354,6 +356,11 @@ namespace Galador.Reflection.Utils
         /// Whether this is a public member or not
         /// </summary>
         public bool IsPublic { get; private set; }
+
+        /// <summary>
+        /// Whether this is a public member or not
+        /// </summary>
+        public bool IsPublicSetter { get; private set; }
 
         /// <summary>
         /// Whether this is a field or a property

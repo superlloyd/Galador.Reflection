@@ -16,27 +16,6 @@ namespace Galador.Reflection.Utils
             domain.AssemblyLoad += (o, e) => AssemblyLoaded?.Invoke(e.LoadedAssembly);
         }
 
-        static IEnumerable<Assembly> FilterOk(IEnumerable<Assembly> source)
-        {
-            if (source == null)
-                yield break;
-            foreach (var ass in source)
-            {
-                if (ass == null)
-                    continue;
-                try
-                {
-                    var dt = ass.DefinedTypes;
-                }
-                catch
-                {
-                    Log.Warning(typeof(KnownAssemblies).FullName, $"Couldn't get Types from {ass.GetName().Name})");
-                    continue;
-                }
-                yield return ass;
-            }
-        }
-
         /// <summary>
         /// Enumerate all the currently loaded assembly.
         /// </summary>
@@ -46,6 +25,27 @@ namespace Galador.Reflection.Utils
             {
                 var domain = AppDomain.CurrentDomain;
                 return FilterOk(domain.GetAssemblies());
+
+                IEnumerable<Assembly> FilterOk(IEnumerable<Assembly> source)
+                {
+                    if (source == null)
+                        yield break;
+                    foreach (var ass in source)
+                    {
+                        if (ass == null)
+                            continue;
+                        try
+                        {
+                            var dt = ass.DefinedTypes;
+                        }
+                        catch
+                        {
+                            Log.Warning(typeof(KnownAssemblies).FullName, $"Couldn't get Types from {ass.GetName().Name})");
+                            continue;
+                        }
+                        yield return ass;
+                    }
+                }
             }
         }
 

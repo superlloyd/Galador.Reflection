@@ -18,5 +18,14 @@ namespace Galador.Reflection.Serialization
         {
             output.Dispose();
         }
+
+        public void Write(object o)
+        {
+        }
+
+        void Write(Type type, object value)
+        {
+
+        }
     }
 }

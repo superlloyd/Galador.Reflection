@@ -233,6 +233,7 @@ namespace Galador.Reflection.Serialization
             w.WriteLine("using System.ComponentModel;");
             w.WriteLine("using System.Collections;");
             w.WriteLine("using System.Collections.Generic;");
+            w.WriteLine("using Galador.Reflection.Serialization;");
             w.WriteLine();
             w.Write("namespace "); w.Write(@namespace); w.WriteLine(" {");
             foreach (var item in this.Objects.OfType<ReflectType>().Where(x => x.Kind == PrimitiveType.Object && !x.IsIgnored))
@@ -260,13 +261,20 @@ namespace Galador.Reflection.Serialization
                 w.WriteLine("\t}");
                 w.WriteLine($"\t[TypeConverter(typeof({ToTypeName(type)}Converter))]");
             }
-            if (type.AssemblyName == null && Guid.TryParse(type.TypeName, out var g))
+            string TrimAttribute(string s)
             {
-                w.WriteLine($"\t[{nameof(System.Runtime.InteropServices.GuidAttribute)}({ToCSharp(type.TypeName)})]");
+                var suffix = "Attribute";
+                if (s.EndsWith(suffix))
+                    return s.Substring(0, s.Length - suffix.Length);
+                return s;
+            }
+            if (type.AssemblyName == null && Guid.TryParse(type.TypeName, out var _))
+            {
+                w.WriteLine($"\t[{TrimAttribute(nameof(SerializationGuidAttribute))}({ToCSharp(type.TypeName)})]");
             }
             else
             {
-                w.WriteLine($"\t[{nameof(SerializationNameAttribute)}({ToCSharp(type.TypeName)}, {ToCSharp(type.AssemblyName)})]");
+                w.WriteLine($"\t[{TrimAttribute(nameof(SerializationNameAttribute))}({ToCSharp(type.TypeName)}, {ToCSharp(type.AssemblyName)})]");
             }
             if (type.IsEnum)
             {

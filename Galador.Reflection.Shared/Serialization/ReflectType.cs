@@ -40,8 +40,6 @@ namespace Galador.Reflection.Serialization
         IDictionaryKV,
     }
 
-    // TODO add support for DataContract, DataMember, IgnoreMember
-
     /// <summary>
     /// The type representing locally all relevant serialization info of a .NET type.
     /// One can object local information with <see cref="ReflectType.GetType(Type)"/>.
@@ -187,6 +185,10 @@ namespace Galador.Reflection.Serialization
         /// Whether this type is a surrogate for another type
         /// </summary>
         public bool IsSurrogateType { get; set; }
+        /// <summary>
+        /// Whether this type is an interface
+        /// </summary>
+        public bool IsInterface { get; set; }
 
         // ==== OBJECTS (not flags) ====
 
@@ -320,7 +322,7 @@ namespace Galador.Reflection.Serialization
 
         internal FastMethod listWrite, listRead;
 
-        #region utilities: ParentHierarchy()
+        #region utilities: ParentHierarchy() As()
 
         /// <summary>
         /// Return the <see cref="BaseType"/>, all the BaseType's BaseType recursively.
@@ -333,6 +335,18 @@ namespace Galador.Reflection.Serialization
                 yield return p;
                 p = p.BaseType;
             }
+        }
+
+        /// <summary>
+        /// If the object <paramref name="o"/> is an instance of <see cref="Type"/> returns <paramref name="o"/>, otherwise returns null
+        /// </summary>
+        /// <param name="o">The object to cast</param>
+        /// <returns>An instance of <see cref="Type"/>, or null</returns>
+        public object As(object o)
+        {
+            if (Type.IsInstanceOf(o))
+                return o;
+            return null;
         }
 
         #endregion
@@ -394,6 +408,7 @@ namespace Galador.Reflection.Serialization
                 }
                 else if (Kind == PrimitiveType.Object)
                 {
+                    IsInterface = ti.IsInterface;
                     if (ti.IsGenericType)
                     {
                         IsGeneric = true;
@@ -411,7 +426,7 @@ namespace Galador.Reflection.Serialization
                     }
                     if (!IsGeneric || IsGenericTypeDefinition)
                     {
-                        var att = SerializationNameAttribute.GetNameAttribute(ti);
+                        var att = ti.GetCustomAttribute<SerializationNameAttribute>();
                         if (att == null)
                         {
                             TypeName = ti.FullName;
@@ -512,10 +527,10 @@ namespace Galador.Reflection.Serialization
                             if (ParentHierarchy().All(x => x.CollectionType == ReflectCollectionType.None))
                             {
                                 var interfaces = type.GetTypeHierarchy().Where(x => x.GetTypeInfo().IsInterface).Distinct().ToList();
-                                itype = interfaces.Where(t => t.GetTypeInfo().IsGenericType && t.GetTypeInfo().GetGenericTypeDefinition() == typeof(IDictionary<,>)).FirstOrDefault();
-                                if (itype == null) itype = interfaces.Where(t => t.GetTypeInfo().IsGenericType && t.GetTypeInfo().GetGenericTypeDefinition() == typeof(IDictionary)).FirstOrDefault();
-                                if (itype == null) itype = interfaces.Where(t => t.GetTypeInfo().IsGenericType && t.GetTypeInfo().GetGenericTypeDefinition() == typeof(ICollection<>)).FirstOrDefault();
-                                if (itype == null) itype = interfaces.Where(t => t.GetTypeInfo().IsGenericType && t.GetTypeInfo().GetGenericTypeDefinition() == typeof(IList)).FirstOrDefault();
+                                itype = interfaces.Where(t => attr.IncludeDictionaryInterface && t.GetTypeInfo().IsGenericType && t.GetTypeInfo().GetGenericTypeDefinition() == typeof(IDictionary<,>)).FirstOrDefault();
+                                if (itype == null) itype = interfaces.Where(t => attr.IncludeDictionaryInterface && t.GetTypeInfo().IsGenericType && t.GetTypeInfo().GetGenericTypeDefinition() == typeof(IDictionary)).FirstOrDefault();
+                                if (itype == null) itype = interfaces.Where(t => attr.IncludeListInterface && t.GetTypeInfo().IsGenericType && t.GetTypeInfo().GetGenericTypeDefinition() == typeof(ICollection<>)).FirstOrDefault();
+                                if (itype == null) itype = interfaces.Where(t => attr.IncludeListInterface && t.GetTypeInfo().IsGenericType && t.GetTypeInfo().GetGenericTypeDefinition() == typeof(IList)).FirstOrDefault();
                             }
                             if (itype != null)
                             {
@@ -836,43 +851,45 @@ namespace Galador.Reflection.Serialization
 
         int FlagsToInt()
         {
-            int result = ((int)Kind) | ((int)CollectionType << 8);
-            if (IsPointer) result |= 1 << 16;
-            if (IsArray) result |= 1 << 17;
-            if (IsGeneric) result |= 1 << 18;
-            if (IsGenericTypeDefinition) result |= 1 << 19;
-            if (IsGenericParameter) result |= 1 << 20;
-            if (IsEnum) result |= 1 << 21;
-            if (IsNullable) result |= 1 << 22;
-            if (IsIgnored) result |= 1 << 23;
-            if (IsFinal) result |= 1 << 24;
-            if (HasSurrogate) result |= 1 << 25;
-            if (HasConverter) result |= 1 << 26;
-            if (IsISerializable) result |= 1 << 27;
-            if (IsReference) result |= 1 << 28;
-            if (IsDefaultSave) result |= 1 << 29;
-            if (IsSurrogateType) result |= 1 << 30;
+            int result = ((int)Kind) | ((int)CollectionType << 5);
+            if (IsPointer) result |= 1 << 09;
+            if (IsArray) result |= 1 << 10;
+            if (IsGeneric) result |= 1 << 11;
+            if (IsGenericTypeDefinition) result |= 1 << 12;
+            if (IsGenericParameter) result |= 1 << 13;
+            if (IsEnum) result |= 1 << 14;
+            if (IsNullable) result |= 1 << 15;
+            if (IsIgnored) result |= 1 << 16;
+            if (IsFinal) result |= 1 << 17;
+            if (HasSurrogate) result |= 1 << 18;
+            if (HasConverter) result |= 1 << 19;
+            if (IsISerializable) result |= 1 << 20;
+            if (IsReference) result |= 1 << 21;
+            if (IsDefaultSave) result |= 1 << 22;
+            if (IsSurrogateType) result |= 1 << 23;
+            if (IsInterface) result |= 1 << 24;
             return result;
         }
         void IntToFlags(int flags)
         {
-            Kind = (PrimitiveType)(flags & 0xFF);
-            CollectionType = (ReflectCollectionType)((flags >> 8) & 0xFF);
-            IsPointer = (flags & (1 << 16)) != 0;
-            IsArray = (flags & (1 << 17)) != 0;
-            IsGeneric = (flags & (1 << 18)) != 0;
-            IsGenericTypeDefinition = (flags & (1 << 19)) != 0;
-            IsGenericParameter = (flags & (1 << 20)) != 0;
-            IsEnum = (flags & (1 << 21)) != 0;
-            IsNullable = (flags & (1 << 22)) != 0;
-            IsIgnored = (flags & (1 << 23)) != 0;
-            IsFinal = (flags & (1 << 24)) != 0;
-            HasSurrogate = (flags & (1 << 25)) != 0;
-            HasConverter = (flags & (1 << 26)) != 0;
-            IsISerializable = (flags & (1 << 27)) != 0;
-            IsReference = (flags & (1 << 28)) != 0;
-            IsDefaultSave = (flags & (1 << 29)) != 0;
-            IsSurrogateType = (flags & (1 << 30)) != 0;
+            Kind = (PrimitiveType)(flags & 0b11111);
+            CollectionType = (ReflectCollectionType)((flags >> 5) & 0b1111);
+            IsPointer = (flags & (1 << 09)) != 0;
+            IsArray = (flags & (1 << 10)) != 0;
+            IsGeneric = (flags & (1 << 11)) != 0;
+            IsGenericTypeDefinition = (flags & (1 << 12)) != 0;
+            IsGenericParameter = (flags & (1 << 13)) != 0;
+            IsEnum = (flags & (1 << 14)) != 0;
+            IsNullable = (flags & (1 << 15)) != 0;
+            IsIgnored = (flags & (1 << 16)) != 0;
+            IsFinal = (flags & (1 << 17)) != 0;
+            HasSurrogate = (flags & (1 << 18)) != 0;
+            HasConverter = (flags & (1 << 19)) != 0;
+            IsISerializable = (flags & (1 << 20)) != 0;
+            IsReference = (flags & (1 << 21)) != 0;
+            IsDefaultSave = (flags & (1 << 22)) != 0;
+            IsSurrogateType = (flags & (1 << 23)) != 0;
+            IsInterface = (flags & (1 << 24)) != 0;
         }
 
         #endregion

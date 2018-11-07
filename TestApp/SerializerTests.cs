@@ -16,7 +16,7 @@ namespace TestApp
 {
     public class SerializationTests
     {
-        [SerializationName("TEST-NAME", null)]
+        [SerializationGuid("635B7B87-A594-4130-8B1A-CB398357613D")]
         public class Serial1
         {
             public int ID { get; set; }
@@ -65,7 +65,7 @@ namespace TestApp
             var csharp = w.Context.GenerateCSharpCode("Generated");
             var t1 = w.Context.Objects.OfType<ReflectType>().First(x => x.Type == typeof(Serial1));
             var t2 = w.Context.Objects.OfType<ReflectType>().First(x => x.Type == typeof(Serial2));
-            Assert.Equal("TEST-NAME", t1.TypeName);
+            Assert.Equal("635B7B87-A594-4130-8B1A-CB398357613D", t1.TypeName);
             Assert.NotNull(t1.Members.Cast<IMember>().FirstOrDefault(x => x.Name == "Bobafet"));
             Assert.Null(t1.Members.Cast<IMember>().FirstOrDefault(x => x.Name == "Name"));
             Assert.Null(t1.AssemblyName);

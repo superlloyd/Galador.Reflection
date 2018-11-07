@@ -125,7 +125,7 @@ namespace Galador.Reflection.Utils
         /// <summary>
         /// Whether this is an abstract class or not.
         /// </summary>
-        public bool IsAbstract { get; set; }
+        public bool IsAbstract { get; private set; }
 
         /// <summary>
         /// Whether or not this is a type passed by reference.
@@ -187,7 +187,7 @@ namespace Galador.Reflection.Utils
             IsReference = !ti.IsValueType;
             BaseType = GetType(Type.GetTypeInfo().BaseType);
             IsMscorlib = IsFromMscorlib(type);
-            IsAbstract = type.GetTypeInfo().IsAbstract;
+            IsAbstract = type.GetTypeInfo().IsAbstract || type.IsInterface;
             IsGenericMeta = IsUndefined(type);
 
             if (type.IsPointer)
@@ -203,19 +203,33 @@ namespace Galador.Reflection.Utils
 
         #endregion
 
+        #region GetRuntimeMembers()
+
         /// <summary>
         /// Enumerate all <see cref="FastMember"/> of this class and all of its base classes.
         /// </summary>
         public IEnumerable<FastMember> GetRuntimeMembers()
         {
+            var previous = new HashSet<FastMember>();
+
             var p = this;
             while (p != null)
             {
                 foreach (var m in p.DeclaredMembers)
+                {
+                    if (m.IsOverride)
+                        previous.Add(m.BaseMember);
+
+                    if (previous.Contains(m))
+                        continue;
+
                     yield return m;
+                }
                 p = p.BaseType;
             }
         }
+
+        #endregion
 
         #region DeclaredMembers
 
@@ -237,17 +251,25 @@ namespace Galador.Reflection.Utils
                                 var mt = FastType.GetType(pi.FieldType);
                                 if (mt.IsIgnored)
                                     continue;
-                                var m = new FastMember(pi);
+                                var m = new FastMember(pi, null);
                                 result.Add(m);
                             }
                             foreach (var pi in ti.DeclaredProperties)
                             {
                                 if (pi.GetMethod == null || pi.GetMethod.GetParameters().Length != 0)
                                     continue;
+
+                                FastMember baseMember = null;
+                                if (!pi.IsBaseProperty())
+                                {
+                                    var pb = pi.GetBaseBroperty();
+                                    if (pb != pi)
+                                        baseMember = GetType(pb.DeclaringType).DeclaredMembers[pi.Name];
+                                }
                                 var mt = FastType.GetType(pi.PropertyType);
                                 if (mt.IsIgnored)
                                     continue;
-                                var m = new FastMember(pi);
+                                var m = new FastMember(pi, baseMember);
                                 result.Add(m);
                             }
                             members = result;
@@ -308,10 +330,11 @@ namespace Galador.Reflection.Utils
     /// </summary>
     public sealed class FastMember : IMember
     {
-        internal FastMember(MemberInfo member)
+        internal FastMember(MemberInfo member, FastMember baseMember)
         {
             Name = member.Name;
             Member = member;
+            BaseMember = baseMember ?? this;
             if (member is FieldInfo)
             {
                 var pi = (FieldInfo)member;
@@ -339,53 +362,78 @@ namespace Galador.Reflection.Utils
         /// <summary>
         /// This is the member name for the member, i.e. <see cref="MemberInfo.Name"/>.
         /// </summary>
-        public string Name { get; private set; }
+        public string Name { get; }
+
+        /// <summary>
+        /// If this member is an override, that will be the original declaration
+        /// </summary>
+        public FastMember BaseMember { get; }
+        public bool IsBase => BaseMember == this;
+        public bool IsOverride => BaseMember != this;
+
+        public T GetAttribute<T>()
+            where T : Attribute
+            => GetAttributes<T>().FirstOrDefault();
+
+        public IEnumerable<T> GetAttributes<T>()
+            where T : Attribute
+            => GetAttributes().Where(x => x is T).Cast<T>();
+
+        public IEnumerable<Attribute> GetAttributes() => PathToBase().SelectMany(x => Attribute.GetCustomAttributes(x.Member));
+
+        public IEnumerable<FastMember> PathToBase()
+        {
+            var type = Type;
+            var me = this;
+            while (true)
+            {
+                if (me != null)
+                    yield return me;
+
+                if (BaseMember == null || me == BaseMember)
+                    yield break;
+
+                type = type.BaseType;
+                me = type.DeclaredMembers[Name];
+            }
+        }
 
         /// <summary>
         /// Whether or not this describe a static member.
         /// </summary>
-        public bool IsStatic { get; private set; }
+        public bool IsStatic { get;  }
 
         /// <summary>
         /// This is the info for the declared type of this member, i.e. either of
         /// <see cref="PropertyInfo.PropertyType"/> or <see cref="FieldInfo.FieldType"/>.
         /// </summary>
-        public FastType Type { get; private set; }
+        public FastType Type { get; }
 
         /// <summary>
         /// Whether this is a public member or not
         /// </summary>
-        public bool IsPublic { get; private set; }
+        public bool IsPublic { get; }
 
         /// <summary>
         /// Whether this is a public member or not
         /// </summary>
-        public bool IsPublicSetter { get; private set; }
+        public bool IsPublicSetter { get; }
 
         /// <summary>
         /// Whether this is a field or a property
         /// </summary>
-        public bool IsField { get; private set; }
+        public bool IsField { get; }
 
         /// <summary>
         /// Whether this member can be set. Will be <c>false</c> if the member is a property without setter, 
         /// or if the field is a literal (set at compile time), <c>true</c> otherwise.
         /// </summary>
-        public bool CanSet { get; private set; }
+        public bool CanSet { get; }
 
         /// <summary>
         /// Return the reflection member associated with this instance, be it a <see cref="FieldInfo"/> or <see cref="PropertyInfo"/>.
         /// </summary>
-        public MemberInfo Member { get; private set; }
-
-        public IEnumerable<Attribute> GetAttributes()
-        {
-            if (pInfo != null)
-                return pInfo.GetCustomAttributes();
-            if (fInfo != null)
-                return fInfo.GetCustomAttributes();
-            throw new InvalidOperationException("Should not be there");
-        }
+        public MemberInfo Member { get; }
 
         // performance fields, depends on platform
 #if !__STD__ && !__IOS__

@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Runtime.Serialization;
 using Galador.Reflection.Utils;
-using System.Runtime.InteropServices;
+using Galador.Reflection.Serialization;
 
 namespace Galador.Reflection.Serialization
 {
@@ -97,10 +97,19 @@ namespace Galador.Reflection.Serialization
                     typeToSurrogate[t] = type;
                 }
             }
-            var nattr = SerializationNameAttribute.GetNameAttribute(type.GetTypeInfo());
+            var nattr = type.GetTypeInfo().GetCustomAttribute<SerializationNameAttribute>();
             if (nattr != null)
                 lock (typeToSurrogate)
-                    sReplacementTypes[nattr] = type;
+                {
+                    if (sReplacementTypes.TryGetValue(nattr, out var prev))
+                    {
+                        Log.Warning($"Duplicate Found for {nattr}: {prev}, {type}");
+                    }
+                    else
+                    {
+                        sReplacementTypes[nattr] = type;
+                    }
+                }
 
 #if !__ANDROID__ && !__IOS__
             var dcattr = type.GetTypeInfo().GetCustomAttribute<DataContractAttribute>();
@@ -142,7 +151,7 @@ namespace Galador.Reflection.Serialization
 
 #endregion
 
-#region TryGetSurrogate()
+        #region TryGetSurrogate()
 
         /// <summary>
         /// Tries the get the surrogate for a given type.
@@ -172,6 +181,6 @@ namespace Galador.Reflection.Serialization
             return false;
         }
 
-#endregion
+        #endregion
     }
 }

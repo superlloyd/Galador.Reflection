@@ -352,20 +352,20 @@ namespace Galador.Reflection.Serialization
                                 switch (colt.CollectionType)
                                 {
                                     case ReflectCollectionType.IList:
-                                        ReadList((IList)o);
+                                        ReadList(o);
                                         break;
                                     case ReflectCollectionType.IDictionary:
-                                        ReadDict((IDictionary)o);
+                                        ReadDict(o);
                                         break;
                                     case ReflectCollectionType.ICollectionT:
                                         if (colt.listRead == null)
-                                            colt.listRead = FastMethod.GetMethod(GetType().TryGetMethods("ReadCollectionT", new[] { colt.Collection1.Type }, ts.Type, typeof(ReflectType)).First());
+                                            colt.listRead = FastMethod.GetMethod(GetType().TryGetMethods("ReadCollectionT", new[] { colt.Collection1.Type }, typeof(object), typeof(ReflectType)).First());
                                         if (colt.listRead != null)
                                             colt.listRead.Invoke(this, o, colt.Collection1);
                                         break;
                                     case ReflectCollectionType.IDictionaryKV:
                                         if (colt.listRead == null)
-                                            colt.listRead = FastMethod.GetMethod(GetType().TryGetMethods("ReadDictKV", new[] { colt.Collection1.Type, colt.Collection2.Type }, ts.Type, typeof(ReflectType), typeof(ReflectType)).First());
+                                            colt.listRead = FastMethod.GetMethod(GetType().TryGetMethods("ReadDictKV", new[] { colt.Collection1.Type, colt.Collection2.Type }, typeof(object), typeof(ReflectType), typeof(ReflectType)).First());
                                         if (colt.listRead != null)
                                             colt.listRead.Invoke(this, o, colt.Collection1, colt.Collection2);
                                         break;
@@ -461,11 +461,12 @@ namespace Galador.Reflection.Serialization
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void ReadList(IList o)
+        void ReadList(object arg)
         {
             var isRO = Reader.ReadBool();
             if (isRO)
                 return;
+            var o = arg as IList;
             var count = (int)Reader.ReadVInt();
             for (int i = 0; i < count; i++)
             {
@@ -475,11 +476,12 @@ namespace Galador.Reflection.Serialization
             }
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void ReadDict(IDictionary o)
+        void ReadDict(object arg)
         {
             var isRO = Reader.ReadBool();
             if (isRO)
                 return;
+            var o = arg as IDictionary;
             var count = (int)Reader.ReadVInt();
             for (int i = 0; i < count; i++)
             {
@@ -489,11 +491,12 @@ namespace Galador.Reflection.Serialization
                     o.Add(key, value);
             }
         }
-        void ReadCollectionT<T>(ICollection<T> col, ReflectType tT)
+        void ReadCollectionT<T>(object o, ReflectType tT)
         {
             var isRO = Reader.ReadBool();
             if (isRO)
                 return;
+            var col = o as ICollection<T>;
             var count = (int)Reader.ReadVInt();
             for (int i = 0; i < count; i++)
             {
@@ -502,11 +505,12 @@ namespace Galador.Reflection.Serialization
                     col.Add((T)value);
             }
         }
-        void ReadDictKV<K, V>(IDictionary<K, V> dict, ReflectType tKey, ReflectType tVal)
+        void ReadDictKV<K, V>(object o, ReflectType tKey, ReflectType tVal)
         {
             var isRO = Reader.ReadBool();
             if (isRO)
                 return;
+            var dict = o as IDictionary<K, V>;
             var count = (int)Reader.ReadVInt();
             for (int i = 0; i < count; i++)
             {

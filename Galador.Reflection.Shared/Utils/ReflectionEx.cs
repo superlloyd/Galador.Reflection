@@ -72,6 +72,43 @@ namespace Galador.Reflection.Utils
         }
 
         /// <summary>
+        /// When a property is overriden in a class, return the original property
+        /// </summary>
+        public static PropertyInfo GetBaseBroperty(this PropertyInfo pi)
+        {
+            if (pi == null)
+                return null;
+
+            while (!pi.IsBaseProperty())
+            {
+                var flags = 
+                    BindingFlags.Public
+                    | BindingFlags.NonPublic
+                    | BindingFlags.Instance
+                    | BindingFlags.Static
+                    ;
+
+                var aPI = pi.DeclaringType.BaseType.GetProperty(pi.Name, flags);
+                if (aPI == null)
+                    return pi;
+                pi = aPI;
+            }
+            return pi;
+        }
+
+        /// <summary>
+        /// When a property is overriden in a class, whether this is the original property, or not
+        /// </summary>
+        public static bool IsBaseProperty(this PropertyInfo pi)
+        {
+            if (pi.GetMethod != null && pi.GetMethod.GetBaseDefinition() == pi.GetMethod)
+                return true;
+            if (pi.SetMethod != null && pi.SetMethod.GetBaseDefinition() == pi.SetMethod)
+                return true;
+            return false;
+        }
+
+        /// <summary>
         /// Determines whether <paramref name="t"/> is a base class of <paramref name="sub"/>
         /// </summary>
         /// <param name="t">The potential base class.</param>

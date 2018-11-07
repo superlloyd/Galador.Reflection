@@ -10,13 +10,16 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)Log.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Serialization\Context.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\IO\IPrimitiveReader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\IO\IPrimitiveWriter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\IO\PrimitiveBinaryReader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\IO\PrimitiveBinaryWriter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\IO\PrimitiveTextReader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\IO\PrimitiveTextWriter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Serialization\Reader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\ReflectObject.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Serialization\Writer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\StreamExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\IO\TokenPrimitiveWriter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)PropertyPath.cs" />

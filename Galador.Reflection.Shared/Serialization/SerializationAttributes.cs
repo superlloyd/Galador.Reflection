@@ -8,7 +8,7 @@ namespace Galador.Reflection.Serialization
     /// <summary>
     /// Attribute that control serialization behavior for a particular type.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false, Inherited = false)]
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface, AllowMultiple = false, Inherited = false)]
     public class SerializationSettingsAttribute : Attribute
     {
         /// <summary>
@@ -28,24 +28,39 @@ namespace Galador.Reflection.Serialization
             IncludePrivateProperties = @default;
             IncludePublicFields = @default;
             IncludePrivateFields = @default;
+            IncludeListInterface = @default;
+            IncludeDictionaryInterface = @default;
         }
 
         /// <summary>
         /// Whether public properties of this type should be serialized or not. Default value is <c>true</c>.
         /// </summary>
         public bool IncludePublicProperties { get; set; } = true;
+
         /// <summary>
         /// Whether private properties of this type should be serialized or not. Default value is <c>false</c>.
         /// </summary>
         public bool IncludePrivateProperties { get; set; } = false;
+
         /// <summary>
         /// Whether public fields of this type should be serialized or not. Default value is <c>true</c>.
         /// </summary>
         public bool IncludePublicFields { get; set; } = true;
+
         /// <summary>
         /// Whether private fields of this type should be serialized or not. Default value is <c>false</c>.
         /// </summary>
         public bool IncludePrivateFields { get; set; } = false;
+
+        /// <summary>
+        /// Include items from <see cref="System.Collections.IList"/> and <see cref="IList{T}"/> interface
+        /// </summary>
+        public bool IncludeListInterface { get; set; } = true;
+
+        /// <summary>
+        /// Include items from <see cref="System.Collections.IDictionary"/> and <see cref="IDictionary{TKey, TValue}"/> interface
+        /// </summary>
+        public bool IncludeDictionaryInterface { get; set; } = true;
 
         /// <summary>
         /// Will get or set whether public properties AND public fields of this type must be serialized.
@@ -103,7 +118,7 @@ namespace Galador.Reflection.Serialization
     /// <summary>
     /// This attribute will override default type name and assembly name used to identify the type they decorate.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Enum, AllowMultiple = false, Inherited = false)]
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface | AttributeTargets.Enum, AllowMultiple = false, Inherited = false)]
     public class SerializationNameAttribute : Attribute
     {
         /// <summary>
@@ -162,17 +177,16 @@ namespace Galador.Reflection.Serialization
             return result;
         }
 
-        public static SerializationNameAttribute GetNameAttribute(TypeInfo ti)
+        public override string ToString() => $"SerializationName({TypeName}, {AssemblyName})";
+    }
+
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface | AttributeTargets.Enum, AllowMultiple = false, Inherited = false)]
+    public class SerializationGuidAttribute : SerializationNameAttribute
+    {
+        public SerializationGuidAttribute(string guid)
+            : base(guid)
         {
-            var att = ti.GetCustomAttribute<SerializationNameAttribute>();
-            if (att != null)
-                return att;
-
-            var gatt = ti.GetCustomAttribute<System.Runtime.InteropServices.GuidAttribute>();
-            if (gatt != null)
-                return new SerializationNameAttribute(gatt.Value);
-
-            return null;
+            Guid.Parse(guid);
         }
     }
 

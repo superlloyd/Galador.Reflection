@@ -179,6 +179,7 @@ namespace Galador.Reflection.Serialization
                 default:
                     return;
             }
+            output.WriteVInt(flags);
             writer.Write(Context.RString, FullName);
             writer.Write(Context.RString, Assembly);
             output.WriteVInt(GenericParameterIndex);

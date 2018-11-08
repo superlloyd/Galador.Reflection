@@ -112,8 +112,6 @@ namespace Galador.Reflection.Serialization
             }
             FullName = (string)reader.Read(Context.RString.TypeData(), null);
             Assembly = (string)reader.Read(Context.RString.TypeData(), null);
-            BaseType = (TypeData)reader.Read(Context.RType.TypeData(), null);
-            Element = (TypeData)reader.Read(Context.RType.TypeData(), null);
             GenericParameterIndex = (int)input.ReadVInt();
             int genCount = (int)input.ReadVInt();
             if (genCount > 0)
@@ -127,6 +125,11 @@ namespace Galador.Reflection.Serialization
                 GenericParameters = glp.AsReadOnly();
             }
 
+            Element = (TypeData)reader.Read(Context.RType.TypeData(), null);
+            if (reader.settings.SkipMetaData)
+                return;
+
+            BaseType = (TypeData)reader.Read(Context.RType.TypeData(), null);
             if (!HasSurrogate && !HasSurrogate
                 && !IsInterface && !IsISerializable
                 && !IsArray && !IsEnum)
@@ -178,14 +181,17 @@ namespace Galador.Reflection.Serialization
             }
             writer.Write(Context.RString, FullName);
             writer.Write(Context.RString, Assembly);
-            writer.Write(Context.RType, BaseType);
-            writer.Write(Context.RType, Element);
             output.WriteVInt(GenericParameterIndex);
             output.WriteVInt(GenericParameters?.Count ?? 0);
             if (GenericParameters != null)
                 for (int i = 0; i < GenericParameters.Count; i++)
                     writer.Write(Context.RType, GenericParameters[i]);
 
+            writer.Write(Context.RType, Element);
+            if (writer.Settings.SkipMetaData)
+                return;
+
+            writer.Write(Context.RType, BaseType);
             if (!HasSurrogate && !HasSurrogate
                 && !IsInterface && !IsISerializable
                 && !IsArray && !IsEnum)

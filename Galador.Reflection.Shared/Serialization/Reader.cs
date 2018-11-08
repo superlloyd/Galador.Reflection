@@ -11,7 +11,7 @@ namespace Galador.Reflection.Serialization
     public class Reader : Context, IDisposable
     {
         readonly IPrimitiveReader input;
-        readonly SerializationSettings settings = new SerializationSettings();
+        readonly internal SerializationSettings settings = new SerializationSettings();
 
         public Reader(IPrimitiveReader input)
         {

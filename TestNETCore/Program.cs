@@ -10,7 +10,7 @@ namespace TestNETCore
     {
         public static void Main(string[] args)
         {
-            //KnownTypes.RegisterAssemblies(typeof(ReflectType).GetTypeInfo().Assembly);
+            //KnownTypes.RegisterAssemblies(typeof(ReflectType2).GetTypeInfo().Assembly);
             //KnownTypes.RegisterAssemblies(typeof(Program).GetTypeInfo().Assembly);
 
             //RunSomeTests();

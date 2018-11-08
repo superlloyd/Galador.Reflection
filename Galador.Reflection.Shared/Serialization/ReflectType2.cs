@@ -42,24 +42,24 @@ namespace Galador.Reflection.Serialization
 
     /// <summary>
     /// The type representing locally all relevant serialization info of a .NET type.
-    /// One can object local information with <see cref="ReflectType.GetType(Type)"/>.
+    /// One can object local information with <see cref="ReflectType2.GetType(Type)"/>.
     /// This information will be serialized along with object data to exactly reproduce object format when deserializing.
     /// </summary>
     [SerializationSettings(false)]
-    public sealed partial class ReflectType
+    public sealed partial class ReflectType2
     {
         #region GetType()
 
         /// <summary>
-        /// Gets the <see cref="ReflectType"/> information of an object
+        /// Gets the <see cref="ReflectType2"/> information of an object
         /// </summary>
-        public static ReflectType GetType(object o)
+        public static ReflectType2 GetType(object o)
         {
             if (o == null)
                 return RObject;
             if (o is Type)
                 return RType;
-            if (o is ReflectType)
+            if (o is ReflectType2)
                 return RReflectType;
             if (o is ReflectObject)
                 return ((ReflectObject)o).Type;
@@ -67,25 +67,25 @@ namespace Galador.Reflection.Serialization
         }
 
         /// <summary>
-        /// Gets the <see cref="ReflectType"/> information of a type
+        /// Gets the <see cref="ReflectType2"/> information of a type
         /// </summary>
-        public static ReflectType GetType(Type type)
+        public static ReflectType2 GetType(Type type)
         {
             if (type == null)
                 return null;
             lock (sReflectCache)
             {
-                ReflectType result;
+                ReflectType2 result;
                 if (!sReflectCache.TryGetValue(type, out result))
                 {
-                    result = new ReflectType();
+                    result = new ReflectType2();
                     sReflectCache[type] = result;
                     result.Initialize(type);
                 }
                 return result;
             }
         }
-        static Dictionary<Type, ReflectType> sReflectCache = new Dictionary<System.Type, ReflectType>();
+        static Dictionary<Type, ReflectType2> sReflectCache = new Dictionary<System.Type, ReflectType2>();
 
         #endregion
 
@@ -96,23 +96,23 @@ namespace Galador.Reflection.Serialization
         /// <summary>
         /// The serialization information about <see cref="System.Object"/> type. Preloaded for performance and implementation reason.
         /// </summary>
-        public static readonly ReflectType RObject = GetType(typeof(object));
+        public static readonly ReflectType2 RObject = GetType(typeof(object));
         /// <summary>
-        /// The serialization information about <see cref="ReflectType"/> type. Preloaded for performance and implementation reason.
+        /// The serialization information about <see cref="ReflectType2"/> type. Preloaded for performance and implementation reason.
         /// </summary>
-        public static readonly ReflectType RReflectType = GetType(typeof(ReflectType));
+        public static readonly ReflectType2 RReflectType = GetType(typeof(ReflectType2));
         /// <summary>
         /// The serialization information about <see cref="System.String"/> type. Preloaded for performance and implementation reason.
         /// </summary>
-        public static readonly ReflectType RString = GetType(typeof(string));
+        public static readonly ReflectType2 RString = GetType(typeof(string));
         /// <summary>
         /// The serialization information about <see cref="System.Type"/> type. Preloaded for performance and implementation reason.
         /// </summary>
-        public static readonly ReflectType RType = GetType(typeof(Type));
+        public static readonly ReflectType2 RType = GetType(typeof(Type));
         /// <summary>
         /// The serialization information about <see cref="System.Nullable{T}"/> type. Preloaded for performance and implementation reason.
         /// </summary>
-        public static readonly ReflectType RNullable = GetType(typeof(Nullable<>));
+        public static readonly ReflectType2 RNullable = GetType(typeof(Nullable<>));
 
         // ==== FLAGS =====
 
@@ -205,7 +205,7 @@ namespace Galador.Reflection.Serialization
         /// <summary>
         /// The base type serialization information.
         /// </summary>
-        public ReflectType BaseType { get; private set; }
+        public ReflectType2 BaseType { get; private set; }
         /// <summary>
         /// For array type, this will be the array rank. Or <c>0</c> otherwise.
         /// </summary>
@@ -218,24 +218,24 @@ namespace Galador.Reflection.Serialization
         /// <summary>
         /// Info about the <see cref="ISurrogate{T}"/> type to use to serialize instance of that type, if any.
         /// </summary>
-        public ReflectType Surrogate { get; private set; }
+        public ReflectType2 Surrogate { get; private set; }
         /// <summary>
         /// Element type information for pointers, array, generic type and enum.
         /// </summary>
-        public ReflectType Element { get; private set; }
+        public ReflectType2 Element { get; private set; }
         /// <summary>
         /// If this type is an <see cref="ICollection{T}"/> or and <see cref="IDictionary{TKey, TValue}"/> 
         /// this would be the info about <c>T</c>, or <c>TKey</c>, respectively
         /// </summary>
-        public ReflectType Collection1 { get; private set; }
+        public ReflectType2 Collection1 { get; private set; }
         /// <summary>
         /// If this type is an <see cref="IDictionary{TKey, TValue}"/> this would be the info about <c>TValue</c>.
         /// </summary>
-        public ReflectType Collection2 { get; private set; }
+        public ReflectType2 Collection2 { get; private set; }
         /// <summary>
         /// If this is a generic type, will contain either the type parameter or arguments.
         /// </summary>
-        public IReadOnlyList<ReflectType> GenericArguments { get; private set; } = Empty<ReflectType>.Array;
+        public IReadOnlyList<ReflectType2> GenericArguments { get; private set; } = Empty<ReflectType2>.Array;
         /// <summary>
         /// For normal type (i.e. all but primitive type, array, pointer, enum) contains the list of known members.
         /// i.e. property of field that are marked for serialization.
@@ -245,8 +245,8 @@ namespace Galador.Reflection.Serialization
         // runtime data that is not serialized
 
         /// <summary>
-        /// The .NET <see cref="System.Type"/> that this <see cref="ReflectType"/> represent, if it can be found.
-        /// <see cref="ReflectType"/> created by the <see cref="ObjectReader"/> might have a null value there if the type
+        /// The .NET <see cref="System.Type"/> that this <see cref="ReflectType2"/> represent, if it can be found.
+        /// <see cref="ReflectType2"/> created by the <see cref="ObjectReader"/> might have a null value there if the type
         /// can't be found. In which case instance of this type will be deserialized as <see cref="ReflectObject"/>.
         /// </summary>
         /// <remarks>This property can be null when deserializing and no matching type can be found.</remarks>
@@ -263,7 +263,7 @@ namespace Galador.Reflection.Serialization
         /// Return the collection type implemented by this type by examining this type
         /// and its <see cref="BaseType"/> If the type is not a collection return self.
         /// </summary>
-        public ReflectType CollectionInterface
+        public ReflectType2 CollectionInterface
         {
             get
             {
@@ -285,7 +285,7 @@ namespace Galador.Reflection.Serialization
                 return lazyCollectionInterface;
             }
         }
-        ReflectType lazyCollectionInterface;
+        ReflectType2 lazyCollectionInterface;
 
         #endregion
 
@@ -327,7 +327,7 @@ namespace Galador.Reflection.Serialization
         /// <summary>
         /// Return the <see cref="BaseType"/>, all the BaseType's BaseType recursively.
         /// </summary>
-        public IEnumerable<ReflectType> ParentHierarchy()
+        public IEnumerable<ReflectType2> ParentHierarchy()
         {
             var p = BaseType;
             while (p != null)
@@ -353,7 +353,7 @@ namespace Galador.Reflection.Serialization
 
         #region ctors() Initialize()
 
-        internal ReflectType() { }
+        internal ReflectType2() { }
 
         void Initialize(Type type)
         {
@@ -363,7 +363,7 @@ namespace Galador.Reflection.Serialization
             var ti = type.GetTypeInfo();
             IsFinal = true;
             IsReference = type.GetTypeInfo().IsByRef;
-            if (FastType.IsIgnored || ti.GetCustomAttribute<NotSerializedAttribute>() != null)
+            if (ti.GetCustomAttribute<NotSerializedAttribute>() != null)
             {
                 IsIgnored = true;
             }
@@ -435,7 +435,7 @@ namespace Galador.Reflection.Serialization
                         }
                         else
                         {
-                            TypeName = att.TypeName;
+                            TypeName = att.FullName;
                             AssemblyName = att.AssemblyName;
                         }
                         if (TypeName == null)
@@ -464,7 +464,7 @@ namespace Galador.Reflection.Serialization
                         }
                         IsSurrogateType = Type.GetTypeHierarchy().Any(x => x.GetTypeInfo().IsInterface && x.GetTypeInfo().IsGenericType && x.GetTypeInfo().GetGenericTypeDefinition() == typeof(ISurrogate<>));
                         Type tSurrogate;
-                        if (KnownTypes.TryGetSurrogate(type, out tSurrogate))
+                        if (KnownTypes2.TryGetSurrogate(type, out tSurrogate))
                         {
                             Surrogate = GetType(tSurrogate);
                             HasSurrogate = true;
@@ -494,7 +494,7 @@ namespace Galador.Reflection.Serialization
                             var attr = ti.GetCustomAttribute<SerializationSettingsAttribute>() ?? DefaultSettings;
                             foreach (var rm in FastType.DeclaredMembers)
                             {
-                                if (rm.Type.IsIgnored || rm.IsStatic)
+                                if (rm.IsStatic)
                                     continue;
                                 if (rm.Member.GetCustomAttribute<NotSerializedAttribute>() != null)
                                     continue;
@@ -582,14 +582,14 @@ namespace Galador.Reflection.Serialization
         #region GetHashCode() Equals() ToString()
 
         /// <summary>
-        /// Determines whether <paramref name="obj"/> is another <see cref="ReflectType"/> representing 
+        /// Determines whether <paramref name="obj"/> is another <see cref="ReflectType2"/> representing 
         /// the same .NET <see cref="Type"/>.
         /// </summary>
         public override bool Equals(object obj)
         {
             if (ReferenceEquals(this, obj))
                 return true;
-            var o = obj as ReflectType;
+            var o = obj as ReflectType2;
             if (o == null)
                 return false;
             if (hashcode != o.hashcode)
@@ -835,7 +835,7 @@ namespace Galador.Reflection.Serialization
             /// This is the info for the declared type of this member, i.e. either of
             /// <see cref="PropertyInfo.PropertyType"/> or <see cref="FieldInfo.FieldType"/>.
             /// </summary>
-            public ReflectType Type { get; set; }
+            public ReflectType2 Type { get; set; }
 
             /// <summary>
             /// This is the info for the declared type of this member, i.e. either of
@@ -899,12 +899,12 @@ namespace Galador.Reflection.Serialization
         internal void Read(ObjectReader reader)
         {
             IntToFlags(reader.Reader.ReadInt32());
-            Type = KnownTypes.GetType(Kind);
+            Type = KnownTypes2.GetType(Kind);
             FastType = FastType.GetType(Kind);
             if (IsArray)
             {
                 ArrayRank = (int)reader.Reader.ReadVInt();
-                Element = (ReflectType)reader.Read(RReflectType, null);
+                Element = (ReflectType2)reader.Read(RReflectType, null);
                 if (Element.Type != null)
                 {
                     if (ArrayRank == 1) Type = Element.Type.MakeArrayType();
@@ -913,7 +913,7 @@ namespace Galador.Reflection.Serialization
             }
             else if (IsPointer)
             {
-                Element = (ReflectType)reader.Read(RReflectType, null);
+                Element = (ReflectType2)reader.Read(RReflectType, null);
                 if (Element.Type != null)
                     Type = Element.Type.MakePointerType();
             }
@@ -927,7 +927,7 @@ namespace Galador.Reflection.Serialization
                 {
                     TypeName = (string)reader.Read(RString, null);
                     AssemblyName = (string)reader.Read(RString, null);
-                    Type = KnownTypes.GetType(TypeName, AssemblyName);
+                    Type = KnownTypes2.GetType(TypeName, AssemblyName);
                     FastType = FastType.GetType(Type);
                     if (reader.settings.SkipMetaData)
                     {
@@ -941,22 +941,22 @@ namespace Galador.Reflection.Serialization
                 {
                     if (!IsGenericTypeDefinition)
                     {
-                        Element = (ReflectType)reader.Read(RReflectType, null);
+                        Element = (ReflectType2)reader.Read(RReflectType, null);
                         int NArgs = (int)reader.Reader.ReadVInt();
-                        var gArgs = new ReflectType[NArgs];
+                        var gArgs = new ReflectType2[NArgs];
                         GenericArguments = gArgs;
                         for (int i = 0; i < NArgs; i++)
-                            gArgs[i] = (ReflectType)reader.Read(RReflectType, null);
+                            gArgs[i] = (ReflectType2)reader.Read(RReflectType, null);
                         BuildGenericType();
                     }
                 }
                 if (IsEnum)
                 {
-                    Element = (ReflectType)reader.Read(RReflectType, null);
+                    Element = (ReflectType2)reader.Read(RReflectType, null);
                 }
                 else if (HasSurrogate)
                 {
-                    Surrogate = (ReflectType)reader.Read(RReflectType, null);
+                    Surrogate = (ReflectType2)reader.Read(RReflectType, null);
                 }
                 else if ((IsISerializable && !reader.settings.IgnoreISerializable) || (HasConverter && !reader.settings.IgnoreTypeConverter))
                 {
@@ -966,25 +966,25 @@ namespace Galador.Reflection.Serialization
                 {
                     if (IsReference)
                     {
-                        BaseType = (ReflectType)reader.Read(RReflectType, null);
+                        BaseType = (ReflectType2)reader.Read(RReflectType, null);
                     }
                     int NMembers = (int)reader.Reader.ReadVInt();
                     for (int i = 0; i < NMembers; i++)
                     {
                         var m = new Member();
                         m.Name = (string)reader.Read(RString, null);
-                        m.Type = (ReflectType)reader.Read(RReflectType, null);
+                        m.Type = (ReflectType2)reader.Read(RReflectType, null);
                         m.RuntimeMember = FastType?.DeclaredMembers[m.Name];
                         Members.Add(m);
                     }
                     switch (CollectionType)
                     {
                         case ReflectCollectionType.ICollectionT:
-                            Collection1 = (ReflectType)reader.Read(RReflectType, null);
+                            Collection1 = (ReflectType2)reader.Read(RReflectType, null);
                             break;
                         case ReflectCollectionType.IDictionaryKV:
-                            Collection1 = (ReflectType)reader.Read(RReflectType, null);
-                            Collection2 = (ReflectType)reader.Read(RReflectType, null);
+                            Collection1 = (ReflectType2)reader.Read(RReflectType, null);
+                            Collection2 = (ReflectType2)reader.Read(RReflectType, null);
                             break;
                     }
                 }
@@ -1118,8 +1118,8 @@ namespace Galador.Reflection.Serialization
             }
         }
 
-        ReflectType MakeGenericType(params ReflectType[] parameters) { return MakeGenericType((IReadOnlyList<ReflectType>)parameters); }
-        ReflectType MakeGenericType(IReadOnlyList<ReflectType> parameters)
+        ReflectType2 MakeGenericType(params ReflectType2[] parameters) { return MakeGenericType((IReadOnlyList<ReflectType2>)parameters); }
+        ReflectType2 MakeGenericType(IReadOnlyList<ReflectType2> parameters)
         {
             if (IsGenericParameter)
                 return parameters[GenericParameterIndex];
@@ -1128,7 +1128,7 @@ namespace Galador.Reflection.Serialization
             if (!IsGenericTypeDefinition && GenericArguments.All(x => !x.IsGenericParameter))
                 return this;
 
-            var result = new ReflectType();
+            var result = new ReflectType2();
             result.Type = Type;
             result.Kind = Kind;
             result.IntToFlags(FlagsToInt());
@@ -1195,12 +1195,12 @@ namespace Galador.Reflection.Serialization
         public bool TryGetSurrogate(object o, out object result)
         {
             result = null;
-            if (o == null || Surrogate == null || KnownTypes.GetType(o) != Type)
+            if (o == null || Surrogate == null || KnownTypes2.GetType(o) != Type)
                 return false;
 
             result = Surrogate.FastType.TryConstruct();
-            var ti = typeof(ISurrogate<>).MakeGenericType(KnownTypes.GetType(o));
-            var mi = ti.TryGetMethods(nameof(ISurrogate<int>.Initialize), null, KnownTypes.GetType(o)).FirstOrDefault();
+            var ti = typeof(ISurrogate<>).MakeGenericType(KnownTypes2.GetType(o));
+            var mi = ti.TryGetMethods(nameof(ISurrogate<int>.Initialize), null, KnownTypes2.GetType(o)).FirstOrDefault();
             if (mi == null)
                 throw new ArgumentException($"Couldn't Initialize surrogate<{Type.FullName}> for {o}");
             mi.Invoke(result, new[] { o });
@@ -1222,12 +1222,12 @@ namespace Galador.Reflection.Serialization
             if (o == null)
                 return false;
 
-            if (KnownTypes.GetType(o) == Type)
+            if (KnownTypes2.GetType(o) == Type)
             {
                 result = o;
                 return true;
             }
-            if (KnownTypes.GetType(o) != Surrogate.Type)
+            if (KnownTypes2.GetType(o) != Surrogate.Type)
                 return false;
 
             var surr = (from t in Surrogate.Type.GetTypeHierarchy()

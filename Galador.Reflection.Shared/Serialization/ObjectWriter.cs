@@ -94,12 +94,12 @@ namespace Galador.Reflection.Serialization
                 var sFlags = Settings.ToFlags();
                 Writer.WriteVInt(sFlags);
             }
-            try { Write(ReflectType.RObject, o); }
+            try { Write(ReflectType2.RObject, o); }
             finally { recurseDepth--; }
         }
         int recurseDepth = 0;
 
-        internal void Write(ReflectType expected, object o)
+        internal void Write(ReflectType2 expected, object o)
         {
             // 1st write the ID of the object, return if already written
             if (expected.IsReference)
@@ -120,8 +120,8 @@ namespace Galador.Reflection.Serialization
             var ots = expected;
             if (!expected.IsFinal)
             {
-                ots = ReflectType.GetType(o);
-                Write(ReflectType.RReflectType, ots);
+                ots = ReflectType2.GetType(o);
+                Write(ReflectType2.RReflectType, ots);
             }
 
             // finally write the item
@@ -129,14 +129,14 @@ namespace Galador.Reflection.Serialization
             {
                 // nothing!
             }
-            else if (ots == ReflectType.RReflectType)
+            else if (ots == ReflectType2.RReflectType)
             {
-                ((ReflectType)o).Write(this);
+                ((ReflectType2)o).Write(this);
             }
-            else if (ots == ReflectType.RType)
+            else if (ots == ReflectType2.RType)
             {
-                var rf = ReflectType.GetType((Type)o);
-                Write(ReflectType.RReflectType, rf);
+                var rf = ReflectType2.GetType((Type)o);
+                Write(ReflectType2.RReflectType, rf);
             }
             else if (ots.IsISerializable && !settings.IgnoreISerializable)
             {
@@ -163,7 +163,7 @@ namespace Galador.Reflection.Serialization
                 WriteObject(ots, o);
             }
         }
-        void BegingSurrogate(ReflectType ots, object o)
+        void BegingSurrogate(ReflectType2 ots, object o)
         {
             for (int i = 0; i < currentSurrogates.Count; i++)
             {
@@ -177,9 +177,9 @@ namespace Galador.Reflection.Serialization
         {
             currentSurrogates.RemoveAt(currentSurrogates.Count - 1);
         }
-        List<Tuple<ReflectType, object>> currentSurrogates = new List<Tuple<ReflectType, object>>();
+        List<Tuple<ReflectType2, object>> currentSurrogates = new List<Tuple<ReflectType2, object>>();
 
-        void WriteISerializable(ReflectType ots, object o)
+        void WriteISerializable(ReflectType2 ots, object o)
         {
             if (o is ReflectObject)
             {
@@ -187,8 +187,8 @@ namespace Galador.Reflection.Serialization
                 Writer.WriteVInt(m.Collection.Count);
                 foreach (var item in m.Collection)
                 {
-                    Write(ReflectType.RString, (string)item.Item1);
-                    Write(ReflectType.RObject, item.Item2);
+                    Write(ReflectType2.RString, (string)item.Item1);
+                    Write(ReflectType2.RObject, item.Item2);
                 }
             }
             else
@@ -200,18 +200,18 @@ namespace Galador.Reflection.Serialization
                 Writer.WriteVInt(info.MemberCount);
                 foreach (var item in info)
                 {
-                    Write(ReflectType.RString, item.Name);
-                    Write(ReflectType.RObject, item.Value);
+                    Write(ReflectType2.RString, item.Name);
+                    Write(ReflectType2.RObject, item.Value);
                 }
             }
         }
 
-        void WriteConverter(ReflectType ots, object value)
+        void WriteConverter(ReflectType2 ots, object value)
         {
             if (value is ReflectObject)
             {
                 var m = (ReflectObject)value;
-                Write(ReflectType.RString, m.ConverterString);
+                Write(ReflectType2.RString, m.ConverterString);
             }
             else
             {
@@ -219,11 +219,11 @@ namespace Galador.Reflection.Serialization
                 if (tc == null)
                     throw new InvalidOperationException("Failed to get converter.");
                 var s = tc.ConvertToInvariantString(value);
-                Write(ReflectType.RString, s);
+                Write(ReflectType2.RString, s);
             }
         }
 
-        void WriteObject(ReflectType ts, object o)
+        void WriteObject(ReflectType2 ts, object o)
         {
             switch (ts.Kind)
             {
@@ -268,15 +268,15 @@ namespace Galador.Reflection.Serialization
                                 case ReflectCollectionType.IList:
                                 case ReflectCollectionType.ICollectionT:
                                     Writer.WriteVInt(miss.Collection.Count);
-                                    var coll = colt.Collection1 ?? ReflectType.RObject;
+                                    var coll = colt.Collection1 ?? ReflectType2.RObject;
                                     foreach (var item in miss.Collection)
                                         Write(coll, item.Item1);
                                     break;
                                 case ReflectCollectionType.IDictionary:
                                 case ReflectCollectionType.IDictionaryKV:
                                     Writer.WriteVInt(miss.Collection.Count);
-                                    var coll1 = colt.Collection1 ?? ReflectType.RObject;
-                                    var coll2 = colt.Collection2 ?? ReflectType.RObject;
+                                    var coll1 = colt.Collection1 ?? ReflectType2.RObject;
+                                    var coll2 = colt.Collection2 ?? ReflectType2.RObject;
                                     foreach (var item in miss.Collection)
                                     {
                                         Write(coll1, item.Item1);
@@ -407,7 +407,7 @@ namespace Galador.Reflection.Serialization
                 return;
             var count = list.Count;
             Writer.WriteVInt(count);
-            var surt = ReflectType.GetType(typeof(T));
+            var surt = ReflectType2.GetType(typeof(T));
             foreach (var item in list)
             {
                 count--;
@@ -423,8 +423,8 @@ namespace Galador.Reflection.Serialization
                 return;
             var count = list.Count;
             Writer.WriteVInt(count);
-            var surk = ReflectType.GetType(typeof(K));
-            var surv = ReflectType.GetType(typeof(V));
+            var surk = ReflectType2.GetType(typeof(K));
+            var surv = ReflectType2.GetType(typeof(V));
             foreach (var kv in list)
             {
                 count--;

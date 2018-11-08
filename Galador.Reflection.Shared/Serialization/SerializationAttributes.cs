@@ -17,6 +17,7 @@ namespace Galador.Reflection.Serialization
         public SerializationSettingsAttribute()
         {
         }
+        readonly internal static SerializationSettingsAttribute Defaults = new SerializationSettingsAttribute();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SerializationSettingsAttribute"/> class.
@@ -130,20 +131,20 @@ namespace Galador.Reflection.Serialization
         /// <summary>
         /// Initializes a new instance of the <see cref="SerializationNameAttribute"/> class.
         /// </summary>
-        /// <param name="type">The <see cref="TypeName"/> to use.</param>
+        /// <param name="type">The <see cref="FullName"/> to use.</param>
         /// <param name="assembly">The <see cref="AssemblyName"/> to use.</param>
         public SerializationNameAttribute(string type, string assembly = null)
         {
             if (type == null)
                 throw new ArgumentNullException($"parameter {type} should not be null.");
-            TypeName = type;
+            FullName = type;
             AssemblyName = assembly;
         }
 
         /// <summary>
         /// Value to use in lieu of the <see cref="Type.FullName"/>
         /// </summary>
-        public string TypeName { get; set; }
+        public string FullName { get; set; }
         /// <summary>
         /// Value to use in lieu of the <see cref="System.Reflection.AssemblyName.Name"/>.
         /// </summary>
@@ -161,7 +162,7 @@ namespace Galador.Reflection.Serialization
             var o = obj as SerializationNameAttribute;
             if (o == null)
                 return false;
-            return TypeName == o.TypeName && AssemblyName == o.AssemblyName;
+            return FullName == o.FullName && AssemblyName == o.AssemblyName;
         }
         /// <summary>
         /// Returns a hash code for this instance.
@@ -171,13 +172,11 @@ namespace Galador.Reflection.Serialization
         /// </returns>
         public override int GetHashCode()
         {
-            var result = TypeName.GetHashCode();
-            if (AssemblyName != null)
-                result ^= AssemblyName.GetHashCode();
-            return result;
+            return (FullName ?? "").GetHashCode()
+                ^ (AssemblyName ?? "").GetHashCode();
         }
 
-        public override string ToString() => $"SerializationName({TypeName}, {AssemblyName})";
+        public override string ToString() => $"SerializationName({FullName}, {AssemblyName})";
     }
 
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface | AttributeTargets.Enum, AllowMultiple = false, Inherited = false)]

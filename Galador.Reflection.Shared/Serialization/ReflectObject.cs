@@ -12,7 +12,7 @@ namespace Galador.Reflection.Serialization
     /// </summary>
     public sealed class ReflectObject
     {
-        internal ReflectObject(ReflectType type)
+        internal ReflectObject(ReflectType2 type)
         {
             this.Type = type;
             foreach (var m in type.RuntimeMembers)
@@ -30,7 +30,7 @@ namespace Galador.Reflection.Serialization
         /// <summary>
         /// Serialization information about this object's original type.
         /// </summary>
-        public ReflectType Type { get; private set; }
+        public ReflectType2 Type { get; private set; }
 
         /// <summary>
         /// Serialized member values.
@@ -64,7 +64,7 @@ namespace Galador.Reflection.Serialization
             /// <summary>
             /// Serialization information about this member declared type.
             /// </summary>
-            public ReflectType Type { get; internal set; }
+            public ReflectType2 Type { get; internal set; }
             /// <summary>
             /// Value of the member at the time it was serialized.
             /// </summary>

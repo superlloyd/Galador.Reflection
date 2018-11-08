@@ -71,7 +71,7 @@ namespace Galador.Reflection.Serialization
             }
             try
             {
-                return Read(ReflectType.RObject, null);
+                return Read(ReflectType2.RObject, null);
             }
             finally
             {
@@ -86,7 +86,7 @@ namespace Galador.Reflection.Serialization
         }
         int recurseDepth = 0;
 
-        internal object Read(ReflectType expected, object possibleValue)
+        internal object Read(ReflectType2 expected, object possibleValue)
         {
             object result;
             ulong oid = 0;
@@ -100,7 +100,7 @@ namespace Galador.Reflection.Serialization
             var actual = expected;
             if (!expected.IsFinal) // if expected type is not final then write actual type
             {
-                actual = (ReflectType)Read(ReflectType.RReflectType, null);
+                actual = (ReflectType2)Read(ReflectType2.RReflectType, null);
             }
 
             object o = null;
@@ -110,16 +110,16 @@ namespace Galador.Reflection.Serialization
                 if (oid > 0)
                     Context.Register(oid, null, false);
             }
-            else if (actual == ReflectType.RReflectType)
+            else if (actual == ReflectType2.RReflectType)
             {
-                var rt = new ReflectType();
+                var rt = new ReflectType2();
                 Context.Register(oid, rt);
                 o = rt;
                 rt.Read(this);
             }
-            else if (actual == ReflectType.RType)
+            else if (actual == ReflectType2.RType)
             {
-                var rf = (ReflectType)Read(ReflectType.RReflectType, null);
+                var rf = (ReflectType2)Read(ReflectType2.RReflectType, null);
                 o = rf.Type;
                 Context.Register(oid, o);
             }
@@ -156,15 +156,15 @@ namespace Galador.Reflection.Serialization
             return o;
         }
 
-        object ReadISerializable(ReflectType ts, ulong oid, object possibleValue)
+        object ReadISerializable(ReflectType2 ts, ulong oid, object possibleValue)
         {
             var info = new SRS.SerializationInfo(typeof(object), new SRS.FormatterConverter());
             var ctx = new SRS.StreamingContext(SRS.StreamingContextStates.Persistence);
             var N = (int)Reader.ReadVInt();
             for (int i = 0; i < N; i++)
             {
-                var s = (string)Read(ReflectType.RString, null);
-                var o = Read(ReflectType.RObject, null);
+                var s = (string)Read(ReflectType2.RString, null);
+                var o = Read(ReflectType2.RObject, null);
                 info.AddValue(s, o);
             }
             if (ts.Type != null)
@@ -194,9 +194,9 @@ namespace Galador.Reflection.Serialization
             return missing;
         }
 
-        object ReadConverter(ReflectType ts, ulong oid)
+        object ReadConverter(ReflectType2 ts, ulong oid)
         {
-            var s = (string)Read(ReflectType.RString, null);
+            var s = (string)Read(ReflectType2.RString, null);
             var tc = ts.GetTypeConverter();
             if (tc != null)
             {
@@ -223,7 +223,7 @@ namespace Galador.Reflection.Serialization
             }
             return false;
         }
-        object ReadObject(ReflectType ts, ulong oid, object possibleValue)
+        object ReadObject(ReflectType2 ts, ulong oid, object possibleValue)
         {
             Func<object, object> RETURN_REGISTER = (value) =>
             {
@@ -299,7 +299,7 @@ namespace Galador.Reflection.Serialization
                                                 var list = new List<Tuple<object, object>>();
                                                 missing.Collection = list;
                                                 var N = (int)Reader.ReadVInt();
-                                                var coll = colt.Collection1 ?? ReflectType.RObject;
+                                                var coll = colt.Collection1 ?? ReflectType2.RObject;
                                                 for (int i = 0; i < N; i++)
                                                 {
                                                     var value = Read(coll, null);
@@ -317,8 +317,8 @@ namespace Galador.Reflection.Serialization
                                                 var list = new List<Tuple<object, object>>();
                                                 missing.Collection = list;
                                                 var N = (int)Reader.ReadVInt();
-                                                var coll1 = colt.Collection1 ?? ReflectType.RObject;
-                                                var coll2 = colt.Collection2 ?? ReflectType.RObject;
+                                                var coll1 = colt.Collection1 ?? ReflectType2.RObject;
+                                                var coll2 = colt.Collection2 ?? ReflectType2.RObject;
                                                 for (int i = 0; i < N; i++)
                                                 {
                                                     var key = Read(coll1, null);
@@ -359,13 +359,13 @@ namespace Galador.Reflection.Serialization
                                         break;
                                     case ReflectCollectionType.ICollectionT:
                                         if (colt.listRead == null)
-                                            colt.listRead = FastMethod.GetMethod(GetType().TryGetMethods("ReadCollectionT", new[] { colt.Collection1.Type }, typeof(object), typeof(ReflectType)).First());
+                                            colt.listRead = FastMethod.GetMethod(GetType().TryGetMethods("ReadCollectionT", new[] { colt.Collection1.Type }, typeof(object), typeof(ReflectType2)).First());
                                         if (colt.listRead != null)
                                             colt.listRead.Invoke(this, o, colt.Collection1);
                                         break;
                                     case ReflectCollectionType.IDictionaryKV:
                                         if (colt.listRead == null)
-                                            colt.listRead = FastMethod.GetMethod(GetType().TryGetMethods("ReadDictKV", new[] { colt.Collection1.Type, colt.Collection2.Type }, typeof(object), typeof(ReflectType), typeof(ReflectType)).First());
+                                            colt.listRead = FastMethod.GetMethod(GetType().TryGetMethods("ReadDictKV", new[] { colt.Collection1.Type, colt.Collection2.Type }, typeof(object), typeof(ReflectType2), typeof(ReflectType2)).First());
                                         if (colt.listRead != null)
                                             colt.listRead.Invoke(this, o, colt.Collection1, colt.Collection2);
                                         break;
@@ -491,7 +491,7 @@ namespace Galador.Reflection.Serialization
                     o.Add(key, value);
             }
         }
-        void ReadCollectionT<T>(object o, ReflectType tT)
+        void ReadCollectionT<T>(object o, ReflectType2 tT)
         {
             var isRO = Reader.ReadBool();
             if (isRO)
@@ -505,7 +505,7 @@ namespace Galador.Reflection.Serialization
                     col.Add((T)value);
             }
         }
-        void ReadDictKV<K, V>(object o, ReflectType tKey, ReflectType tVal)
+        void ReadDictKV<K, V>(object o, ReflectType2 tKey, ReflectType2 tVal)
         {
             var isRO = Reader.ReadBool();
             if (isRO)

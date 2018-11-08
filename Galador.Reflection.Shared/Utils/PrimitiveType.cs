@@ -20,6 +20,7 @@ namespace Galador.Reflection.Utils
         /// Anything else that the obvious other values.
         /// </summary>
         Object,
+        Type,
 #pragma warning disable 1591 // XML Comments
         String,
         Bytes,
@@ -55,6 +56,7 @@ namespace Galador.Reflection.Utils
                 default:
                 case PrimitiveType.None:
                 case PrimitiveType.Object:
+                case PrimitiveType.Type:
                 case PrimitiveType.String:
                 case PrimitiveType.Bytes:
                     return false;
@@ -87,6 +89,7 @@ namespace Galador.Reflection.Utils
                 case PrimitiveType.None:
                 case PrimitiveType.Object:
                     return null;
+                case PrimitiveType.Type: return typeof(Type);
                 case PrimitiveType.String: return typeof(string);
                 case PrimitiveType.Bytes: return typeof(byte[]);
                 case PrimitiveType.Guid: return typeof(Guid);
@@ -113,6 +116,7 @@ namespace Galador.Reflection.Utils
         {
             if (type == null)
                 throw new ArgumentNullException(nameof(type));
+            if (type == typeof(Type)) return PrimitiveType.Type;
             if (type == typeof(string)) return PrimitiveType.String;
             if (type == typeof(byte[])) return PrimitiveType.Bytes;
             if (type == typeof(Guid)) return PrimitiveType.Guid;

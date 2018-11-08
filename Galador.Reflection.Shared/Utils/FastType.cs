@@ -64,7 +64,7 @@ namespace Galador.Reflection.Utils
         /// </summary>
         public object TryConstruct()
         {
-            if (IsGenericMeta || IsAbstract || IsIgnored)
+            if (IsGenericMeta || IsAbstract)
                 return null;
 
 #if !__STD__ && !__IOS__
@@ -111,11 +111,6 @@ namespace Galador.Reflection.Utils
         }
 
         #endregion
-
-        /// <summary>
-        /// Whether or not this is associated with a <see cref="Type"/> which is a pointer, delegate or IntPtr.
-        /// </summary>
-        internal bool IsIgnored { get; private set; }
 
         /// <summary>
         /// Whether this is a real class (<c>false</c>), or a generic one missing arguments (<c>true</c>).
@@ -190,13 +185,6 @@ namespace Galador.Reflection.Utils
             IsAbstract = type.GetTypeInfo().IsAbstract || type.IsInterface;
             IsGenericMeta = IsUndefined(type);
 
-            if (type.IsPointer)
-                IsIgnored = true;
-            else if (typeof(Delegate).IsBaseClass(type) || type == typeof(IntPtr) || type == typeof(Enum))
-                IsIgnored = true;
-            if (IsIgnored)
-                return;
-
             if (!type.IsArray && !ti.IsEnum)
                 SetConstructor();
         }
@@ -249,8 +237,6 @@ namespace Galador.Reflection.Utils
                             foreach (var pi in ti.DeclaredFields)
                             {
                                 var mt = FastType.GetType(pi.FieldType);
-                                if (mt.IsIgnored)
-                                    continue;
                                 var m = new FastMember(pi, null);
                                 result.Add(m);
                             }
@@ -267,8 +253,6 @@ namespace Galador.Reflection.Utils
                                         baseMember = GetType(pb.DeclaringType).DeclaredMembers[pi.Name];
                                 }
                                 var mt = FastType.GetType(pi.PropertyType);
-                                if (mt.IsIgnored)
-                                    continue;
                                 var m = new FastMember(pi, baseMember);
                                 result.Add(m);
                             }

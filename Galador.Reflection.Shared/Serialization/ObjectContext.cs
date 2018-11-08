@@ -21,28 +21,28 @@ namespace Galador.Reflection.Serialization
             // 0 <==> null
             ulong index = 1;
             // essential type that must be shared by all serialized stream
-            WellKnownContext.Register(index++, ReflectType.RObject);
-            WellKnownContext.Register(index++, ReflectType.RString);
-            WellKnownContext.Register(index++, ReflectType.RType);
-            WellKnownContext.Register(index++, ReflectType.RReflectType);
-            WellKnownContext.Register(index++, ReflectType.RNullable);
+            WellKnownContext.Register(index++, ReflectType2.RObject);
+            WellKnownContext.Register(index++, ReflectType2.RString);
+            WellKnownContext.Register(index++, ReflectType2.RType);
+            WellKnownContext.Register(index++, ReflectType2.RReflectType);
+            WellKnownContext.Register(index++, ReflectType2.RNullable);
             // other well known values, to speed up read-write and reduce stream size
             WellKnownContext.Register(index++, "");
-            WellKnownContext.Register(index++, ReflectType.GetType(typeof(byte[])));
-            WellKnownContext.Register(index++, ReflectType.GetType(typeof(Guid)));
-            WellKnownContext.Register(index++, ReflectType.GetType(typeof(bool)));
-            WellKnownContext.Register(index++, ReflectType.GetType(typeof(char)));
-            WellKnownContext.Register(index++, ReflectType.GetType(typeof(byte)));
-            WellKnownContext.Register(index++, ReflectType.GetType(typeof(sbyte)));
-            WellKnownContext.Register(index++, ReflectType.GetType(typeof(short)));
-            WellKnownContext.Register(index++, ReflectType.GetType(typeof(ushort)));
-            WellKnownContext.Register(index++, ReflectType.GetType(typeof(int)));
-            WellKnownContext.Register(index++, ReflectType.GetType(typeof(uint)));
-            WellKnownContext.Register(index++, ReflectType.GetType(typeof(long)));
-            WellKnownContext.Register(index++, ReflectType.GetType(typeof(ulong)));
-            WellKnownContext.Register(index++, ReflectType.GetType(typeof(float)));
-            WellKnownContext.Register(index++, ReflectType.GetType(typeof(double)));
-            WellKnownContext.Register(index++, ReflectType.GetType(typeof(decimal)));
+            WellKnownContext.Register(index++, ReflectType2.GetType(typeof(byte[])));
+            WellKnownContext.Register(index++, ReflectType2.GetType(typeof(Guid)));
+            WellKnownContext.Register(index++, ReflectType2.GetType(typeof(bool)));
+            WellKnownContext.Register(index++, ReflectType2.GetType(typeof(char)));
+            WellKnownContext.Register(index++, ReflectType2.GetType(typeof(byte)));
+            WellKnownContext.Register(index++, ReflectType2.GetType(typeof(sbyte)));
+            WellKnownContext.Register(index++, ReflectType2.GetType(typeof(short)));
+            WellKnownContext.Register(index++, ReflectType2.GetType(typeof(ushort)));
+            WellKnownContext.Register(index++, ReflectType2.GetType(typeof(int)));
+            WellKnownContext.Register(index++, ReflectType2.GetType(typeof(uint)));
+            WellKnownContext.Register(index++, ReflectType2.GetType(typeof(long)));
+            WellKnownContext.Register(index++, ReflectType2.GetType(typeof(ulong)));
+            WellKnownContext.Register(index++, ReflectType2.GetType(typeof(float)));
+            WellKnownContext.Register(index++, ReflectType2.GetType(typeof(double)));
+            WellKnownContext.Register(index++, ReflectType2.GetType(typeof(decimal)));
         }
 
         #region serialization methods: TryGetObject() Contains() TryGetId() NewId() Register()
@@ -140,8 +140,8 @@ namespace Galador.Reflection.Serialization
         public int Count { get { return idToObjects.Count; } }
 
         /// <summary>
-        /// All the objects. Note that the <see cref="ReflectType"/> found in the context are not the singletons
-        /// obtained with <see cref="ReflectType.GetType(Type)"/> method but are, instead, the type information
+        /// All the objects. Note that the <see cref="ReflectType2"/> found in the context are not the singletons
+        /// obtained with <see cref="ReflectType2.GetType(Type)"/> method but are, instead, the type information
         /// of the item in the stream as they were at the time of serialization.
         /// </summary>
         public IEnumerable<object> Objects { get { return idToObjects.Values; } }
@@ -151,7 +151,7 @@ namespace Galador.Reflection.Serialization
 
         #region GenerateCSharpCode()
 
-        void RecursiveAdd(ReflectType type)
+        void RecursiveAdd(ReflectType2 type)
         {
             if (Contains(type))
                 return;
@@ -180,7 +180,7 @@ namespace Galador.Reflection.Serialization
             var ctxt = new ObjectContext();
             foreach (var t in types)
             {
-                var rt = ReflectType.GetType(t);
+                var rt = ReflectType2.GetType(t);
                 ctxt.RecursiveAdd(rt);
             }
             var sb = new StringBuilder(256);
@@ -194,7 +194,7 @@ namespace Galador.Reflection.Serialization
         /// <param name="namespace">The namespace of the generated class.</param>
         /// <param name="types">The types that will be rewritten with only the serialization information.</param>
         /// <returns>A generated C# code file as string.</returns>
-        public static string GenerateCSharpCode(string @namespace, params ReflectType[] types)
+        public static string GenerateCSharpCode(string @namespace, params ReflectType2[] types)
         {
             var ctxt = new ObjectContext();
             foreach (var t in types)
@@ -236,7 +236,7 @@ namespace Galador.Reflection.Serialization
             w.WriteLine("using Galador.Reflection.Serialization;");
             w.WriteLine();
             w.Write("namespace "); w.Write(@namespace); w.WriteLine(" {");
-            foreach (var item in this.Objects.OfType<ReflectType>().Where(x => x.Kind == PrimitiveType.Object && !x.IsIgnored))
+            foreach (var item in this.Objects.OfType<ReflectType2>().Where(x => x.Kind == PrimitiveType.Object && !x.IsIgnored))
             {
                 if (item.IsGeneric && !item.IsGenericTypeDefinition)
                     continue;
@@ -252,7 +252,7 @@ namespace Galador.Reflection.Serialization
             w.WriteLine("}");
         }
 
-        void GenerateCSharpCode(TextWriter w, ReflectType type, ReflectType isSurrogateFor = null)
+        void GenerateCSharpCode(TextWriter w, ReflectType2 type, ReflectType2 isSurrogateFor = null)
         {
             if (type.HasConverter && type.IsGeneric) // TODO: IsGeneric only... because not sure...
             {
@@ -316,7 +316,7 @@ namespace Galador.Reflection.Serialization
                     w.Write(", ");
                 }
             };
-            if (type.BaseType != null && type.BaseType != ReflectType.RObject)
+            if (type.BaseType != null && type.BaseType != ReflectType2.RObject)
             {
                 addInterface();
                 w.Write(ToTypeName(type.BaseType));
@@ -376,14 +376,14 @@ namespace Galador.Reflection.Serialization
             if (type.Surrogate != null)
                 GenerateCSharpCode(w, type.Surrogate, type);
         }
-        string ToTypeName(ReflectType type)
+        string ToTypeName(ReflectType2 type)
         {
             var sb = new StringBuilder();
             var sb2 = new StringBuilder();
             ToTypeName(sb, sb2, type);
             return sb.ToString();
         }
-        void ToTypeName(StringBuilder sb, StringBuilder sb2, ReflectType type)
+        void ToTypeName(StringBuilder sb, StringBuilder sb2, ReflectType2 type)
         {
             string getFriendlyName()
             {

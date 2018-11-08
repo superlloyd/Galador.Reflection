@@ -13,9 +13,9 @@ namespace Galador.Reflection.Serialization
     /// <summary>
     /// This class does all the reflection work related to .NET type lookup.
     /// </summary>
-    public static class KnownTypes
+    public static class KnownTypes2
     {
-        static KnownTypes()
+        static KnownTypes2()
         {
             Register(KnownAssemblies.Current);
             // IMPORTANT: add the callback after Register() to avoid deadlock

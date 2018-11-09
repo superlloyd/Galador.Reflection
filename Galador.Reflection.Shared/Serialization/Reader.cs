@@ -12,10 +12,19 @@ namespace Galador.Reflection.Serialization
     {
         readonly IPrimitiveReader input;
         readonly internal SerializationSettings settings = new SerializationSettings();
+        readonly ulong VERSION;
 
         public Reader(IPrimitiveReader input)
         {
             this.input = input ?? throw new ArgumentNullException(nameof(input));
+            this.VERSION = input.ReadVUInt();
+            switch (VERSION)
+            {
+                case 1:
+                    break;
+                default:
+                    throw new ArgumentException("Unknown version number " + VERSION);
+            }
         }
 
         public void Dispose()

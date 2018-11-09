@@ -100,8 +100,8 @@ namespace Galador.Reflection.Serialization
             IsGenericTypeDefinition = (flags & (1 << 10)) != 0;
             HasConverter = (flags & (1 << 11)) != 0;
             HasSurrogate = (flags & (1 << 12)) != 0;
-            Kind = (PrimitiveType)((flags >> 13) & 0xb11111);
-            CollectionType = (RuntimeCollectionType)((flags >> 18) & 0x111);
+            Kind = (PrimitiveType)((flags >> 13) & 0b11111);
+            CollectionType = (RuntimeCollectionType)((flags >> 18) & 0b111);
             switch (Kind)
             {
                 case PrimitiveType.None:
@@ -124,11 +124,10 @@ namespace Galador.Reflection.Serialization
                 }
                 GenericParameters = glp.AsReadOnly();
             }
-
             Element = (TypeData)reader.Read(Context.RType.TypeData(), null);
-            if (reader.settings.SkipMetaData)
-                return;
 
+            if (reader.settings.SkipMemberData)
+                return;
             BaseType = (TypeData)reader.Read(Context.RType.TypeData(), null);
             if (!HasSurrogate && !HasSurrogate
                 && !IsInterface && !IsISerializable
@@ -187,11 +186,10 @@ namespace Galador.Reflection.Serialization
             if (GenericParameters != null)
                 for (int i = 0; i < GenericParameters.Count; i++)
                     writer.Write(Context.RType, GenericParameters[i]);
-
             writer.Write(Context.RType, Element);
-            if (writer.Settings.SkipMetaData)
-                return;
 
+            if (writer.Settings.SkipMemberData)
+                return;
             writer.Write(Context.RType, BaseType);
             if (!HasSurrogate && !HasSurrogate
                 && !IsInterface && !IsISerializable

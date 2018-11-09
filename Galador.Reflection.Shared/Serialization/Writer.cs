@@ -16,7 +16,11 @@ namespace Galador.Reflection.Serialization
         public Writer(IPrimitiveWriter output)
         {
             this.output = output ?? throw new ArgumentNullException(nameof(output));
+            output.WriteVInt(VERSION);
         }
+
+        // v2 added BaseClass, IsSurrogateType
+        const ulong VERSION = 1;
 
         public void Dispose()
         {
@@ -84,7 +88,7 @@ namespace Galador.Reflection.Serialization
             }
             else if (actual.Surrogate != null)
             {
-                Write(RObject, actual.Surrogate.Create(value));
+                Write(RObject, actual.Surrogate.Convert(value));
             }
             else
             {

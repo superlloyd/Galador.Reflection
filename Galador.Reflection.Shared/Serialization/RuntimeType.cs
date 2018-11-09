@@ -132,21 +132,19 @@ namespace Galador.Reflection.Serialization
         {
             internal SurrogateInfo(Type target, Type surrogate)
             {
-                TargetType = FastType.GetType(target);
-                SurrogateType = FastType.GetType(surrogate);
+                SurrogateType = RuntimeType.GetType(surrogate);
 
                 var tInterface = typeof(ISurrogate<>).MakeGenericType(target);
                 Initialize = tInterface.TryGetMethods(nameof(ISurrogate<int>.Initialize), null, target).First();
                 Instantiate = tInterface.GetRuntimeMethod(nameof(ISurrogate<int>.Instantiate), Array.Empty<Type>());
             }
 
+            public RuntimeType SurrogateType { get; }
             readonly MethodInfo Initialize, Instantiate;
-            public FastType TargetType { get; }
-            public FastType SurrogateType { get; }
 
-            public object Create(object source)
+            public object Convert(object source)
             {
-                var result = SurrogateType.TryConstruct();
+                var result = SurrogateType.FastType.TryConstruct();
                 Initialize.Invoke(result, new[] { source });
                 return result;
             }

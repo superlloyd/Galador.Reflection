@@ -929,7 +929,7 @@ namespace Galador.Reflection.Serialization
                     AssemblyName = (string)reader.Read(RString, null);
                     Type = KnownTypes2.GetType(TypeName, AssemblyName);
                     FastType = FastType.GetType(Type);
-                    if (reader.settings.SkipMetaData)
+                    if (reader.settings.SkipMemberData)
                     {
                         if (Type == null)
                             throw new IOException("No MetaData with skip = true");
@@ -1014,7 +1014,7 @@ namespace Galador.Reflection.Serialization
                 {
                     writer.Write(RString, TypeName);
                     writer.Write(RString, AssemblyName);
-                    if (writer.Settings.SkipMetaData)
+                    if (writer.Settings.SkipMemberData)
                         return;
                 }
                 if (IsGeneric)

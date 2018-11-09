@@ -82,7 +82,7 @@ namespace TestApp
             d.A = "B";
             d.Me = d;
             d.C = 42;
-            var o = Serializer.Clone(d, new SerializationSettings { SkipMetaData = false });
+            var o = Serializer.Clone(d, new SerializationSettings { SkipMemberData = false });
             Assert.Equal(d.A, o.A);
             Assert.Equal(d.C, o.C);
             Assert.Equal(o.Me, o);
@@ -330,8 +330,8 @@ namespace TestApp
                 Elements2 = new List<string> { "hello" },
                 Elements3 = new List<Tuple<int, string>> { Tuple.Create(1, "haha") },
             };
-            var o2 = Serializer.Clone(o, new SerializationSettings { SkipMetaData = true });
-            var o3 = Serializer.Clone(o, new SerializationSettings { SkipMetaData = false });
+            var o2 = Serializer.Clone(o, new SerializationSettings { SkipMemberData = true });
+            var o3 = Serializer.Clone(o, new SerializationSettings { SkipMemberData = false });
 
             Assert.NotNull(o2.Elements);
             Assert.NotNull(o3.Elements);

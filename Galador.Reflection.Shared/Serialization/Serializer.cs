@@ -74,7 +74,7 @@ namespace Galador.Reflection.Serialization
             {
                 Settings = settings,
             };
-            ow.Settings.SkipMetaData = true;
+            ow.Settings.SkipMemberData = true;
 
             ow.Write(instance);
 

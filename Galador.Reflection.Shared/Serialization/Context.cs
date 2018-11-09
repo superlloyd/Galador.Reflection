@@ -49,8 +49,12 @@ namespace Galador.Reflection.Serialization
 
         protected void Register(ulong id, object o)
         {
-            if (Contains(id))
+            if (TryGetObject(id, out var o2))
+            {
+                if (o == o2)
+                    return;
                 throw new InvalidOperationException($"{id} already registered");
+            }
             if (Contains(o))
                 throw new InvalidOperationException($"{o} already registered");
 
@@ -64,12 +68,6 @@ namespace Galador.Reflection.Serialization
         {
             if (obj is Type)
                 return RuntimeType.GetType((Type)obj).TypeData();
-            return obj;
-        }
-        protected virtual object FromInternals(object obj)
-        {
-            if (obj is TypeData)
-                return ((TypeData)obj).Target()?.Type;
             return obj;
         }
 

@@ -211,11 +211,11 @@ namespace Galador.Reflection.Serialization
 
         #region public: Target()
 
-        public RuntimeType Target()
+        public RuntimeType Target(bool resolve)
         {
-            if (target == null && !targetInit)
+            if (target == null && resolve && !resolved)
             {
-                targetInit = true;
+                resolved = true;
                 switch (Kind)
                 {
                     case PrimitiveType.None:
@@ -231,7 +231,7 @@ namespace Galador.Reflection.Serialization
             return target;
         }
         RuntimeType target;
-        bool targetInit;
+        bool resolved;
 
         #endregion
 

@@ -19,8 +19,8 @@ namespace Galador.Reflection.Serialization
             output.WriteVInt(VERSION);
         }
 
-        // v2 added BaseClass, IsSurrogateType
-        const ulong VERSION = 1;
+        // v2, whole new Serializer classes
+        const ulong VERSION = 0x01_02;
 
         public void Dispose()
         {
@@ -69,11 +69,11 @@ namespace Galador.Reflection.Serialization
             }
 
             // write class info if needed
+            var actual = RuntimeType.GetType(value);
             if (expected.IsReference && !expected.IsSealed)
-                Write(RType, value.GetType());
+                Write(RType, actual);
 
             // only proceed further if value is supported
-            var actual = RuntimeType.GetType(value);
             if (!expected.IsSupported || !actual.IsSupported)
                 return;
 

@@ -17,7 +17,8 @@ namespace TestApp
             //tSer.CheckWriteIsFastEnough();
             //tSer.CheckReadIsFastEnough();
 
-            var csharp = ObjectContext.GenerateCSharpCode("Generated"
+            var ctxt = new Context();
+            var csharp = ctxt.GenerateCSharpCode("Generated"
                 , typeof(SerializationTests.BigClass)
                 , typeof(SerializationTests.SimpleClass<Dictionary<int, string>>)
                 , typeof(SerializationTests.BList)

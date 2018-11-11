@@ -208,11 +208,25 @@ namespace Galador.Reflection.Serialization
             return GetType(value.GetType());
         }
 
+        public static RuntimeType GetType(PrimitiveType kind)
+        {
+            switch (kind)
+            {
+                case PrimitiveType.None:
+                case PrimitiveType.Object:
+                    return null;
+                default:
+                    return GetType(PrimitiveConverter.GetType(kind));
+            }
+        }
+
+        public static RuntimeType GetType<T>() => GetType(typeof(T));
+
         public static RuntimeType GetType(Type type)
         {
             if (type == null)
                 return null;
-            lock (sReflectCache)
+            lock (locker)
             {
                 if (!sReflectCache.TryGetValue(type, out var result))
                 {
@@ -289,6 +303,22 @@ namespace Galador.Reflection.Serialization
                     return;
             }
 
+            void CaptureName()
+            {
+                var nattr = type.GetTypeInfo().GetCustomAttribute<SerializationNameAttribute>();
+                if (nattr != null)
+                {
+                    FullName = nattr.FullName;
+                    Assembly = nattr.AssemblyName;
+                }
+                else
+                {
+                    FullName = type.FullName;
+                    if (!FastType.IsMscorlib)
+                        Assembly = type.Namespace;
+                }
+            }
+
             if (type.IsArray)
             {
                 IsReference = true;
@@ -300,6 +330,7 @@ namespace Galador.Reflection.Serialization
             {
                 IsEnum = true;
                 Element = GetType(type.GetEnumUnderlyingType());
+                CaptureName();
             }
             else if (type.IsGenericParameter)
             {
@@ -319,24 +350,10 @@ namespace Galador.Reflection.Serialization
                 Surrogate = GetSurrogate(type);
                 BaseType = GetType(type.BaseType);
                 IsInterface = type.IsInterface;
+                IsAbstract = type.IsAbstract;
                 IsISerializable = typeof(ISerializable).IsBaseClass(type);
                 Converter = GetTypeConverter();
-
-                // name
-                {
-                    var nattr = type.GetTypeInfo().GetCustomAttribute<SerializationNameAttribute>();
-                    if (nattr == null)
-                    {
-                        FullName = nattr.FullName;
-                        Assembly = nattr.AssemblyName;
-                    }
-                    else
-                    {
-                        FullName = type.FullName;
-                        if (!FastType.IsMscorlib)
-                            Assembly = type.Namespace;
-                    }
-                }
+                CaptureName();
 
                 if (type.IsGenericType)
                 {
@@ -383,7 +400,7 @@ namespace Galador.Reflection.Serialization
                         if (!m.CanSet || !m.Type.IsReference)
                             continue;
                         var name = m.GetAttribute<SerializationMemberNameAttribute>()?.MemberName;
-                        Members.Add(new Member
+                        Members.Add(new Member(this)
                         {
                             Name = name ?? m.Name,
                             Type = rType,
@@ -442,6 +459,7 @@ namespace Galador.Reflection.Serialization
         public bool IsGenericParameter { get; private set; }
         public bool IsGenericTypeDefinition { get; private set; }
         public bool IsInterface { get; private set; }
+        public bool IsAbstract { get; private set; }
         public bool IsISerializable { get; private set; }
 
         public RuntimeCollectionType CollectionType { get; private set; }
@@ -520,7 +538,9 @@ namespace Galador.Reflection.Serialization
         /// </summary>
         public class Member : IMember
         {
-            internal Member() { }
+            internal Member(RuntimeType owner) { DeclaringType = owner; }
+
+            public RuntimeType DeclaringType { get; }
 
             /// <summary>
             /// This is the member name for the member, i.e. <see cref="MemberInfo.Name"/>.

@@ -53,7 +53,7 @@ namespace Galador.Reflection.Serialization
 
         internal void Write(RuntimeType expected, object value)
         {
-            value = ToInternals(value);
+            value = AsTypeData(value);
 
             // write id, continue if first time
             if (expected.IsReference)
@@ -84,7 +84,7 @@ namespace Galador.Reflection.Serialization
             }
             else if (actual.Converter != null && !settings.IgnoreTypeConverter)
             {
-                WriteConverter(expected, value);
+                WriteConverter(actual, value);
             }
             else if (actual.Surrogate != null)
             {
@@ -213,12 +213,12 @@ namespace Galador.Reflection.Serialization
             {
                 case RuntimeCollectionType.IDictionaryKV:
                     if (type.writeDictKV == null)
-                        type.writeDictKV = FastMethod.GetMethod(GetType().TryGetMethods("WriteDictionary", new[] { type.Collection1.Type, type.Collection2.Type }, type.Type).First());
+                        type.writeDictKV = FastMethod.GetMethod(GetType().TryGetMethods(nameof(WriteDictionary), new[] { type.Collection1.Type, type.Collection2.Type }, type.Type).First());
                     type.writeDictKV.Invoke(this, value);
                     break;
                 case RuntimeCollectionType.ICollectionT:
                     if (type.writeColT == null)
-                        type.writeColT = FastMethod.GetMethod(GetType().TryGetMethods("WriteCollection", new[] { type.Collection1.Type }, type.Type).First());
+                        type.writeColT = FastMethod.GetMethod(GetType().TryGetMethods(nameof(WriteCollection), new[] { type.Collection1.Type }, type.Type).First());
                     type.writeColT.Invoke(this, value);
                     break;
                 case RuntimeCollectionType.IList:

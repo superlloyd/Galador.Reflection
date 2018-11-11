@@ -21,7 +21,7 @@ namespace Galador.Reflection.Serialization
         /// <param name="settings">The serialization settings to use</param>
         public static void Serialize(object o, IPrimitiveWriter target, SerializationSettings settings = null)
         {
-            var ow = new ObjectWriter(target) { Settings = settings };
+            var ow = new Writer(target) { Settings = settings };
             ow.Write(o);
         }
 
@@ -32,7 +32,7 @@ namespace Galador.Reflection.Serialization
         /// <returns>A newly deserialized object.</returns>
         public static object Deserialize(IPrimitiveReader source)
         {
-            var or = new ObjectReader(source);
+            var or = new Reader(source);
             return or.Read();
         }
 
@@ -70,7 +70,7 @@ namespace Galador.Reflection.Serialization
             var ms = new List<object>(256);
 
             var pw = new TokenPrimitiveWriter(ms);
-            var ow = new ObjectWriter(pw)
+            var ow = new Writer(pw)
             {
                 Settings = settings,
             };
@@ -79,7 +79,7 @@ namespace Galador.Reflection.Serialization
             ow.Write(instance);
 
             var pr = new TokenPrimitiveReader(ms);
-            var or = new ObjectReader(pr);
+            var or = new Reader(pr);
 
             var result = or.Read();
             return (T)result;

@@ -59,18 +59,18 @@ namespace TestApp
             Assert.Equal(s1.Serial2.Serial1.ID, clone.Serial2.Serial1.ID);
 
             var ms = new MemoryStream();
-            var w = new ObjectWriter(new PrimitiveBinaryWriter(ms));
+            var w = new Writer(new PrimitiveBinaryWriter(ms));
             w.Write(s1);
 
-            var csharp = w.Context.GenerateCSharpCode("Generated");
-            var t1 = w.Context.Objects.OfType<ReflectType2>().First(x => x.Type == typeof(Serial1));
-            var t2 = w.Context.Objects.OfType<ReflectType2>().First(x => x.Type == typeof(Serial2));
-            Assert.Equal("635B7B87-A594-4130-8B1A-CB398357613D", t1.TypeName);
+            var csharp = w.GenerateCSharpCode("Generated");
+            var t1 = w.Objects.OfType<TypeData>().First(x => x.RuntimeType().Type == typeof(Serial1));
+            var t2 = w.Objects.OfType<TypeData>().First(x => x.RuntimeType().Type == typeof(Serial2));
+            Assert.Equal("635B7B87-A594-4130-8B1A-CB398357613D", t1.FullName);
             Assert.NotNull(t1.Members.Cast<IMember>().FirstOrDefault(x => x.Name == "Bobafet"));
             Assert.Null(t1.Members.Cast<IMember>().FirstOrDefault(x => x.Name == "Name"));
-            Assert.Null(t1.AssemblyName);
-            Assert.Equal("TEST-NAME", t2.TypeName);
-            Assert.Equal("TEST Assembly", t2.AssemblyName);
+            Assert.Null(t1.Assembly);
+            Assert.Equal("TEST-NAME", t2.FullName);
+            Assert.Equal("TEST Assembly", t2.Assembly);
             Assert.NotNull(t2.Members.Cast<IMember>().FirstOrDefault(x => x.Name == "PID"));
             Assert.Null(t2.Members.Cast<IMember>().FirstOrDefault(x => x.Name == "ID"));
         }
@@ -580,11 +580,11 @@ namespace TestApp
             wrap.Set(value);
 
             var sb = new StringBuilder();
-            var writer = new ObjectWriter(new PrimitiveTextWriter(new StringWriter(sb)));
+            var writer = new Writer(new PrimitiveTextWriter(new StringWriter(sb)));
             writer.Write(wrap);
 
             var text = sb.ToString();
-            var reader = new ObjectReader(new PrimitiveTextReader(new StringReader(text)));
+            var reader = new Reader(new PrimitiveTextReader(new StringReader(text)));
             var clone = reader.Read();
 
             Assert.IsType<SimpleClass<T>>(clone);

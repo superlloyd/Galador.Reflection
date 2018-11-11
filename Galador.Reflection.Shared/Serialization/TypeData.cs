@@ -39,6 +39,7 @@ namespace Galador.Reflection.Serialization
 
             BaseType = type.BaseType?.TypeData();
             Element = type.Element?.TypeData();
+            Surrogate = type.Surrogate?.SurrogateType.TypeData();
             FullName = type.FullName;
             Assembly = type.Assembly;
 
@@ -47,7 +48,6 @@ namespace Galador.Reflection.Serialization
             IsEnum = type.IsEnum;
             IsInterface = type.IsInterface;
             HasConverter = type.Converter != null;
-            HasSurrogate = type.Surrogate != null;
             IsISerializable = type.IsISerializable;
             IsGenericParameter = type.IsGenericParameter;
             IsGeneric = type.IsGeneric;
@@ -58,13 +58,14 @@ namespace Galador.Reflection.Serialization
             if (type.GenericParameters != null)
                 GenericParameters = type.GenericParameters.Select(x => x.TypeData()).ToList().AsReadOnly();
 
-            if (!HasSurrogate && !HasSurrogate
+            if (!HasConverter && Surrogate == null
                 && !IsInterface && !IsISerializable
-                && !IsArray && !IsEnum)
+                && !IsArray && !IsEnum
+                && !IsGenericTypeDefinition)
             {
                 foreach (var m in type.Members)
                 {
-                    Members.Add(new Member
+                    Members.Add(new Member(this)
                     {
                         Name = m.Name,
                         Type = m.Type.TypeData(),
@@ -99,9 +100,8 @@ namespace Galador.Reflection.Serialization
             IsGenericParameter = (flags & (1 << 9)) != 0;
             IsGenericTypeDefinition = (flags & (1 << 10)) != 0;
             HasConverter = (flags & (1 << 11)) != 0;
-            HasSurrogate = (flags & (1 << 12)) != 0;
-            Kind = (PrimitiveType)((flags >> 13) & 0b11111);
-            CollectionType = (RuntimeCollectionType)((flags >> 18) & 0b111);
+            Kind = (PrimitiveType)((flags >> 12) & 0b11111);
+            CollectionType = (RuntimeCollectionType)((flags >> 17) & 0b111);
             switch (Kind)
             {
                 case PrimitiveType.None:
@@ -110,8 +110,8 @@ namespace Galador.Reflection.Serialization
                 default:
                     return;
             }
-            FullName = (string)reader.Read(Context.RString.TypeData(), null);
-            Assembly = (string)reader.Read(Context.RString.TypeData(), null);
+            FullName = (string)reader.ReadImpl(new Reader.ReadArgs(Context.RString));
+            Assembly = (string)reader.ReadImpl(new Reader.ReadArgs(Context.RString));
             GenericParameterIndex = (int)input.ReadVInt();
             int genCount = (int)input.ReadVInt();
             if (genCount > 0)
@@ -119,32 +119,34 @@ namespace Galador.Reflection.Serialization
                 var glp = new List<TypeData>();
                 for (int i = 0; i < genCount; i++)
                 {
-                    var data = (TypeData)reader.Read(Context.RType.TypeData(), null);
+                    var data = (TypeData)reader.ReadImpl(new Reader.ReadArgs(Context.RType));
                     glp.Add(data);
                 }
                 GenericParameters = glp.AsReadOnly();
             }
-            Element = (TypeData)reader.Read(Context.RType.TypeData(), null);
+            Element = (TypeData)reader.ReadImpl(new Reader.ReadArgs(Context.RType));
+            Surrogate = (TypeData)reader.ReadImpl(new Reader.ReadArgs(Context.RType));
 
             if (reader.settings.SkipMemberData)
                 return;
-            BaseType = (TypeData)reader.Read(Context.RType.TypeData(), null);
-            if (!HasSurrogate && !HasSurrogate
+            BaseType = (TypeData)reader.ReadImpl(new Reader.ReadArgs(Context.RType));
+            if (!HasConverter && Surrogate == null
                 && !IsInterface && !IsISerializable
-                && !IsArray && !IsEnum)
+                && !IsArray && !IsEnum
+                && !IsGenericTypeDefinition)
             {
                 int mc = (int)input.ReadVInt();
                 for (int i = 0; i < mc; i++)
                 {
-                    var m = new Member
+                    var m = new Member(this)
                     {
-                        Name = (string)reader.Read(Context.RString.TypeData(), null),
-                        Type = (TypeData)reader.Read(Context.RType.TypeData(), null),
+                        Name = (string)reader.ReadImpl(new Reader.ReadArgs(Context.RString)),
+                        Type = (TypeData)reader.ReadImpl(new Reader.ReadArgs(Context.RType)),
                     };
                     Members.Add(m);
                 }
-                Collection1 = (TypeData)reader.Read(Context.RType.TypeData(), null);
-                Collection2 = (TypeData)reader.Read(Context.RType.TypeData(), null);
+                Collection1 = (TypeData)reader.ReadImpl(new Reader.ReadArgs(Context.RType));
+                Collection2 = (TypeData)reader.ReadImpl(new Reader.ReadArgs(Context.RType));
             }
         }
 
@@ -167,9 +169,8 @@ namespace Galador.Reflection.Serialization
             if (IsGenericParameter) flags |= 1 << 9;
             if (IsGenericTypeDefinition) flags |= 1 << 10;
             if (HasConverter) flags |= 1 << 11;
-            if (HasSurrogate) flags |= 1 << 12;
-            flags |= (int)Kind << 13;
-            flags |= (int)CollectionType << 18;
+            flags |= (int)Kind << 12;
+            flags |= (int)CollectionType << 17;
             switch (Kind)
             {
                 case PrimitiveType.None:
@@ -187,13 +188,15 @@ namespace Galador.Reflection.Serialization
                 for (int i = 0; i < GenericParameters.Count; i++)
                     writer.Write(Context.RType, GenericParameters[i]);
             writer.Write(Context.RType, Element);
+            writer.Write(Context.RType, Surrogate);
 
             if (writer.Settings.SkipMemberData)
                 return;
             writer.Write(Context.RType, BaseType);
-            if (!HasSurrogate && !HasSurrogate
+            if (!HasConverter && Surrogate == null
                 && !IsInterface && !IsISerializable
-                && !IsArray && !IsEnum)
+                && !IsArray && !IsEnum
+                && !IsGenericTypeDefinition)
             {
                 output.WriteVInt(Members.Count);
                 for (int i = 0; i < Members.Count; i++)
@@ -209,11 +212,11 @@ namespace Galador.Reflection.Serialization
 
         #endregion
 
-        #region public: Target()
+        #region public: RuntimeType()
 
-        public RuntimeType Target(bool resolve)
+        public RuntimeType RuntimeType()
         {
-            if (target == null && resolve && !resolved)
+            if (target == null && !resolved)
             {
                 resolved = true;
                 switch (Kind)
@@ -221,10 +224,33 @@ namespace Galador.Reflection.Serialization
                     case PrimitiveType.None:
                         break;
                     case PrimitiveType.Object:
-                        // TODO
+                        if (IsArray)
+                        {
+                            var type = Element.RuntimeType()?.Type;
+                            if (ArrayRank == 1)
+                                type = type?.MakeArrayType();
+                            else if (ArrayRank > 1)
+                                type = type?.MakeArrayType(ArrayRank);
+                            target = Serialization.RuntimeType.GetType(type);
+                        }
+                        else if (IsGenericParameter)
+                        {
+                            // nothing
+                        }
+                        else if (IsGeneric && !IsGenericTypeDefinition)
+                        {
+                            var type = Element.RuntimeType()?.Type;
+                            var parameters = GenericParameters.Select(x => x.RuntimeType()?.Type).ToArray();
+                            if (type != null && parameters.All(x => x != null))
+                                target = Serialization.RuntimeType.GetType(type.MakeGenericType(parameters));
+                        }
+                        else
+                        {
+                            target = Serialization.RuntimeType.GetType(FullName, Assembly);
+                        }
                         break;
                     default:
-                        target = RuntimeType.GetType(PrimitiveConverter.GetType(Kind));
+                        target = Serialization.RuntimeType.GetType(PrimitiveConverter.GetType(Kind));
                         break;
                 }
             }
@@ -232,6 +258,22 @@ namespace Galador.Reflection.Serialization
         }
         RuntimeType target;
         bool resolved;
+
+        #endregion
+
+        #region RuntimeMembers
+
+        public IEnumerable<Member> RuntimeMembers
+        {
+            get
+            {
+                if (BaseType != null)
+                    foreach (var m in BaseType.Members)
+                        yield return m;
+                foreach (var m in Members)
+                    yield return m;
+            }
+        }
 
         #endregion
 
@@ -248,13 +290,13 @@ namespace Galador.Reflection.Serialization
         public bool IsGenericParameter { get; private set; }
         public bool IsGenericTypeDefinition { get; private set; }
         public bool HasConverter { get; set; }
-        public bool HasSurrogate { get; set; }
 
         public string FullName { get; private set; }
         public string Assembly { get; private set; }
 
         public TypeData BaseType { get; private set; }
         public TypeData Element { get; private set; }
+        public TypeData Surrogate { get; set; } // not strictly for deserialization, but needed for C# Code generation, and should be present in stream
 
         public RuntimeCollectionType CollectionType { get; private set; }
         public TypeData Collection1 { get; private set; }
@@ -268,7 +310,8 @@ namespace Galador.Reflection.Serialization
         public MemberList<Member> Members { get; } = new MemberList<Member>();
         public class Member : IMember
         {
-            internal Member() { }
+            internal Member(TypeData owner) { DeclaringType = owner; }
+            public TypeData DeclaringType { get; }
             public string Name { get; internal set; }
             public TypeData Type { get; internal set; }
         }

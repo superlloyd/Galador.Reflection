@@ -446,6 +446,7 @@ namespace TestApp
         public void CheckSimpleTypes()
         {
             Check(typeof(DateTime));
+            Check(DateTime.Now);
             Check("aloha");
             Check<string>(null);
             Check(DBNull.Value);
@@ -582,9 +583,12 @@ namespace TestApp
             var sb = new StringBuilder();
             var writer = new Writer(new PrimitiveTextWriter(new StringWriter(sb)));
             writer.Write(wrap);
-
             var text = sb.ToString();
-            var reader = new Reader(new PrimitiveTextReader(new StringReader(text)));
+
+            var tokens = new TokenPrimitiveWriter();
+            var _tokens = tokens.TokenStream;
+            new Writer(tokens).Write(wrap);
+            var reader = new Reader(new TokenPrimitiveReader(tokens.TokenStream));
             var clone = reader.Read();
 
             Assert.IsType<SimpleClass<T>>(clone);

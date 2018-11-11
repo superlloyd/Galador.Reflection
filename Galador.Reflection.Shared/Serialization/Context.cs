@@ -1,5 +1,6 @@
 ﻿using Galador.Reflection.Utils;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -19,6 +20,10 @@ namespace Galador.Reflection.Serialization
             result.Register(index++, RuntimeType.GetType(typeof(string)).TypeData());
             result.Register(index++, RuntimeType.GetType(typeof(Type)).TypeData());
             result.Register(index++, RuntimeType.GetType(typeof(Nullable<>)).TypeData());
+            result.Register(index++, RuntimeType.GetType(typeof(IList)).TypeData());
+            result.Register(index++, RuntimeType.GetType(typeof(IDictionary)).TypeData());
+            result.Register(index++, RuntimeType.GetType(typeof(ICollection<>)).TypeData());
+            result.Register(index++, RuntimeType.GetType(typeof(IDictionary<,>)).TypeData());
             // other well known values, to speed up read-write and reduce stream size
             result.Register(index++, "");
             result.Register(index++, RuntimeType.GetType(typeof(byte[])).TypeData());
@@ -48,7 +53,7 @@ namespace Galador.Reflection.Serialization
         // context code
         readonly Dictionary<ulong, object> idToObjects = new Dictionary<ulong, object>();
         readonly Dictionary<object, ulong> objectsToIds = new Dictionary<object, ulong>();
-        ulong seed = 30;
+        ulong seed = 50;
 
         protected void Register(ulong id, object o)
         {
@@ -71,12 +76,16 @@ namespace Galador.Reflection.Serialization
         {
             if (obj is Type)
                 return RuntimeType.GetType((Type)obj).TypeData();
+            if (obj is RuntimeType)
+                return ((RuntimeType)obj).TypeData();
             return obj;
         }
         protected object AsType(object obj)
         {
             if (obj is TypeData)
                 return ((TypeData)obj).RuntimeType()?.Type;
+            if (obj is RuntimeType)
+                return ((RuntimeType)obj).Type;
             return obj;
         }
 
@@ -107,7 +116,7 @@ namespace Galador.Reflection.Serialization
                 return true;
             }
 
-            if (wellknown != null && wellknown.TryGetObject(id, out o))
+            if (wellknown != null && wellknown.idToObjects.TryGetValue(id, out o))
                 return true;
             return idToObjects.TryGetValue(id, out o);
         }
@@ -121,7 +130,7 @@ namespace Galador.Reflection.Serialization
                 return true;
             }
 
-            if (wellknown != null && wellknown.TryGetId(o, out id))
+            if (wellknown != null && wellknown.objectsToIds.TryGetValue(o, out id))
                 return true;
             return objectsToIds.TryGetValue(o, out id);
         }

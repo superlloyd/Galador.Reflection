@@ -201,9 +201,9 @@ namespace Galador.Reflection.Serialization
         {
             if (value == null)
                 return GetType(typeof(object));
-            if (value is Type)
-                return GetType(typeof(Type));
-            if (value is TypeData)
+            if (value is Type
+                || value is TypeData
+                || value is RuntimeType)
                 return GetType(typeof(Type));
             return GetType(value.GetType());
         }
@@ -315,7 +315,7 @@ namespace Galador.Reflection.Serialization
                 {
                     FullName = type.FullName;
                     if (!FastType.IsMscorlib)
-                        Assembly = type.Namespace;
+                        Assembly = type.Assembly.GetName().Name;
                 }
             }
 
@@ -346,14 +346,13 @@ namespace Galador.Reflection.Serialization
             else
             {
                 IsSealed = type.IsSealed;
-                IsReference = type.IsByRef;
+                IsReference = !type.IsValueType;
                 Surrogate = GetSurrogate(type);
                 BaseType = GetType(type.BaseType);
                 IsInterface = type.IsInterface;
                 IsAbstract = type.IsAbstract;
                 IsISerializable = typeof(ISerializable).IsBaseClass(type);
                 Converter = GetTypeConverter();
-                CaptureName();
 
                 if (type.IsGenericType)
                 {
@@ -361,6 +360,7 @@ namespace Galador.Reflection.Serialization
                     if (type.IsGenericTypeDefinition)
                     {
                         IsGenericTypeDefinition = true;
+                        CaptureName();
                     }
                     else
                     {
@@ -372,6 +372,10 @@ namespace Galador.Reflection.Serialization
                         .Select(x => GetType(x))
                         .ToList()
                         .AsReadOnly();
+                }
+                else
+                {
+                    CaptureName();
                 }
 
                 if (Converter == null && Surrogate == null && !IsInterface && !IsISerializable)
@@ -397,7 +401,7 @@ namespace Galador.Reflection.Serialization
                             if (!m.IsField && !m.IsPublic && !settings.IncludePrivateProperties)
                                 continue;
                         }
-                        if (!m.CanSet || !m.Type.IsReference)
+                        if (!m.CanSet && !m.Type.IsReference)
                             continue;
                         var name = m.GetAttribute<SerializationMemberNameAttribute>()?.MemberName;
                         Members.Add(new Member(this)

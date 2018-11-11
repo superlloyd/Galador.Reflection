@@ -30,6 +30,10 @@ namespace Galador.Reflection.Serialization
             }
         }
 
+        internal static readonly ReadArgs AObject = new ReadArgs(RObject);
+        internal static readonly ReadArgs AString = new ReadArgs(RString);
+        internal static readonly ReadArgs AType = new ReadArgs(RType);
+
         public void Dispose()
         {
             input.Dispose();
@@ -38,13 +42,13 @@ namespace Galador.Reflection.Serialization
         public object Read()
         {
             readRaw = false;
-            return Read(new ReadArgs(RObject));
+            return Read(AObject);
         }
 
         public object ReadRaw()
         {
             readRaw = true;
-            return Read(new ReadArgs(RObject));
+            return Read(AObject);
         }
 
         object Read(ReadArgs args)
@@ -78,21 +82,17 @@ namespace Galador.Reflection.Serialization
 
         internal class ReadArgs
         {
-            public TypeData TypeData;
-            public RuntimeType TypeHint;
-            public object Instance;
+            public readonly TypeData TypeData;
+            public readonly RuntimeType TypeHint;
+            public readonly object Instance;
 
             #region ctor
 
-            public ReadArgs(ReadArgs o)
-            {
-                TypeData = o.TypeData;
-                TypeHint = o.TypeHint;
-                Instance = o.Instance;
-            }
-            public ReadArgs(TypeData data)
+            public ReadArgs(TypeData data, RuntimeType hint = null, object instance = null)
             {
                 TypeData = data;
+                TypeHint = hint;
+                Instance = instance;
             }
             public ReadArgs(RuntimeType type)
             {
@@ -160,7 +160,7 @@ namespace Galador.Reflection.Serialization
 
             // if expected is not final
             if (args.TypeData.IsReference && !args.TypeData.IsSealed)
-                args.TypeData = (TypeData)ReadImpl(new ReadArgs(RType));
+                args = new ReadArgs((TypeData)ReadImpl(AType));
 
             object ReturnRegister(object value)
             {
@@ -174,17 +174,17 @@ namespace Galador.Reflection.Serialization
                 return ReturnRegister(new ObjectData(args.TypeData));
 
             // dispatch to appropriate read method
-            if (args.TypeData.IsISerializable && !settings.IgnoreISerializable)
+            if (args.TypeData.Surrogate != null)
             {
-                return ReturnRegister(ReadISerializable(args));
+                return ReturnRegister(ReadSurrogate(args));
             }
             else if (args.TypeData.HasConverter && !settings.IgnoreTypeConverter)
             {
                 return ReturnRegister(ReadConverter(args));
             }
-            else if (args.TypeData.Surrogate != null)
+            else if (args.TypeData.IsISerializable && !settings.IgnoreISerializable)
             {
-                return ReturnRegister(ReadSurrogate(args));
+                return ReturnRegister(ReadISerializable(args));
             }
             else
             {
@@ -271,8 +271,8 @@ namespace Galador.Reflection.Serialization
             var N = (int)input.ReadVInt();
             for (int i = 0; i < N; i++)
             {
-                var s = (string)ReadImpl(new ReadArgs(RString));
-                var o = ReadImpl(new ReadArgs(RObject));
+                var s = (string)ReadImpl(AString);
+                var o = ReadImpl(AObject);
                 info.AddValue(s, o);
             }
 
@@ -299,7 +299,7 @@ namespace Galador.Reflection.Serialization
                 var ctor = rtype?.Type.TryGetConstructors(info.GetType(), ctx.GetType()).FirstOrDefault();
                 if (ctor != null)
                 {
-                    return ctor.Invoke(null, new object[] { info, ctx }); // Dare to do it! Call constructor on existing instance!!
+                    return ctor.Invoke(new object[] { info, ctx });
                 }
 
                 // should we do that?
@@ -319,7 +319,7 @@ namespace Galador.Reflection.Serialization
 
         object ReadConverter(ReadArgs args)
         {
-            var s = (string)ReadImpl(new ReadArgs(RString));
+            var s = (string)ReadImpl(AString);
 
             var converter = args.InstanceType(readRaw)?.Converter;
             if (converter != null)
@@ -333,7 +333,7 @@ namespace Galador.Reflection.Serialization
 
         object ReadSurrogate(ReadArgs args)
         {
-            var o = ReadImpl(new ReadArgs(RObject));
+            var o = ReadImpl(AObject);
 
             var surrogate = args.InstanceType(readRaw)?.Surrogate;
             if (surrogate != null)
@@ -397,7 +397,7 @@ namespace Galador.Reflection.Serialization
             var type = args.InstanceType(readRaw);
             var o = args.Instance ?? type?.FastType.TryConstruct();
             var od = o == null ? new ObjectData(args.TypeData) : null;
-            Register(oid, o ?? od);
+            if (oid > 0) Register(oid, o ?? od);
 
             var candidates = new List<RuntimeType.Member>();
             var matches = new List<TypeData.Member>();
@@ -440,16 +440,18 @@ namespace Galador.Reflection.Serialization
                 return candidates[ic];
             }
 
-            foreach (var m in args.TypeData.RuntimeMembers)
+            var members = settings.SkipMemberData
+                ? type.RuntimeMembers.Cast<IMember>()
+                : args.TypeData.RuntimeMembers.Cast<IMember>();
+            foreach (var m in members)
             {
-                var p = FindRuntimeMember(m);
-
-                var margs = new ReadArgs(m.Type);
-                if (o != null && p != null)
-                {
-                    margs.TypeHint = p.Type;
-                    margs.Instance = p.RuntimeMember.GetValue(o);
-                }
+                var p = settings.SkipMemberData
+                    ? (RuntimeType.Member)m
+                    : FindRuntimeMember((TypeData.Member)m);
+                var pt = settings.SkipMemberData
+                    ? ((RuntimeType.Member)m).Type.TypeData()
+                    : ((TypeData.Member)m).Type;
+                var margs = new ReadArgs(pt, p?.Type, p?.RuntimeMember.GetValue(o));
 
                 var value = ReadImpl(margs);
                 if (o != null)
@@ -508,7 +510,7 @@ namespace Galador.Reflection.Serialization
             var count = (int)input.ReadVInt();
             for (int i = 0; i < count; i++)
             {
-                var value = ReadImpl(new ReadArgs(RObject));
+                var value = ReadImpl(AObject);
                 if (list != null)
                 {
                     list.Add(AsType(value));
@@ -536,8 +538,8 @@ namespace Galador.Reflection.Serialization
             var count = (int)input.ReadVInt();
             for (int i = 0; i < count; i++)
             {
-                var key = ReadImpl(new ReadArgs(RObject));
-                var value = ReadImpl(new ReadArgs(RObject));
+                var key = ReadImpl(AObject);
+                var value = ReadImpl(AObject);
                 if (list != null)
                 {
                     list.Add(AsType(key), AsType(value));

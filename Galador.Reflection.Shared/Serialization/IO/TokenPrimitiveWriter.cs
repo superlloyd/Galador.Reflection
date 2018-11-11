@@ -27,6 +27,27 @@ namespace Galador.Reflection.Serialization.IO
         /// </summary>
         public TokenPrimitiveWriter() { this.stream = new List<object>(256); }
 
+#if DEBUG
+        internal void DebugInfo(string s)
+        {
+            debugInfo.TryGetValue(stream.Count, out var prev);
+            if (prev != null) debugInfo[stream.Count] = prev + "\r\n" + s;
+            else debugInfo[stream.Count] = s;
+        }
+        Dictionary<int, string> debugInfo = new Dictionary<int, string>();
+        public IEnumerable<(string info, object token)> DebugTokenInfo
+        {
+            get
+            {
+                for (int i = 0; i < stream.Count; i++)
+                {
+                    debugInfo.TryGetValue(i, out var s);
+                    yield return (s, stream[i]);
+                }
+            }
+        }
+#endif
+
         /// <summary>
         /// The list where token will be written.
         /// </summary>

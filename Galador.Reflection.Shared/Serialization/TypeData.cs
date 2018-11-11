@@ -61,7 +61,7 @@ namespace Galador.Reflection.Serialization
             if (!HasConverter && Surrogate == null
                 && !IsInterface && !IsISerializable
                 && !IsArray && !IsEnum
-                && !IsGenericTypeDefinition)
+                && !IsGenericParameter)
             {
                 foreach (var m in type.Members)
                 {
@@ -79,6 +79,60 @@ namespace Galador.Reflection.Serialization
 
         #endregion
 
+        #region MakeGenericTypeData()
+
+        TypeData MakeGenericTypeData(IReadOnlyList<TypeData> parameters)
+        {
+            if (!IsSupported)
+                return this;
+
+            if (IsGenericParameter)
+                return parameters[this.GenericParameterIndex];
+
+            if (!IsGeneric)
+                return this;
+
+            var result = new TypeData()
+            {
+                IsSupported = true,
+                Kind = Kind,
+                BaseType = BaseType?.MakeGenericTypeData(parameters),
+                Element = Element?.MakeGenericTypeData(parameters),
+                Surrogate = Surrogate?.MakeGenericTypeData(parameters),
+                IsSealed = IsSealed,
+                IsReference = IsReference,
+                IsEnum = IsEnum,
+                IsInterface = IsInterface,
+                HasConverter = HasConverter,
+                IsISerializable = IsISerializable,
+                IsGeneric = true,
+                IsGenericTypeDefinition = false,
+                IsNullable = IsNullable,
+            };
+            GenericParameters = GenericParameters.Select(x => x.MakeGenericTypeData(parameters)).ToList().AsReadOnly();
+
+            if (!HasConverter && Surrogate == null
+                && !IsInterface && !IsISerializable
+                && !IsArray && !IsEnum
+                && !IsGenericParameter)
+            {
+                foreach (var m in Members)
+                {
+                    result.Members.Add(new Member(result)
+                    {
+                        Name = m.Name,
+                        Type = m.Type.MakeGenericTypeData(parameters),
+                    });
+                }
+                result.CollectionType = CollectionType;
+                result.Collection1 = Collection1?.MakeGenericTypeData(parameters);
+                result.Collection2 = Collection2?.MakeGenericTypeData(parameters);
+            }
+            return result;
+        }
+
+        #endregion
+
         #region Read() Write()
 
         internal void Read(Reader reader, IPrimitiveReader input)
@@ -89,6 +143,7 @@ namespace Galador.Reflection.Serialization
                 IsSupported = false;
                 return;
             }
+            IsSupported = true;
             IsInterface = (flags & (1 << 1)) != 0;
             IsISerializable = (flags & (1 << 2)) != 0;
             IsReference = (flags & (1 << 3)) != 0;
@@ -110,43 +165,90 @@ namespace Galador.Reflection.Serialization
                 default:
                     return;
             }
-            FullName = (string)reader.ReadImpl(new Reader.ReadArgs(Context.RString));
-            Assembly = (string)reader.ReadImpl(new Reader.ReadArgs(Context.RString));
-            GenericParameterIndex = (int)input.ReadVInt();
-            int genCount = (int)input.ReadVInt();
-            if (genCount > 0)
+            if (IsGeneric && !IsGenericTypeDefinition)
             {
-                var glp = new List<TypeData>();
-                for (int i = 0; i < genCount; i++)
+                Element = (TypeData)reader.ReadImpl(Reader.AType);
+                Surrogate = (TypeData)reader.ReadImpl(Reader.AType);
+                int genCount = (int)input.ReadVInt();
+                if (genCount > 0)
                 {
-                    var data = (TypeData)reader.ReadImpl(new Reader.ReadArgs(Context.RType));
-                    glp.Add(data);
-                }
-                GenericParameters = glp.AsReadOnly();
-            }
-            Element = (TypeData)reader.ReadImpl(new Reader.ReadArgs(Context.RType));
-            Surrogate = (TypeData)reader.ReadImpl(new Reader.ReadArgs(Context.RType));
-
-            if (reader.settings.SkipMemberData)
-                return;
-            BaseType = (TypeData)reader.ReadImpl(new Reader.ReadArgs(Context.RType));
-            if (!HasConverter && Surrogate == null
-                && !IsInterface && !IsISerializable
-                && !IsArray && !IsEnum
-                && !IsGenericTypeDefinition)
-            {
-                int mc = (int)input.ReadVInt();
-                for (int i = 0; i < mc; i++)
-                {
-                    var m = new Member(this)
+                    var glp = new List<TypeData>();
+                    for (int i = 0; i < genCount; i++)
                     {
-                        Name = (string)reader.ReadImpl(new Reader.ReadArgs(Context.RString)),
-                        Type = (TypeData)reader.ReadImpl(new Reader.ReadArgs(Context.RType)),
-                    };
-                    Members.Add(m);
+                        var data = (TypeData)reader.ReadImpl(Reader.AType);
+                        glp.Add(data);
+                    }
+                    GenericParameters = glp.AsReadOnly();
                 }
-                Collection1 = (TypeData)reader.ReadImpl(new Reader.ReadArgs(Context.RType));
-                Collection2 = (TypeData)reader.ReadImpl(new Reader.ReadArgs(Context.RType));
+
+                if (Surrogate == null && Element.Surrogate != null)
+                    Surrogate = Element.Surrogate.MakeGenericTypeData(GenericParameters);
+
+                if (reader.settings.SkipMemberData)
+                    return;
+
+                BaseType = Element?.BaseType.MakeGenericTypeData(GenericParameters);
+
+                if (!HasConverter && Surrogate == null
+                    && !IsInterface && !IsISerializable
+                    && !IsArray && !IsEnum
+                    && !IsGenericParameter)
+                {
+                    for (int i = 0; i < Element.Members.Count; i++)
+                    {
+                        var me = Element.Members[i];
+                        var m = new Member(this)
+                        {
+                            Name = me.Name,
+                            Type = me.Type.MakeGenericTypeData(GenericParameters),
+                        };
+                        Members.Add(m);
+                    }
+                    Collection1 = Element.Collection1?.MakeGenericTypeData(GenericParameters);
+                    Collection2 = Element.Collection2?.MakeGenericTypeData(GenericParameters);
+                }
+            }
+            else
+            {
+                FullName = (string)reader.ReadImpl(Reader.AString);
+                Assembly = (string)reader.ReadImpl(Reader.AString);
+                GenericParameterIndex = (int)input.ReadVInt();
+                int genCount = (int)input.ReadVInt();
+                if (genCount > 0)
+                {
+                    var glp = new List<TypeData>();
+                    for (int i = 0; i < genCount; i++)
+                    {
+                        var data = (TypeData)reader.ReadImpl(Reader.AType);
+                        glp.Add(data);
+                    }
+                    GenericParameters = glp.AsReadOnly();
+                }
+                Element = (TypeData)reader.ReadImpl(Reader.AType);
+                Surrogate = (TypeData)reader.ReadImpl(Reader.AType);
+
+                if (reader.settings.SkipMemberData)
+                    return;
+
+                BaseType = (TypeData)reader.ReadImpl(Reader.AType);
+                if (!HasConverter && Surrogate == null
+                    && !IsInterface && !IsISerializable
+                    && !IsArray && !IsEnum
+                    && !IsGenericParameter)
+                {
+                    int mc = (int)input.ReadVInt();
+                    for (int i = 0; i < mc; i++)
+                    {
+                        var m = new Member(this)
+                        {
+                            Name = (string)reader.ReadImpl(Reader.AString),
+                            Type = (TypeData)reader.ReadImpl(Reader.AType),
+                        };
+                        Members.Add(m);
+                    }
+                    Collection1 = (TypeData)reader.ReadImpl(Reader.AType);
+                    Collection2 = (TypeData)reader.ReadImpl(Reader.AType);
+                }
             }
         }
 
@@ -180,33 +282,45 @@ namespace Galador.Reflection.Serialization
                     return;
             }
             output.WriteVInt(flags);
-            writer.Write(Context.RString, FullName);
-            writer.Write(Context.RString, Assembly);
-            output.WriteVInt(GenericParameterIndex);
-            output.WriteVInt(GenericParameters?.Count ?? 0);
-            if (GenericParameters != null)
-                for (int i = 0; i < GenericParameters.Count; i++)
-                    writer.Write(Context.RType, GenericParameters[i]);
-            writer.Write(Context.RType, Element);
-            writer.Write(Context.RType, Surrogate);
-
-            if (writer.Settings.SkipMemberData)
-                return;
-            writer.Write(Context.RType, BaseType);
-            if (!HasConverter && Surrogate == null
-                && !IsInterface && !IsISerializable
-                && !IsArray && !IsEnum
-                && !IsGenericTypeDefinition)
+            if (IsGeneric && !IsGenericTypeDefinition)
             {
-                output.WriteVInt(Members.Count);
-                for (int i = 0; i < Members.Count; i++)
+                writer.Write(Context.RType, Element);
+                writer.Write(Context.RType, Surrogate);
+                output.WriteVInt(GenericParameters?.Count ?? 0);
+                if (GenericParameters != null)
+                    for (int i = 0; i < GenericParameters.Count; i++)
+                        writer.Write(Context.RType, GenericParameters[i]);
+            }
+            else
+            {
+                writer.Write(Context.RString, FullName);
+                writer.Write(Context.RString, Assembly);
+                output.WriteVInt(GenericParameterIndex);
+                output.WriteVInt(GenericParameters?.Count ?? 0);
+                if (GenericParameters != null)
+                    for (int i = 0; i < GenericParameters.Count; i++)
+                        writer.Write(Context.RType, GenericParameters[i]);
+                writer.Write(Context.RType, Element);
+                writer.Write(Context.RType, Surrogate);
+
+                if (writer.Settings.SkipMemberData)
+                    return;
+                writer.Write(Context.RType, BaseType);
+                if (!HasConverter && Surrogate == null
+                    && !IsInterface && !IsISerializable
+                    && !IsArray && !IsEnum
+                    && !IsGenericParameter)
                 {
-                    var m = Members[i];
-                    writer.Write(Context.RString, m.Name);
-                    writer.Write(Context.RType, m.Type);
+                    output.WriteVInt(Members.Count);
+                    for (int i = 0; i < Members.Count; i++)
+                    {
+                        var m = Members[i];
+                        writer.Write(Context.RString, m.Name);
+                        writer.Write(Context.RType, m.Type);
+                    }
+                    writer.Write(Context.RType, Collection1);
+                    writer.Write(Context.RType, Collection2);
                 }
-                writer.Write(Context.RType, Collection1);
-                writer.Write(Context.RType, Collection2);
             }
         }
 

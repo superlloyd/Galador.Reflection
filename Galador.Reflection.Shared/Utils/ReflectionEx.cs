@@ -131,6 +131,17 @@ namespace Galador.Reflection.Utils
             return t.IsBaseClass(o.GetType());
         }
 
+
+        static (bool ok, T[] value) Catch<T>(Func<T[]> getter)
+        {
+            try { return (true, getter()); }
+            catch (Exception ex)
+            {
+                Log.Warning(ex);
+                return (false, Array.Empty<T>());
+            }
+        }
+
         /// <summary>
         /// Try the get constructors that match the given arguments types. This method will consider public constructor first and will also consider default values.
         /// </summary>
@@ -142,7 +153,9 @@ namespace Galador.Reflection.Utils
             var ctors =
                 from ci in type.GetTypeInfo().DeclaredConstructors
                 where !ci.IsStatic
-                let ps = ci.GetParameters()
+                let okvalue = Catch(() => ci.GetParameters())
+                where okvalue.ok
+                let ps = okvalue.value
                 let N = ps.Where(x => !x.HasDefaultValue).Count()
                 where (argsType == null && N == 0) || (argsType != null && argsType.Length >= N && argsType.Length <= ps.Length)
                 where argsType.Length == 0 || Enumerable.Range(0, argsType.Length).All(i => IsBaseClass(ps[i].ParameterType, argsType[i]))
@@ -162,7 +175,9 @@ namespace Galador.Reflection.Utils
             var ctors =
                 from ci in type.GetTypeInfo().DeclaredConstructors
                 where !ci.IsStatic
-                let ps = ci.GetParameters()
+                let okvalue = Catch(() => ci.GetParameters())
+                where okvalue.ok
+                let ps = okvalue.value
                 let N = ps.Where(x => !x.HasDefaultValue).Count()
                 where !ci.IsStatic
                 where (args == null && N == 0) || (args != null && args.Length >= N && args.Length <= ps.Length)
@@ -185,7 +200,9 @@ namespace Galador.Reflection.Utils
         /// <returns>A newly constructed object, or null.</returns>
         public static object TryConstruct(this ConstructorInfo ctor, params object[] args)
         {
-            var ps = ctor.GetParameters();
+            var (ok, ps) = Catch(() => ctor.GetParameters());
+            if (!ok)
+                return GetUninitializedObject(ctor.DeclaringType);
             var cargs = new object[ps.Length];
             for (int i = 0; i < ps.Length; i++)
             {

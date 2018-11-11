@@ -3,6 +3,7 @@ using Galador.Reflection.Utils;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using SRS = System.Runtime.Serialization;
@@ -51,6 +52,14 @@ namespace Galador.Reflection.Serialization
         }
         int writeRecurseDepth = 0;
 
+        [Conditional("DEBUG")]
+        internal void DebugInfo(string s)
+        {
+#if DEBUG
+            (output as IO.TokenPrimitiveWriter)?.DebugInfo(s);
+#endif
+        }
+
         internal void Write(RuntimeType expected, object value)
         {
             value = AsTypeData(value);
@@ -58,6 +67,7 @@ namespace Galador.Reflection.Serialization
             // write id, continue if first time
             if (expected.IsReference)
             {
+                DebugInfo("Reference ID");
                 if (TryGetId(value, out var id))
                 {
                     output.WriteVInt(id);
@@ -69,29 +79,37 @@ namespace Galador.Reflection.Serialization
             }
 
             // write class info if needed
-            var actual = RuntimeType.GetType(value);
+            var actual = expected;
             if (expected.IsReference && !expected.IsSealed)
+            {
+                actual = RuntimeType.GetType(value);
+                DebugInfo("Actual Class " + actual.FullName);
                 Write(RType, actual);
+            }
 
             // only proceed further if value is supported
             if (!expected.IsSupported || !actual.IsSupported)
                 return;
 
             // dispatch to the appropriate write method
-            if (actual.IsISerializable && !Settings.IgnoreISerializable)
+            if (actual.Surrogate != null)
             {
-                WriteISerializable(value);
+                DebugInfo("WriteSurrogate");
+                Write(RObject, actual.Surrogate.Convert(value));
             }
             else if (actual.Converter != null && !settings.IgnoreTypeConverter)
             {
+                DebugInfo("WriteConverter");
                 WriteConverter(actual, value);
             }
-            else if (actual.Surrogate != null)
+            else if (actual.IsISerializable && !Settings.IgnoreISerializable)
             {
-                Write(RObject, actual.Surrogate.Convert(value));
+                DebugInfo("WriteSerializable");
+                WriteISerializable(value);
             }
             else
             {
+                DebugInfo("Write+" + actual.Kind);
                 switch (actual.Kind)
                 {
                     default:
@@ -205,6 +223,7 @@ namespace Galador.Reflection.Serialization
         {
             foreach (var m in type.RuntimeMembers)
             {
+                DebugInfo("Member." + m.Name);
                 var p = m.RuntimeMember.GetValue(value);
                 Write(m.Type, p);
             }
@@ -212,19 +231,23 @@ namespace Galador.Reflection.Serialization
             switch (type.CollectionType)
             {
                 case RuntimeCollectionType.IDictionaryKV:
+                    DebugInfo(type.CollectionType.ToString());
                     if (type.writeDictKV == null)
                         type.writeDictKV = FastMethod.GetMethod(GetType().TryGetMethods(nameof(WriteDictionary), new[] { type.Collection1.Type, type.Collection2.Type }, type.Type).First());
                     type.writeDictKV.Invoke(this, value);
                     break;
                 case RuntimeCollectionType.ICollectionT:
+                    DebugInfo(type.CollectionType.ToString());
                     if (type.writeColT == null)
                         type.writeColT = FastMethod.GetMethod(GetType().TryGetMethods(nameof(WriteCollection), new[] { type.Collection1.Type }, type.Type).First());
                     type.writeColT.Invoke(this, value);
                     break;
                 case RuntimeCollectionType.IList:
+                    DebugInfo(type.CollectionType.ToString());
                     WriteList((IList)value);
                     break;
                 case RuntimeCollectionType.IDictionary:
+                    DebugInfo(type.CollectionType.ToString());
                     WriteDict((IDictionary)value);
                     break;
             }

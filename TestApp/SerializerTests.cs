@@ -355,7 +355,7 @@ namespace TestApp
             }
             bDT.Stop();
 
-            Debug.WriteLine($"{jDT.ElapsedMilliseconds} {mDT.ElapsedMilliseconds} {bDT.ElapsedMilliseconds}");
+            Debug.WriteLine($"json: {jDT.ElapsedMilliseconds},\ttext: {mDT.ElapsedMilliseconds},\tbin: {bDT.ElapsedMilliseconds}");
 
             // REMARK: works **much** better (i.e. lower times) 
             // if the Serializer is compiled in RELEASE mode

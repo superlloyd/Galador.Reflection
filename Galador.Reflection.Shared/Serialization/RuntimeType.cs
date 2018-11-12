@@ -389,9 +389,9 @@ namespace Galador.Reflection.Serialization
                         var rType = GetType(m.Type.Type);
                         if (!rType.IsSupported)
                             continue;
-                        if (m.GetAttribute<NonSerializedAttribute>() != null)
+                        if (m.GetAttribute<NotSerializedAttribute>() != null)
                             continue;
-                        if (m.GetAttribute<SerializableAttribute>() == null)
+                        if (m.GetAttribute<SerializedAttribute>() == null)
                         {
                             if (m.IsField && m.IsPublic && !settings.IncludePublicFields)
                                 continue;

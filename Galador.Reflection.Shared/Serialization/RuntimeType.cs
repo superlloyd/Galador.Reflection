@@ -369,7 +369,7 @@ namespace Galador.Reflection.Serialization
                         Element = GetType(def);
                         IsNullable = def == typeof(Nullable<>);
                     }
-                    GenericParameters = type.GetGenericArguments()
+                    var gargs = type.GetGenericArguments()
                         .Select(x => GetType(x))
                         .ToList()
                         .AsReadOnly();

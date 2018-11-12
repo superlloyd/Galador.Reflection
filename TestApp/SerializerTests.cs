@@ -385,14 +385,32 @@ namespace TestApp
             Assert.NotNull(o2.Elements3);
 
             Assert.Equal(2, o2.Elements.Count);
-            Assert.Equal(1, o2.Elements2.Count);
-            Assert.Equal(1, o2.Elements3.Count);
+            Assert.Single(o2.Elements2);
+            Assert.Single(o2.Elements3);
 
             Assert.Equal(1, o2.Elements[0]);
             Assert.Equal(2, o2.Elements[1]);
             Assert.Equal("hello", o2.Elements2[0]);
             Assert.Equal(1, o2.Elements3[0].Item1);
             Assert.Equal("haha", o2.Elements3[0].Item2);
+        }
+
+        public class GFoo<T>
+        {
+            public Dictionary<int, T> Values = new Dictionary<int, T>();
+        }
+
+        [Fact]
+        public void CheckPartialGeneric()
+        {
+            var g = new GFoo<string>();
+            g.Values[0] = "hello";
+            g.Values[1] = "bye";
+
+            var g2 = Serializer.Clone(g);
+            Assert.Equal(2, g2.Values.Count);
+            Assert.Equal(g.Values[0], g2.Values[0]);
+            Assert.Equal(g.Values[1], g2.Values[1]);
         }
 
         public class BList : List<string>

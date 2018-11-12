@@ -88,13 +88,12 @@ namespace Galador.Reflection.Serialization
             if (!IsGeneric)
                 return this;
 
+            var p2 = GenericParameters?.Select(x => x.MakeGenericTypeData(parameters)).ToList().AsReadOnly();
+
             var result = new TypeData()
             {
                 IsSupported = true,
                 Kind = Kind,
-                BaseType = BaseType?.MakeGenericTypeData(parameters),
-                Element = Element?.MakeGenericTypeData(parameters),
-                Surrogate = Surrogate?.MakeGenericTypeData(parameters),
                 IsSealed = IsSealed,
                 IsReference = IsReference,
                 IsEnum = IsEnum,
@@ -105,7 +104,10 @@ namespace Galador.Reflection.Serialization
                 IsGenericTypeDefinition = false,
                 IsNullable = IsNullable,
             };
-            GenericParameters = GenericParameters.Select(x => x.MakeGenericTypeData(parameters)).ToList().AsReadOnly();
+            result.BaseType = BaseType?.MakeGenericTypeData(p2);
+            result.Element = this;
+            result.Surrogate = Surrogate?.MakeGenericTypeData(p2);
+            result.GenericParameters = p2;
 
             if (Surrogate == null
                 && !IsInterface
@@ -114,15 +116,14 @@ namespace Galador.Reflection.Serialization
             {
                 foreach (var m in Members)
                 {
-                    result.Members.Add(new Member(result)
-                    {
-                        Name = m.Name,
-                        Type = m.Type.MakeGenericTypeData(parameters),
-                    });
+                    var rm = new Member(result);
+                    rm.Name = m.Name;
+                    rm.Type = m.Type.MakeGenericTypeData(p2);
+                    result.Members.Add(rm);
                 }
                 result.CollectionType = CollectionType;
-                result.Collection1 = Collection1?.MakeGenericTypeData(parameters);
-                result.Collection2 = Collection2?.MakeGenericTypeData(parameters);
+                result.Collection1 = Collection1?.MakeGenericTypeData(p2);
+                result.Collection2 = Collection2?.MakeGenericTypeData(p2);
             }
             return result;
         }
@@ -189,12 +190,10 @@ namespace Galador.Reflection.Serialization
                 {
                     for (int i = 0; i < Element.Members.Count; i++)
                     {
-                        var me = Element.Members[i];
-                        var m = new Member(this)
-                        {
-                            Name = me.Name,
-                            Type = me.Type.MakeGenericTypeData(GenericParameters),
-                        };
+                        var em = Element.Members[i];
+                        var m = new Member(this);
+                        m.Name = em.Name;
+                        m.Type = em.Type.MakeGenericTypeData(GenericParameters);
                         Members.Add(m);
                     }
                     Collection1 = Element.Collection1?.MakeGenericTypeData(GenericParameters);
@@ -217,11 +216,12 @@ namespace Galador.Reflection.Serialization
                     }
                     GenericParameters = glp.AsReadOnly();
                 }
+
+                BaseType = (TypeData)reader.ReadImpl(Reader.AType);
                 Element = (TypeData)reader.ReadImpl(Reader.AType);
                 Surrogate = (TypeData)reader.ReadImpl(Reader.AType);
                 ArrayRank = (int)input.ReadVInt();
 
-                BaseType = (TypeData)reader.ReadImpl(Reader.AType);
                 if (Surrogate == null
                     && !IsInterface
                     && !IsArray && !IsEnum
@@ -291,11 +291,12 @@ namespace Galador.Reflection.Serialization
                 if (GenericParameters != null)
                     for (int i = 0; i < GenericParameters.Count; i++)
                         writer.Write(Context.RType, GenericParameters[i]);
+
+                writer.Write(Context.RType, BaseType);
                 writer.Write(Context.RType, Element);
                 writer.Write(Context.RType, Surrogate);
                 output.WriteVInt(ArrayRank);
 
-                writer.Write(Context.RType, BaseType);
                 if (Surrogate == null 
                     && !IsInterface
                     && !IsArray && !IsEnum

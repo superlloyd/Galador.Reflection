@@ -16,6 +16,54 @@ namespace TestApp
 {
     public class SerializationTests
     {
+        public class CRA1
+        {
+            public int ID { get; set; }
+            public object Child;
+            public string Tag;
+        }
+        public class CRA2
+        {
+            public string Name { get; set; }
+            public CRA1 CRA1;
+        }
+        public class CRB1
+        {
+            public int ID { get; set; }
+            public CRB2 Child;
+            public string Tag2;
+        }
+        public class CRB2
+        {
+            public string Name { get; set; }
+            public CRB1 CRA1;
+        }
+
+        [Fact]
+        public void CheckReshape()
+        {
+            var a = new CRA1()
+            {
+                ID = 42,
+                Tag = "Ping",
+                Child = new CRA2()
+                {
+                    Name = "hello",
+                },
+            };
+            var ac = (CRA2)a.Child;
+            ac.CRA1 = a;
+
+            var stream = new TokenPrimitiveWriter();
+            Serializer.Serialize(a, stream);
+            var b = Serializer.Deserialize<CRB1>(new TokenPrimitiveReader(stream.TokenStream));
+
+            Assert.Equal(a.ID, b.ID);
+            Assert.Equal(b.Child.CRA1, b);
+            Assert.Equal(ac.Name, b.Child.Name);
+        }
+
+
         [SerializationGuid("635B7B87-A594-4130-8B1A-CB398357613D")]
         public class Serial1
         {

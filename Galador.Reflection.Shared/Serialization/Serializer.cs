@@ -36,6 +36,12 @@ namespace Galador.Reflection.Serialization
             return or.Read();
         }
 
+        public static T Deserialize<T>(IPrimitiveReader source)
+        {
+            var or = new Reader(source);
+            return or.Read<T>();
+        }
+
         /// <summary>
         /// Serializes the specified object <paramref name="o"/> to a compressed gzip stream.
         /// </summary>

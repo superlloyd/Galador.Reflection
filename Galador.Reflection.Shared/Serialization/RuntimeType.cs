@@ -323,6 +323,7 @@ namespace Galador.Reflection.Serialization
             {
                 IsReference = true;
                 IsSealed = true;
+                IsArray = true;
                 ArrayRank = type.GetArrayRank();
                 Element = GetType(type.GetElementType());
             }

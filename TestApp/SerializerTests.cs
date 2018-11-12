@@ -511,6 +511,23 @@ namespace TestApp
                 Assert.Equal(c1[1], c2[1]);
                 Assert.Equal(c1[2], c2[2]);
             });
+            Check(new System.Collections.ArrayList { 1, null, "hello" }, (c1, c2) =>
+            {
+                Assert.Equal(c1.Count, c2.Count);
+                Assert.Equal(c1[0], c2[0]);
+                Assert.Equal(c1[1], c2[1]);
+                Assert.Equal(c1[2], c2[2]);
+            });
+            Check(new System.Collections.Hashtable
+            {
+                { 1, "one" },
+                { "two", 2 }
+            }, (c1, c2) =>
+            {
+                Assert.Equal(c1.Count, c2.Count);
+                Assert.Equal((object)c2[1], (object)"one");
+                Assert.Equal((object)c2["two"], (object)2);
+            });
             Check(new List<string> { "one", "two", "three" }, (c1, c2) => {
                 Assert.Equal(c1.Count, c2.Count);
                 Assert.Equal(c1[0], c2[0]);

@@ -47,7 +47,10 @@ namespace Galador.Reflection.Serialization
                 var sFlags = Settings.ToFlags();
                 output.WriteVInt(sFlags);
             }
-            try { Write(RObject, o); }
+            try
+            {
+                Write(RObject, o);
+            }
             finally { writeRecurseDepth--; }
         }
         int writeRecurseDepth = 0;
@@ -122,7 +125,12 @@ namespace Galador.Reflection.Serialization
                         }
                         else if (actual.IsNullable)
                         {
-                            Write(actual.GenericParameters[0], value);
+                            if (value == null) output.Write(false);
+                            else
+                            {
+                                output.Write(true);
+                                Write(actual.GenericParameters[0], value);
+                            }
                         }
                         else if (actual.IsEnum)
                         {

@@ -64,6 +64,8 @@ namespace Galador.Reflection.Serialization
             {
                 var sFlags = input.ReadVInt();
                 settings.FromFlags((int)sFlags);
+                if (args.TypeHint != null && settings.SkipMemberData)
+                    throw new ArgumentException("Can't read to another Type if meta data is missing");
             }
             try
             {
@@ -167,7 +169,7 @@ namespace Galador.Reflection.Serialization
 
             // if expected is not final
             if (args.TypeData.IsReference && !args.TypeData.IsSealed)
-                args = new ReadArgs((TypeData)ReadImpl(AType));
+                args = new ReadArgs((TypeData)ReadImpl(AType), args.TypeHint, args.Instance);
 
             object ReturnRegister(object value)
             {
@@ -207,7 +209,11 @@ namespace Galador.Reflection.Serialization
                         }
                         else if (args.TypeData.IsNullable)
                         {
-                            return ReturnRegister(ReadImpl(new ReadArgs(args.TypeData.Element)));
+                            object o = null;
+                            var isNotNull = input.ReadBool();
+                            if (isNotNull)
+                                o = ReadImpl(new ReadArgs(args.TypeData.GenericParameters[0]));
+                            return ReturnRegister(o);
                         }
                         else if (args.TypeData.IsEnum)
                         {
@@ -491,10 +497,24 @@ namespace Galador.Reflection.Serialization
                     ReadDict(o ?? od);
                     break;
                 case RuntimeCollectionType.ICollectionT:
-                    ReadCollectionT(o ?? od, args.TypeData.Collection1);
+                    if (settings.SkipMemberData)
+                    {
+                        ReadCollectionT(o ?? od, args.TypeHint.Collection1.TypeData());
+                    }
+                    else
+                    {
+                        ReadCollectionT(o ?? od, args.TypeData.Collection1);
+                    }
                     break;
                 case RuntimeCollectionType.IDictionaryKV:
-                    ReadDictKV(o ?? od, args.TypeData.Collection1, args.TypeData.Collection2);
+                    if (settings.SkipMemberData)
+                    {
+                        ReadDictKV(o ?? od, args.TypeHint.Collection1.TypeData(), args.TypeHint.Collection2.TypeData());
+                    }
+                    else
+                    {
+                        ReadDictKV(o ?? od, args.TypeData.Collection1, args.TypeData.Collection2);
+                    }
                     break;
             }
 

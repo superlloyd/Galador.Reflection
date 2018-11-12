@@ -43,6 +43,7 @@ namespace Galador.Reflection.Serialization
             FullName = type.FullName;
             Assembly = type.Assembly;
 
+            IsArray = type.IsArray;
             IsSealed = type.IsSealed;
             IsReference = type.IsReference;
             IsEnum = type.IsEnum;
@@ -53,6 +54,7 @@ namespace Galador.Reflection.Serialization
             IsGeneric = type.IsGeneric;
             IsGenericTypeDefinition = type.IsGenericTypeDefinition;
             IsNullable = type.IsNullable;
+            ArrayRank = type.ArrayRank;
 
             GenericParameterIndex = type.GenericParameterIndex;
             if (type.GenericParameters != null)
@@ -226,6 +228,7 @@ namespace Galador.Reflection.Serialization
                 }
                 Element = (TypeData)reader.ReadImpl(Reader.AType);
                 Surrogate = (TypeData)reader.ReadImpl(Reader.AType);
+                ArrayRank = (int)input.ReadVInt();
 
                 if (reader.settings.SkipMemberData)
                     return;
@@ -302,6 +305,7 @@ namespace Galador.Reflection.Serialization
                         writer.Write(Context.RType, GenericParameters[i]);
                 writer.Write(Context.RType, Element);
                 writer.Write(Context.RType, Surrogate);
+                output.WriteVInt(ArrayRank);
 
                 if (writer.Settings.SkipMemberData)
                     return;

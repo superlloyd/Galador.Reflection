@@ -488,10 +488,10 @@ namespace Galador.Reflection.Serialization
                     ReadDict(o ?? od);
                     break;
                 case RuntimeCollectionType.ICollectionT:
-                    ReadCollectionT(o ?? od, args.TypeData.Collection1);
+                    ReadCollection(o ?? od, args.TypeData);
                     break;
                 case RuntimeCollectionType.IDictionaryKV:
-                    ReadDictKV(o ?? od, args.TypeData.Collection1, args.TypeData.Collection2);
+                    ReadDict(o ?? od, args.TypeData);
                     break;
             }
 
@@ -554,13 +554,12 @@ namespace Galador.Reflection.Serialization
                 }
             }
         }
-        void ReadCollectionT(object o, TypeData tValue)
+        void ReadCollection(object o, TypeData tSrc)
         {
             var isRO = input.ReadBool();
             if (isRO)
                 return;
 
-            FastMethod mAdd = null;
             List<object> ilist = null;
             if (o is ObjectData od)
             {
@@ -569,41 +568,47 @@ namespace Galador.Reflection.Serialization
             }
             else
             {
-                var rtValue = tValue.RuntimeType();
+                var rtValue = tSrc.Collection1.RuntimeType();
                 if (rtValue != null)
                 {
-                    mAdd = FastMethod.GetMethod(GetType().TryGetMethods(nameof(AddToCollection), new[] { rtValue.Type }, typeof(object), rtValue.Type).First());
+                    if (tSrc.mReadCollection == null)
+                    {
+                        tSrc.mReadCollection = FastMethod.GetMethod(GetType().TryGetMethods(nameof(ReadCollectionT), new[] { rtValue.Type }, typeof(object), typeof(TypeData)).First());
+                    }
+                    tSrc.mReadCollection.Invoke(this, o, tSrc);
+                    return;
                 }
             }
 
             var count = (int)input.ReadVInt();
-            var eArgs = new ReadArgs(tValue);
+            var eArgs = new ReadArgs(tSrc.Collection1);
             for (int i = 0; i < count; i++)
             {
                 var value = ReadImpl(eArgs);
-                if (mAdd != null)
-                {
-                    mAdd.Invoke(null, o, AsType(value));
-                }
-                else if (ilist != null)
+                if (ilist != null)
                 {
                     ilist.Add(value);
                 }
             }
         }
-        static void AddToCollection<T>(object list, T value)
+        void ReadCollectionT<T>(object o, TypeData tSrc)
         {
-            var l = list as ICollection<T>;
-            if (l != null && !l.IsReadOnly)
-                l.Add(value);
+            var l = o as ICollection<T>;
+            var count = (int)input.ReadVInt();
+            var eArgs = new ReadArgs(tSrc.Collection1);
+            for (int i = 0; i < count; i++)
+            {
+                var value = ReadImpl(eArgs);
+                if (l != null && !l.IsReadOnly)
+                    l.Add((T)AsType(value));
+            }
         }
-        void ReadDictKV(object o, TypeData tKey, TypeData tValue)
+        void ReadDict(object o, TypeData tSrc)
         {
             var isRO = input.ReadBool();
             if (isRO)
                 return;
 
-            FastMethod mAdd = null;
             List<(object, object)> ilist = null;
             if (o is ObjectData od)
             {
@@ -612,36 +617,45 @@ namespace Galador.Reflection.Serialization
             }
             else
             {
-                var rtKey = tKey.RuntimeType();
-                var rtValue = tValue.RuntimeType();
+                var rtKey = tSrc.Collection1.RuntimeType();
+                var rtValue = tSrc.Collection2.RuntimeType();
                 if (rtKey != null && rtValue != null)
                 {
-                    mAdd = FastMethod.GetMethod(GetType().TryGetMethods(nameof(AddToDictionary), new[] { rtKey.Type, rtValue.Type }, typeof(object), rtKey.Type, rtValue.Type).First());
+                    if (tSrc.mReadCollection == null)
+                    {
+                        tSrc.mReadCollection = FastMethod.GetMethod(GetType().TryGetMethods(nameof(ReadDictKV), new[] { rtKey.Type, rtValue.Type }, typeof(object), typeof(TypeData)).First());
+                    }
+                    tSrc.mReadCollection.Invoke(this, o, tSrc);
+                    return;
                 }
             }
 
             var count = (int)input.ReadVInt();
-            var eKey = new ReadArgs(tKey);
-            var eValue = new ReadArgs(tValue);
+            var eKey = new ReadArgs(tSrc.Collection1);
+            var eValue = new ReadArgs(tSrc.Collection2);
             for (int i = 0; i < count; i++)
             {
                 var key = ReadImpl(eKey);
                 var value = ReadImpl(eValue);
-                if (mAdd != null)
-                {
-                    mAdd.Invoke(null, o, AsType(key), AsType(value));
-                }
-                else if (ilist != null)
+                if (ilist != null)
                 {
                     ilist.Add((key, value));
                 }
             }
         }
-        static void AddToDictionary<K, V>(object dict, K key, V value)
+        void ReadDictKV<K, V>(object o, TypeData tSrc)
         {
-            var d = dict as IDictionary<K, V>;
-            if (d != null && !d.IsReadOnly)
-                d.Add(key, value);
+            var d = o as IDictionary<K, V>;
+            var count = (int)input.ReadVInt();
+            var eKey = new ReadArgs(tSrc.Collection1);
+            var eValue = new ReadArgs(tSrc.Collection2);
+            for (int i = 0; i < count; i++)
+            {
+                var key = ReadImpl(eKey);
+                var value = ReadImpl(eValue);
+                if (d != null && !d.IsReadOnly)
+                    d.Add((K)AsType(key), (V)AsType(value));
+            }
         }
     }
 }

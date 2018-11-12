@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Linq;
+using System.Collections.Concurrent;
 
 namespace Galador.Reflection.Utils
 {
@@ -13,41 +14,49 @@ namespace Galador.Reflection.Utils
         static KnownAssemblies()
         {
             var domain = AppDomain.CurrentDomain;
-            domain.AssemblyLoad += (o, e) => AssemblyLoaded?.Invoke(e.LoadedAssembly);
+
+            foreach (var ass in FilterOk(domain.GetAssemblies()))
+                assemblies[ass.GetName().Name] = ass;
+
+            domain.AssemblyLoad += (o, e) =>
+            {
+                var loaded = new[] { e.LoadedAssembly };
+                foreach (var ass in FilterOk(loaded))
+                {
+                    assemblies[ass.GetName().Name] = ass;
+                    AssemblyLoaded?.Invoke(ass);
+                }
+            };
+
+            IEnumerable<Assembly> FilterOk(IEnumerable<Assembly> source)
+            {
+                if (source == null)
+                    yield break;
+                foreach (var ass in source)
+                {
+                    if (ass == null)
+                        continue;
+                    try
+                    {
+                        var dt = ass.DefinedTypes;
+                    }
+                    catch
+                    {
+                        Log.Warning(typeof(KnownAssemblies).FullName, $"Couldn't get Types from {ass.GetName().Name})");
+                        continue;
+                    }
+                    yield return ass;
+                }
+            }
         }
+
+        static ConcurrentDictionary<string, Assembly> assemblies = new ConcurrentDictionary<string, Assembly>();
+
 
         /// <summary>
         /// Enumerate all the currently loaded assembly.
         /// </summary>
-        public static IEnumerable<Assembly> Current
-        {
-            get
-            {
-                var domain = AppDomain.CurrentDomain;
-                return FilterOk(domain.GetAssemblies());
-
-                IEnumerable<Assembly> FilterOk(IEnumerable<Assembly> source)
-                {
-                    if (source == null)
-                        yield break;
-                    foreach (var ass in source)
-                    {
-                        if (ass == null)
-                            continue;
-                        try
-                        {
-                            var dt = ass.DefinedTypes;
-                        }
-                        catch
-                        {
-                            Log.Warning(typeof(KnownAssemblies).FullName, $"Couldn't get Types from {ass.GetName().Name})");
-                            continue;
-                        }
-                        yield return ass;
-                    }
-                }
-            }
-        }
+        public static IEnumerable<Assembly> Current => assemblies.Values;
 
 #pragma warning disable 67
         /// <summary>
@@ -67,14 +76,11 @@ namespace Galador.Reflection.Utils
             if (assemblyName == null)
                 return Type.GetType(typeName);
 
-            var candidates =
-                from ass in Current
-                where ass.GetName().Name == assemblyName
-                let t = ass.GetType(typeName)
-                where t != null
-                select t
-                ;
-            return candidates.FirstOrDefault();
+            assemblies.TryGetValue(assemblyName, out var candidate);
+            if (candidate != null)
+                return candidate.GetType(typeName);
+
+            return null;
         }
     }
 }

@@ -116,8 +116,9 @@ namespace Galador.Reflection.Utils
         /// <returns>Whether <paramref name="sub"/> is a <paramref name="t"/></returns>
         public static bool IsBaseClass(this Type t, Type sub)
         {
-            return t.GetTypeInfo().IsAssignableFrom(sub.GetTypeInfo());
+            return t.IsAssignableFrom(sub);
         }
+
         /// <summary>
         /// Determines whether <paramref name="t"/> is a base class of <paramref name="o"/>
         /// </summary>
@@ -127,7 +128,7 @@ namespace Galador.Reflection.Utils
         public static bool IsInstanceOf(this Type t, object o)
         {
             if (o == null)
-                return t.GetTypeInfo().IsClass || t.GetTypeInfo().IsInterface;
+                return t.IsClass || t.IsInterface;
             return t.IsBaseClass(o.GetType());
         }
 

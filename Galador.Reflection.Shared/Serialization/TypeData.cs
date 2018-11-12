@@ -405,6 +405,7 @@ namespace Galador.Reflection.Serialization
         public RuntimeCollectionType CollectionType { get; private set; }
         public TypeData Collection1 { get; private set; }
         public TypeData Collection2 { get; private set; }
+        internal FastMethod mReadCollection;
 
         public int ArrayRank { get; private set; }
         public int GenericParameterIndex { get; private set; }

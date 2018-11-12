@@ -64,8 +64,6 @@ namespace Galador.Reflection.Serialization
             {
                 var sFlags = input.ReadVInt();
                 settings.FromFlags((int)sFlags);
-                if (args.TypeHint != null && settings.SkipMemberData)
-                    throw new ArgumentException("Can't read to another Type if meta data is missing");
             }
             try
             {
@@ -453,17 +451,10 @@ namespace Galador.Reflection.Serialization
                 return candidates[ic];
             }
 
-            var members = settings.SkipMemberData
-                ? type.RuntimeMembers.Cast<IMember>()
-                : args.TypeData.RuntimeMembers.Cast<IMember>();
-            foreach (var m in members)
+            foreach (var m in args.TypeData.RuntimeMembers)
             {
-                var p = settings.SkipMemberData
-                    ? (RuntimeType.Member)m
-                    : FindRuntimeMember((TypeData.Member)m);
-                var pt = settings.SkipMemberData
-                    ? ((RuntimeType.Member)m).Type.TypeData()
-                    : ((TypeData.Member)m).Type;
+                var p = FindRuntimeMember(m);
+                var pt = m.Type;
                 var margs = new ReadArgs(pt, p?.Type, p?.RuntimeMember.GetValue(o));
 
                 var value = ReadImpl(margs);
@@ -497,24 +488,10 @@ namespace Galador.Reflection.Serialization
                     ReadDict(o ?? od);
                     break;
                 case RuntimeCollectionType.ICollectionT:
-                    if (settings.SkipMemberData)
-                    {
-                        ReadCollectionT(o ?? od, args.TypeHint.Collection1.TypeData());
-                    }
-                    else
-                    {
-                        ReadCollectionT(o ?? od, args.TypeData.Collection1);
-                    }
+                    ReadCollectionT(o ?? od, args.TypeData.Collection1);
                     break;
                 case RuntimeCollectionType.IDictionaryKV:
-                    if (settings.SkipMemberData)
-                    {
-                        ReadDictKV(o ?? od, args.TypeHint.Collection1.TypeData(), args.TypeHint.Collection2.TypeData());
-                    }
-                    else
-                    {
-                        ReadDictKV(o ?? od, args.TypeData.Collection1, args.TypeData.Collection2);
-                    }
+                    ReadDictKV(o ?? od, args.TypeData.Collection1, args.TypeData.Collection2);
                     break;
             }
 

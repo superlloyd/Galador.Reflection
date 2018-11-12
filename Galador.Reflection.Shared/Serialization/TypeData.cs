@@ -186,9 +186,6 @@ namespace Galador.Reflection.Serialization
                 if (Surrogate == null && Element.Surrogate != null)
                     Surrogate = Element.Surrogate.MakeGenericTypeData(GenericParameters);
 
-                if (reader.settings.SkipMemberData)
-                    return;
-
                 BaseType = Element?.BaseType.MakeGenericTypeData(GenericParameters);
 
                 if (!HasConverter && Surrogate == null
@@ -229,9 +226,6 @@ namespace Galador.Reflection.Serialization
                 Element = (TypeData)reader.ReadImpl(Reader.AType);
                 Surrogate = (TypeData)reader.ReadImpl(Reader.AType);
                 ArrayRank = (int)input.ReadVInt();
-
-                if (reader.settings.SkipMemberData)
-                    return;
 
                 BaseType = (TypeData)reader.ReadImpl(Reader.AType);
                 if (!HasConverter && Surrogate == null
@@ -307,8 +301,6 @@ namespace Galador.Reflection.Serialization
                 writer.Write(Context.RType, Surrogate);
                 output.WriteVInt(ArrayRank);
 
-                if (writer.Settings.SkipMemberData)
-                    return;
                 writer.Write(Context.RType, BaseType);
                 if (!HasConverter && Surrogate == null
                     && !IsInterface && !IsISerializable

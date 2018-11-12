@@ -31,7 +31,7 @@ namespace Galador.Reflection.Utils
         /// <summary>
         /// Return the method's parameters.
         /// </summary>
-        public IReadOnlyList<ParameterInfo> Paremeters { get { return parameters; } }
+        public IReadOnlyList<ParameterInfo> Parameters { get { return parameters; } }
 
         /// <summary>
         /// Construct a new <see cref="FastMethod"/> associated with an existing method.

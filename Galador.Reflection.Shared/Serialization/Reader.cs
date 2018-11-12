@@ -583,7 +583,7 @@ namespace Galador.Reflection.Serialization
                 var value = ReadImpl(eArgs);
                 if (mAdd != null)
                 {
-                    mAdd.Invoke(null, new object[] { o, AsType(value) });
+                    mAdd.Invoke(null, o, AsType(value));
                 }
                 else if (ilist != null)
                 {
@@ -629,7 +629,7 @@ namespace Galador.Reflection.Serialization
                 var value = ReadImpl(eValue);
                 if (mAdd != null)
                 {
-                    mAdd.Invoke(o, AsType(key), AsType(value));
+                    mAdd.Invoke(null, o, AsType(key), AsType(value));
                 }
                 else if (ilist != null)
                 {

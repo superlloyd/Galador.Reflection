@@ -379,7 +379,7 @@ namespace Galador.Reflection.Serialization
                     CaptureName();
                 }
 
-                if (Converter == null && Surrogate == null && !IsInterface && !IsISerializable)
+                if (Surrogate == null && !IsInterface)
                 {
                     var settings = type.GetCustomAttribute<SerializationSettingsAttribute>() ?? SerializationSettingsAttribute.Defaults;
                     foreach (var m in FastType.DeclaredMembers)
@@ -411,29 +411,29 @@ namespace Galador.Reflection.Serialization
                             Type = rType,
                             RuntimeMember = m,
                         });
+                    }
 
-                        var interfaces = type.GetInterfaces();
-                        var iDictKV = interfaces.Where(t => t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IDictionary<,>)).FirstOrDefault();
-                        var iColT = interfaces.Where(t => t.IsGenericType && t.GetGenericTypeDefinition() == typeof(ICollection<>)).FirstOrDefault();
-                        if (settings.IncludeDictionaryInterface && iDictKV != null)
-                        {
-                            CollectionType = RuntimeCollectionType.IDictionaryKV;
-                            Collection1 = GetType(iDictKV.GenericTypeArguments[0]);
-                            Collection2 = GetType(iDictKV.GenericTypeArguments[1]);
-                        }
-                        else if (settings.IncludeListInterface && iColT != null)
-                        {
-                            CollectionType = RuntimeCollectionType.ICollectionT;
-                            Collection1 = GetType(iColT.GenericTypeArguments[0]);
-                        }
-                        else if (settings.IncludeDictionaryInterface && interfaces.Contains(typeof(IDictionary)))
-                        {
-                            CollectionType = RuntimeCollectionType.IDictionary;
-                        }
-                        else if (settings.IncludeListInterface && interfaces.Contains(typeof(IList)))
-                        {
-                            CollectionType = RuntimeCollectionType.IList;
-                        }
+                    var interfaces = type.GetInterfaces();
+                    var iDictKV = interfaces.Where(t => t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IDictionary<,>)).FirstOrDefault();
+                    var iColT = interfaces.Where(t => t.IsGenericType && t.GetGenericTypeDefinition() == typeof(ICollection<>)).FirstOrDefault();
+                    if (settings.IncludeDictionaryInterface && iDictKV != null)
+                    {
+                        CollectionType = RuntimeCollectionType.IDictionaryKV;
+                        Collection1 = GetType(iDictKV.GenericTypeArguments[0]);
+                        Collection2 = GetType(iDictKV.GenericTypeArguments[1]);
+                    }
+                    else if (settings.IncludeListInterface && iColT != null)
+                    {
+                        CollectionType = RuntimeCollectionType.ICollectionT;
+                        Collection1 = GetType(iColT.GenericTypeArguments[0]);
+                    }
+                    else if (settings.IncludeDictionaryInterface && interfaces.Contains(typeof(IDictionary)))
+                    {
+                        CollectionType = RuntimeCollectionType.IDictionary;
+                    }
+                    else if (settings.IncludeListInterface && interfaces.Contains(typeof(IList)))
+                    {
+                        CollectionType = RuntimeCollectionType.IList;
                     }
                 }
             }

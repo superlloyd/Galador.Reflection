@@ -60,23 +60,17 @@ namespace Galador.Reflection.Serialization
             if (type.GenericParameters != null)
                 GenericParameters = type.GenericParameters.Select(x => x.TypeData()).ToList().AsReadOnly();
 
-            if (!HasConverter && Surrogate == null
-                && !IsInterface && !IsISerializable
-                && !IsArray && !IsEnum
-                && !IsGenericParameter)
+            foreach (var m in type.Members)
             {
-                foreach (var m in type.Members)
+                Members.Add(new Member(this)
                 {
-                    Members.Add(new Member(this)
-                    {
-                        Name = m.Name,
-                        Type = m.Type.TypeData(),
-                    });
-                }
-                CollectionType = type.CollectionType;
-                Collection1 = type.Collection1?.TypeData();
-                Collection2 = type.Collection2?.TypeData();
+                    Name = m.Name,
+                    Type = m.Type.TypeData(),
+                });
             }
+            CollectionType = type.CollectionType;
+            Collection1 = type.Collection1?.TypeData();
+            Collection2 = type.Collection2?.TypeData();
         }
 
         #endregion
@@ -113,8 +107,8 @@ namespace Galador.Reflection.Serialization
             };
             GenericParameters = GenericParameters.Select(x => x.MakeGenericTypeData(parameters)).ToList().AsReadOnly();
 
-            if (!HasConverter && Surrogate == null
-                && !IsInterface && !IsISerializable
+            if (Surrogate == null
+                && !IsInterface
                 && !IsArray && !IsEnum
                 && !IsGenericParameter)
             {
@@ -186,10 +180,10 @@ namespace Galador.Reflection.Serialization
                 if (Surrogate == null && Element.Surrogate != null)
                     Surrogate = Element.Surrogate.MakeGenericTypeData(GenericParameters);
 
-                BaseType = Element?.BaseType.MakeGenericTypeData(GenericParameters);
+                BaseType = Element?.BaseType?.MakeGenericTypeData(GenericParameters);
 
-                if (!HasConverter && Surrogate == null
-                    && !IsInterface && !IsISerializable
+                if (Surrogate == null
+                    && !IsInterface
                     && !IsArray && !IsEnum
                     && !IsGenericParameter)
                 {
@@ -228,8 +222,8 @@ namespace Galador.Reflection.Serialization
                 ArrayRank = (int)input.ReadVInt();
 
                 BaseType = (TypeData)reader.ReadImpl(Reader.AType);
-                if (!HasConverter && Surrogate == null
-                    && !IsInterface && !IsISerializable
+                if (Surrogate == null
+                    && !IsInterface
                     && !IsArray && !IsEnum
                     && !IsGenericParameter)
                 {
@@ -302,8 +296,8 @@ namespace Galador.Reflection.Serialization
                 output.WriteVInt(ArrayRank);
 
                 writer.Write(Context.RType, BaseType);
-                if (!HasConverter && Surrogate == null
-                    && !IsInterface && !IsISerializable
+                if (Surrogate == null 
+                    && !IsInterface
                     && !IsArray && !IsEnum
                     && !IsGenericParameter)
                 {

@@ -338,7 +338,7 @@ namespace Galador.Reflection.Serialization
                 IsGenericParameter = true;
                 var pargs = type.DeclaringType.GetTypeInfo().GetGenericArguments();
                 for (int i = 0; i < pargs.Length; i++)
-                    if (pargs[i] == type)
+                    if (pargs[i].Name == type.Name)
                     {
                         GenericParameterIndex = i;
                         break;
@@ -369,7 +369,7 @@ namespace Galador.Reflection.Serialization
                         Element = GetType(def);
                         IsNullable = def == typeof(Nullable<>);
                     }
-                    var gargs = type.GetGenericArguments()
+                    GenericParameters = type.GetGenericArguments()
                         .Select(x => GetType(x))
                         .ToList()
                         .AsReadOnly();

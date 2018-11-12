@@ -398,20 +398,19 @@ namespace Galador.Reflection.Serialization
 
         public string FullName { get; private set; }
         public string Assembly { get; private set; }
+        public IReadOnlyList<TypeData> GenericParameters { get; private set; }
 
         public TypeData BaseType { get; private set; }
         public TypeData Element { get; private set; }
         public TypeData Surrogate { get; set; } // not strictly for deserialization, but needed for C# Code generation, and should be present in stream
+        public int ArrayRank { get; private set; }
+        public int GenericParameterIndex { get; private set; }
 
         public RuntimeCollectionType CollectionType { get; private set; }
         public TypeData Collection1 { get; private set; }
         public TypeData Collection2 { get; private set; }
         internal FastMethod mReadCollection;
 
-        public int ArrayRank { get; private set; }
-        public int GenericParameterIndex { get; private set; }
-
-        public IReadOnlyList<TypeData> GenericParameters { get; private set; }
 
         public MemberList<Member> Members { get; } = new MemberList<Member>();
         public class Member : IMember

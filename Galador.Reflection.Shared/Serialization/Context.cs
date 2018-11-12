@@ -315,7 +315,21 @@ namespace Galador.Reflection.Serialization
             foreach (var item in tSurrogated)
             {
                 addInterface();
-                w.WriteLine($"ISurrogate<{ToTypeName(item)}>");
+                w.Write($"ISurrogate<{ToTypeName(item)}");
+                if ((item.GenericParameters?.Count ?? 0) > 0)
+                {
+                    w.Write("<");
+                    int N = item.GenericParameters.Count;
+                    for (int i = 0; i < N; i++)
+                    {
+                        if (i > 0)
+                            w.Write(",");
+                        w.Write("T");
+                        w.Write(i + 1);
+                    }
+                    w.Write(">");
+                }
+                w.Write(">");
             }
             if (type.IsISerializable)
             {
@@ -356,10 +370,15 @@ namespace Galador.Reflection.Serialization
             }
             foreach (var m in type.Members)
             {
+                var mID = ToID(m.Name);
+                if (mID != m.Name)
+                {
+                    w.WriteLine($"\t\t[SerializationMemberName(\"{m.Name}\")]");
+                }
                 w.Write("\t\tpublic ");
                 w.Write(ToTypeName(m.Type));
                 w.Write(' ');
-                w.Write(m.Name);
+                w.Write(mID);
                 w.Write(" { get; set; }");
                 w.WriteLine();
             }
@@ -460,8 +479,23 @@ namespace Galador.Reflection.Serialization
             }
             else
             {
-                sb.Append(type.ToString());
+                sb.Append(PrimitiveConverter.GetChsarpName(type.Kind));
             }
+        }
+        string ToID(string s)
+        {
+            var sb = new StringBuilder(s.Length + 1);
+            if (!char.IsLetter(s[0]))
+                sb.Append('_');
+            foreach (var c in s)
+            {
+                if (char.IsLetterOrDigit(c))
+                    sb.Append(c);
+                else
+                    sb.Append('_');
+            }
+            return sb.ToString();
+
         }
         string ToCSharp(string s)
         {

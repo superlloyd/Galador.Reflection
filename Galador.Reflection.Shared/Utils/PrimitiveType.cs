@@ -135,5 +135,33 @@ namespace Galador.Reflection.Utils
             if (type == typeof(decimal)) return PrimitiveType.Decimal;
             return PrimitiveType.Object;
         }
+
+        public static string GetChsarpName(PrimitiveType type)
+        {
+            switch (type)
+            {
+                default:
+                case PrimitiveType.None:
+                case PrimitiveType.Object:
+                    return "object";
+                case PrimitiveType.Type: return "System.Type";
+                case PrimitiveType.String: return "string";
+                case PrimitiveType.Bytes: return "byte[]";
+                case PrimitiveType.Guid: return "System.Guid";
+                case PrimitiveType.Bool: return "bool";
+                case PrimitiveType.Char: return "char";
+                case PrimitiveType.Byte: return "byte";
+                case PrimitiveType.SByte: return "sbyte";
+                case PrimitiveType.Int16: return "short";
+                case PrimitiveType.UInt16: return "ushort";
+                case PrimitiveType.Int32: return "int";
+                case PrimitiveType.UInt32: return "uint";
+                case PrimitiveType.Int64: return "long";
+                case PrimitiveType.UInt64: return "ulong";
+                case PrimitiveType.Single: return "float";
+                case PrimitiveType.Double: return "double";
+                case PrimitiveType.Decimal: return "decimal";
+            }
+        }
     }
 }

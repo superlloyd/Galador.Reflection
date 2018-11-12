@@ -35,14 +35,14 @@ namespace Galador.Reflection.Serialization.IO
             else debugInfo[stream.Count] = s;
         }
         Dictionary<int, string> debugInfo = new Dictionary<int, string>();
-        public IEnumerable<(string info, object token)> DebugTokenInfo
+        public IEnumerable<(object token, string info)> DebugTokenInfo
         {
             get
             {
                 for (int i = 0; i < stream.Count; i++)
                 {
                     debugInfo.TryGetValue(i, out var s);
-                    yield return (s, stream[i]);
+                    yield return (stream[i], s);
                 }
             }
         }

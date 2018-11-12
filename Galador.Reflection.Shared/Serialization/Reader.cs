@@ -51,6 +51,13 @@ namespace Galador.Reflection.Serialization
             return Read(AObject);
         }
 
+        public T Read<T>()
+        {
+            readRaw = false;
+            var args = new ReadArgs(RObject.TypeData(), RuntimeType.GetType(typeof(T)));
+            return (T)Read(args);
+        }
+
         object Read(ReadArgs args)
         {
             if (readRecurseDepth++ == 0)

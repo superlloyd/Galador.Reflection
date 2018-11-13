@@ -348,7 +348,7 @@ namespace Galador.Reflection.Serialization
             get
             {
                 if (BaseType != null)
-                    foreach (var m in BaseType.Members)
+                    foreach (var m in BaseType.RuntimeMembers)
                         yield return m;
                 foreach (var m in Members)
                     yield return m;

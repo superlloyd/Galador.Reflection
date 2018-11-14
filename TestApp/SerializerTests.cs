@@ -399,6 +399,10 @@ namespace TestApp
         {
             public Dictionary<int, T> Values = new Dictionary<int, T>();
         }
+        public class GFoo2<T>
+        {
+            public object Values;
+        }
 
         [Fact]
         public void CheckPartialGeneric()
@@ -411,6 +415,14 @@ namespace TestApp
             Assert.Equal(2, g2.Values.Count);
             Assert.Equal(g.Values[0], g2.Values[0]);
             Assert.Equal(g.Values[1], g2.Values[1]);
+
+            var store = new TokenPrimitiveWriter();
+            Serializer.Serialize(g, store);
+            var g3 = Serializer.Deserialize<GFoo2<string>>(new TokenPrimitiveReader(store.TokenStream));
+            var g3v = (Dictionary<int, string>)g3.Values;
+            Assert.Equal(2, g3v.Count);
+            Assert.Equal(g.Values[0], g3v[0]);
+            Assert.Equal(g.Values[1], g3v[1]);
         }
 
         public class BList : List<string>

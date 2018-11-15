@@ -18,11 +18,11 @@ namespace Galador.Reflection.Serialization
         /// Initializes the surrogate with the a value
         /// </summary>
         /// <param name="value">The value that must be saved.</param>
-        void Initialize(T value);
+        void Convert(T value);
         /// <summary>
         /// Return the value that was serialized.
         /// </summary>
-        T Instantiate();
+        T Revert();
     }
 
 #pragma warning disable 1591 // XML Comments
@@ -32,9 +32,9 @@ namespace Galador.Reflection.Serialization
     /// </summary>
     public class DBNullSurrogate : ISurrogate<DBNull>
     {
-        void ISurrogate<DBNull>.Initialize(DBNull value) { }
+        void ISurrogate<DBNull>.Convert(DBNull value) { }
 
-        public DBNull Instantiate() { return DBNull.Value; }
+        public DBNull Revert() { return DBNull.Value; }
     }
 
     /// <summary>
@@ -42,13 +42,13 @@ namespace Galador.Reflection.Serialization
     /// </summary>
     public class DateTimeSurrogate : ISurrogate<DateTime>
     {
-        void ISurrogate<DateTime>.Initialize(DateTime value)
+        void ISurrogate<DateTime>.Convert(DateTime value)
         {
             Ticks = value.Ticks;
             Kind = value.Kind;
         }
 
-        DateTime ISurrogate<DateTime>.Instantiate()
+        DateTime ISurrogate<DateTime>.Revert()
         {
             return new DateTime(Ticks, Kind);
         }
@@ -62,13 +62,13 @@ namespace Galador.Reflection.Serialization
     /// </summary>
     public class DateTimeOffsetSurrogate : ISurrogate<DateTimeOffset>
     {
-        void ISurrogate<DateTimeOffset>.Initialize(DateTimeOffset value)
+        void ISurrogate<DateTimeOffset>.Convert(DateTimeOffset value)
         {
             Ticks = value.Ticks;
             Offset = value.Offset.Ticks;
         }
 
-        DateTimeOffset ISurrogate<DateTimeOffset>.Instantiate()
+        DateTimeOffset ISurrogate<DateTimeOffset>.Revert()
         {
             return new DateTimeOffset(Ticks, new TimeSpan(Offset));
         }
@@ -82,12 +82,12 @@ namespace Galador.Reflection.Serialization
     /// </summary>
     public class TimeSpanSurrogate : ISurrogate<TimeSpan>
     {
-        void ISurrogate<TimeSpan>.Initialize(TimeSpan value)
+        void ISurrogate<TimeSpan>.Convert(TimeSpan value)
         {
             Ticks = value.Ticks;
         }
 
-        TimeSpan ISurrogate<TimeSpan>.Instantiate()
+        TimeSpan ISurrogate<TimeSpan>.Revert()
         {
             return new TimeSpan(Ticks);
         }
@@ -100,12 +100,12 @@ namespace Galador.Reflection.Serialization
     /// </summary>
     public class TupleSurrogate<T1> : ISurrogate<Tuple<T1>>
     {
-        void ISurrogate<Tuple<T1>>.Initialize(Tuple<T1> value)
+        void ISurrogate<Tuple<T1>>.Convert(Tuple<T1> value)
         {
             this.Item1 = value.Item1;
         }
 
-        Tuple<T1> ISurrogate<Tuple<T1>>.Instantiate()
+        Tuple<T1> ISurrogate<Tuple<T1>>.Revert()
         {
             return Tuple.Create(Item1);
         }
@@ -119,35 +119,35 @@ namespace Galador.Reflection.Serialization
     /// </summary>
     public class TupleSurrogate<T1, T2> : ISurrogate<Tuple<T1, T2>>, ISurrogate<ValueTuple<T1, T2>>, ISurrogate<KeyValuePair<T1, T2>>
     {
-        void ISurrogate<Tuple<T1, T2>>.Initialize(Tuple<T1, T2> value)
+        void ISurrogate<Tuple<T1, T2>>.Convert(Tuple<T1, T2> value)
         {
             this.Item1 = value.Item1;
             this.Item2 = value.Item2;
         }
 
-        Tuple<T1, T2> ISurrogate<Tuple<T1, T2>>.Instantiate()
+        Tuple<T1, T2> ISurrogate<Tuple<T1, T2>>.Revert()
         {
             return Tuple.Create(Item1, Item2);
         }
 
-        void ISurrogate<ValueTuple<T1, T2>>.Initialize(ValueTuple<T1, T2> value)
+        void ISurrogate<ValueTuple<T1, T2>>.Convert(ValueTuple<T1, T2> value)
         {
             this.Item1 = value.Item1;
             this.Item2 = value.Item2;
         }
 
-        ValueTuple<T1, T2> ISurrogate<ValueTuple<T1, T2>>.Instantiate()
+        ValueTuple<T1, T2> ISurrogate<ValueTuple<T1, T2>>.Revert()
         {
             return ValueTuple.Create(Item1, Item2);
         }
 
-        void ISurrogate<KeyValuePair<T1, T2>>.Initialize(KeyValuePair<T1, T2> value)
+        void ISurrogate<KeyValuePair<T1, T2>>.Convert(KeyValuePair<T1, T2> value)
         {
             this.Item1 = value.Key;
             this.Item2 = value.Value;
         }
 
-        KeyValuePair<T1, T2> ISurrogate<KeyValuePair<T1, T2>>.Instantiate()
+        KeyValuePair<T1, T2> ISurrogate<KeyValuePair<T1, T2>>.Revert()
         {
             return new KeyValuePair<T1, T2>(Item1, Item2);
         }
@@ -161,26 +161,26 @@ namespace Galador.Reflection.Serialization
     /// </summary>
     public class TupleSurrogate<T1, T2, T3> : ISurrogate<Tuple<T1, T2, T3>>, ISurrogate<ValueTuple<T1, T2, T3>>
     {
-        void ISurrogate<Tuple<T1, T2, T3>>.Initialize(Tuple<T1, T2, T3> value)
+        void ISurrogate<Tuple<T1, T2, T3>>.Convert(Tuple<T1, T2, T3> value)
         {
             this.Item1 = value.Item1;
             this.Item2 = value.Item2;
             this.Item3 = value.Item3;
         }
 
-        Tuple<T1, T2, T3> ISurrogate<Tuple<T1, T2, T3>>.Instantiate()
+        Tuple<T1, T2, T3> ISurrogate<Tuple<T1, T2, T3>>.Revert()
         {
             return Tuple.Create(Item1, Item2, Item3);
         }
 
-        void ISurrogate<ValueTuple<T1, T2, T3>>.Initialize(ValueTuple<T1, T2, T3> value)
+        void ISurrogate<ValueTuple<T1, T2, T3>>.Convert(ValueTuple<T1, T2, T3> value)
         {
             this.Item1 = value.Item1;
             this.Item2 = value.Item2;
             this.Item3 = value.Item3;
         }
 
-        ValueTuple<T1, T2, T3> ISurrogate<ValueTuple<T1, T2, T3>>.Instantiate()
+        ValueTuple<T1, T2, T3> ISurrogate<ValueTuple<T1, T2, T3>>.Revert()
         {
             return ValueTuple.Create(Item1, Item2, Item3);
         }
@@ -195,7 +195,7 @@ namespace Galador.Reflection.Serialization
     /// </summary>
     public class TupleSurrogate<T1, T2, T3, T4> : ISurrogate<Tuple<T1, T2, T3, T4>>, ISurrogate<ValueTuple<T1, T2, T3, T4>>
     {
-        void ISurrogate<Tuple<T1, T2, T3, T4>>.Initialize(Tuple<T1, T2, T3, T4> value)
+        void ISurrogate<Tuple<T1, T2, T3, T4>>.Convert(Tuple<T1, T2, T3, T4> value)
         {
             this.Item1 = value.Item1;
             this.Item2 = value.Item2;
@@ -203,12 +203,12 @@ namespace Galador.Reflection.Serialization
             this.Item4 = value.Item4;
         }
 
-        Tuple<T1, T2, T3, T4> ISurrogate<Tuple<T1, T2, T3, T4>>.Instantiate()
+        Tuple<T1, T2, T3, T4> ISurrogate<Tuple<T1, T2, T3, T4>>.Revert()
         {
             return Tuple.Create(Item1, Item2, Item3, Item4);
         }
 
-        void ISurrogate<ValueTuple<T1, T2, T3, T4>>.Initialize(ValueTuple<T1, T2, T3, T4> value)
+        void ISurrogate<ValueTuple<T1, T2, T3, T4>>.Convert(ValueTuple<T1, T2, T3, T4> value)
         {
             this.Item1 = value.Item1;
             this.Item2 = value.Item2;
@@ -216,7 +216,7 @@ namespace Galador.Reflection.Serialization
             this.Item4 = value.Item4;
         }
 
-        ValueTuple<T1, T2, T3, T4> ISurrogate<ValueTuple<T1, T2, T3, T4>>.Instantiate()
+        ValueTuple<T1, T2, T3, T4> ISurrogate<ValueTuple<T1, T2, T3, T4>>.Revert()
         {
             return ValueTuple.Create(Item1, Item2, Item3, Item4);
         }
@@ -232,7 +232,7 @@ namespace Galador.Reflection.Serialization
     /// </summary>
     public class TupleSurrogate<T1, T2, T3, T4, T5> : ISurrogate<Tuple<T1, T2, T3, T4, T5>>, ISurrogate<ValueTuple<T1, T2, T3, T4, T5>>
     {
-        void ISurrogate<Tuple<T1, T2, T3, T4, T5>>.Initialize(Tuple<T1, T2, T3, T4, T5> value)
+        void ISurrogate<Tuple<T1, T2, T3, T4, T5>>.Convert(Tuple<T1, T2, T3, T4, T5> value)
         {
             this.Item1 = value.Item1;
             this.Item2 = value.Item2;
@@ -241,12 +241,12 @@ namespace Galador.Reflection.Serialization
             this.Item5 = value.Item5;
         }
 
-        Tuple<T1, T2, T3, T4, T5> ISurrogate<Tuple<T1, T2, T3, T4, T5>>.Instantiate()
+        Tuple<T1, T2, T3, T4, T5> ISurrogate<Tuple<T1, T2, T3, T4, T5>>.Revert()
         {
             return Tuple.Create(Item1, Item2, Item3, Item4, Item5);
         }
 
-        void ISurrogate<ValueTuple<T1, T2, T3, T4, T5>>.Initialize(ValueTuple<T1, T2, T3, T4, T5> value)
+        void ISurrogate<ValueTuple<T1, T2, T3, T4, T5>>.Convert(ValueTuple<T1, T2, T3, T4, T5> value)
         {
             this.Item1 = value.Item1;
             this.Item2 = value.Item2;
@@ -255,7 +255,7 @@ namespace Galador.Reflection.Serialization
             this.Item5 = value.Item5;
         }
 
-        ValueTuple<T1, T2, T3, T4, T5> ISurrogate<ValueTuple<T1, T2, T3, T4, T5>>.Instantiate()
+        ValueTuple<T1, T2, T3, T4, T5> ISurrogate<ValueTuple<T1, T2, T3, T4, T5>>.Revert()
         {
             return ValueTuple.Create(Item1, Item2, Item3, Item4, Item5);
         }

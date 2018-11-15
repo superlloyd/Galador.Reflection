@@ -135,8 +135,8 @@ namespace Galador.Reflection.Serialization
                 SurrogateType = RuntimeType.GetType(surrogate);
 
                 var tInterface = typeof(ISurrogate<>).MakeGenericType(target);
-                Initialize = tInterface.TryGetMethods(nameof(ISurrogate<int>.Initialize), null, target).First();
-                Instantiate = tInterface.GetRuntimeMethod(nameof(ISurrogate<int>.Instantiate), Array.Empty<Type>());
+                Initialize = tInterface.TryGetMethods(nameof(ISurrogate<int>.Convert), null, target).First();
+                Instantiate = tInterface.GetRuntimeMethod(nameof(ISurrogate<int>.Revert), Array.Empty<Type>());
             }
 
             public RuntimeType SurrogateType { get; }

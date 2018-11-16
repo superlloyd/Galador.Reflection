@@ -507,6 +507,31 @@ namespace TestApp
             check(Serializer.Clone(big, new SerializationSettings { IgnoreISerializable = true }));
         }
 
+        [SerializationSettings(false)]
+        class Fubar
+        {
+            [Serialized]
+            byte[] data;
+
+            public Fubar(int i, params byte[] data)
+            {
+                if (i != 42)
+                    throw new ArgumentOutOfRangeException();
+                this.data = data;
+            }
+            public byte[] Data => data;
+        }
+
+        [Fact]
+        public void CheckNoConstructorSucess()
+        {
+            var f = new Fubar(42, 1, 2, 3, 4, 5, 6, 34, 2, 1, 21);
+            var f2 = Serializer.Clone(f);
+            Assert.Equal(f.Data.Length, f2.Data.Length);
+            for (int i = 0; i < f.Data.Length; i++)
+                Assert.Equal(f.Data[i], f2.Data[i]);
+        }
+
         [Fact]
         public void CheckSimpleTypes()
         {

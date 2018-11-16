@@ -511,7 +511,7 @@ namespace TestApp
         class Fubar
         {
             [Serialized]
-            byte[] data;
+            readonly byte[] data;
 
             public Fubar(int i, params byte[] data)
             {

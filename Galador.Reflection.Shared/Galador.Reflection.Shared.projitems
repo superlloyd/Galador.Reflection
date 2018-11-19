@@ -22,6 +22,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\RuntimeType.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\TypeData.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\Writer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utils\ReferenceEqualityComparer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\StreamExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\IO\TokenPrimitiveWriter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)PropertyPath.cs" />

@@ -510,8 +510,11 @@ namespace TestApp
         [SerializationSettings(false)]
         class Fubar
         {
+            [NotSerialized]
+            public Dictionary<string, int> Tada = new Dictionary<string, int>();
+
             [Serialized]
-            readonly byte[] data;
+            byte[] data;
 
             public Fubar(int i, params byte[] data)
             {
@@ -670,8 +673,8 @@ namespace TestApp
             }
             public void AssertClonningSuccess(T value, Action<T, T> assertTEqual = null)
             {
-                Assert.True(Val3 == Val4);
-                Assert.True(Val3 == Val6);
+                Assert.Equal(Val3, Val4);
+                Assert.Equal(Val3, Val6);
                 Assert.Equal(Val1, Val2);
                 Assert.Equal(Val1, Val3);
                 Assert.Equal(Val1, Val5);

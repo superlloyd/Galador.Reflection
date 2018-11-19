@@ -52,7 +52,7 @@ namespace Galador.Reflection.Serialization
 
         // context code
         readonly Dictionary<ulong, object> idToObjects = new Dictionary<ulong, object>();
-        readonly Dictionary<object, ulong> objectsToIds = new Dictionary<object, ulong>();
+        readonly Dictionary<object, ulong> objectsToIds = new Dictionary<object, ulong>(new ReferenceEqualityComparer());
         ulong seed = 50;
 
         protected void Register(ulong id, object o)

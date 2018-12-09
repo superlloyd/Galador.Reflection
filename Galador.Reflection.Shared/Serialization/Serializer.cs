@@ -36,10 +36,10 @@ namespace Galador.Reflection.Serialization
             return or.Read();
         }
 
-        public static T Deserialize<T>(IPrimitiveReader source)
+        public static T Deserialize<T>(IPrimitiveReader source, T suggested = default(T))
         {
             var or = new Reader(source);
-            return or.Read<T>();
+            return or.Read<T>(suggested);
         }
 
         /// <summary>
@@ -62,6 +62,12 @@ namespace Galador.Reflection.Serialization
         {
             using (var gzStream = new GZipStream(stream, CompressionMode.Decompress, true))
                 return Deserialize(new PrimitiveBinaryReader(gzStream));
+        }
+
+        public static T ZipDeserialize<T>(Stream stream, T suggested = default(T))
+        {
+            using (var gzStream = new GZipStream(stream, CompressionMode.Decompress, true))
+                return Deserialize<T>(new PrimitiveBinaryReader(gzStream), suggested);
         }
 
         /// <summary>

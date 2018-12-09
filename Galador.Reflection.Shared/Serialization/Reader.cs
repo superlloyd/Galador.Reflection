@@ -51,10 +51,10 @@ namespace Galador.Reflection.Serialization
             return Read(AObject);
         }
 
-        public T Read<T>()
+        public T Read<T>(T suggested = default(T))
         {
             readRaw = false;
-            var args = new ReadArgs(RObject.TypeData(), RuntimeType.GetType(typeof(T)));
+            var args = new ReadArgs(RObject.TypeData(), RuntimeType.GetType(typeof(T)), suggested);
             return (T)Read(args);
         }
 

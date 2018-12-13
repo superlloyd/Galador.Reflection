@@ -581,11 +581,8 @@ namespace Galador.Reflection.Serialization
                 }
                 if (rtValue != null)
                 {
-                    if (tSrc.mReadCollection == null)
-                    {
-                        tSrc.mReadCollection = FastMethod.GetMethod(GetType().TryGetMethods(nameof(ReadCollectionT), new[] { rtValue.Type }, typeof(object), typeof(TypeData), typeof(RuntimeType)).First());
-                    }
-                    tSrc.mReadCollection.Invoke(this, o, tSrc, overrides ? oType : null);
+                    var m = GetType().TryGetMethods(nameof(ReadCollectionT), new[] { rtValue.Type }, typeof(object), typeof(TypeData), typeof(RuntimeType)).First();
+                    m.Invoke(this, new object[] { o, tSrc, overrides ? oType : null });
                     return;
                 }
             }
@@ -638,11 +635,8 @@ namespace Galador.Reflection.Serialization
                 }
                 if (rtKey != null && rtValue != null)
                 {
-                    if (tSrc.mReadCollection == null)
-                    {
-                        tSrc.mReadCollection = FastMethod.GetMethod(GetType().TryGetMethods(nameof(ReadDictKV), new[] { rtKey.Type, rtValue.Type }, typeof(object), typeof(TypeData), typeof(RuntimeType)).First());
-                    }
-                    tSrc.mReadCollection.Invoke(this, o, tSrc, overrides ? oType : null);
+                    var m = GetType().TryGetMethods(nameof(ReadDictKV), new[] { rtKey.Type, rtValue.Type }, typeof(object), typeof(TypeData), typeof(RuntimeType)).First();
+                    m.Invoke(this, new object[] { o, tSrc, overrides ? oType : null });
                     return;
                 }
             }

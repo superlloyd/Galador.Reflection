@@ -407,7 +407,7 @@ namespace TestApp
 
             // REMARK: works **much** better (i.e. lower times) 
             // if the Serializer is compiled in RELEASE mode
-            Assert.True(mDT.Elapsed.Ticks < jDT.Elapsed.Ticks);
+            Assert.True(bDT.Elapsed.Ticks < jDT.Elapsed.Ticks); // ahem.. check our binary version vs JSON, should be good right?
         }
 
         public class Generic01<T1, T2>

@@ -80,8 +80,9 @@ namespace Galador.Reflection.Serialization
                         item.Deserialized();
                     foreach (var item in Objects.OfType<SRS.IDeserializationCallback>())
                     {
+                        // Known Issue: native .NET serialization doesn't support breaking generic type parameter change
                         try { item.OnDeserialization(this); }
-                        catch (Exception ex) { Log.Error(ex); } // don't worry about native serialization
+                        catch (Exception ex) { Log.Error(ex); } 
                     }
                 }
             }

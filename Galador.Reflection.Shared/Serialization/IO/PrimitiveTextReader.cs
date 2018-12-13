@@ -130,7 +130,7 @@ namespace Galador.Reflection.Serialization.IO
             if (!s.StartsWith("x"))
                 throw new IOException("Invalid Token");
             if (s.Length == 1)
-                return Empty<byte>.Array;
+                return Array.Empty<byte>();
             return Convert.FromBase64String(s.Substring(1));
         }
 

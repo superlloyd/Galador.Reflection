@@ -88,7 +88,7 @@ namespace TestAndroid
                 {
                     try
                     {
-                        item.TestMethod.Invoke(target, Empty<object>.Array);
+                        item.TestMethod.Invoke(target, Array.Empty<object>());
                         item.Success = true;
                     }
                     catch

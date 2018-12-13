@@ -86,7 +86,7 @@ namespace Galador.Reflection.Utils
         public object Invoke(object target, params object[] args)
         {
             if (args == null)
-                args = Empty<object>.Array;
+                args = Array.Empty<object>();
             if (args.Length < parameters.Length)
             {
                 for (int i = args.Length; i < parameters.Length; i++)

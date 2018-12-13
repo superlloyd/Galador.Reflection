@@ -55,7 +55,7 @@ namespace Galador.Reflection.Serialization.IO
             if (len == null)
                 return null;
             if (len.Value == 0)
-                return Empty<byte>.Array;
+                return Array.Empty<byte>();
             var buf = new byte[(int)len.Value];
             int pos = 0;
             while (pos < buf.Length)

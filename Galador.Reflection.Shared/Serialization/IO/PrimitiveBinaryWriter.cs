@@ -72,7 +72,7 @@ namespace Galador.Reflection.Serialization.IO
             if (value != null)
             {
                 if (value.Length == 0)
-                    buf = Empty<byte>.Array;
+                    buf = Array.Empty<byte>();
                 else
                     buf = Encoding.UTF8.GetBytes(value);
             }

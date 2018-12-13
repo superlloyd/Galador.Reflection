@@ -16,6 +16,54 @@ namespace TestApp
 {
     public class SerializationTests
     {
+        public class ReshapeISerial1
+        {
+            public int ID { get; set; }
+            public string Fu { get; set; }
+        }
+        public class ReshapeISerial2
+        {
+            public int ID { get; set; }
+            public string Bar { get; set; }
+        }
+
+        [Fact]
+        public void TestConfirmISerializableCanTTakeTheHeat()
+        {
+            var hash1 = new HashSet<ReshapeISerial1>()
+            {
+                new ReshapeISerial1 { ID = 1, Fu = "Snafu", },
+                new ReshapeISerial1 { ID = 2, Fu = "Futon", },
+            };
+
+            var ms1Out = new MemoryStream();
+            Serializer.Serialize(hash1, new PrimitiveBinaryWriter(ms1Out), new SerializationSettings { IgnoreISerializable = false });
+
+            ms1Out.Position = 0;
+            var result2 = Serializer.Deserialize<HashSet<ReshapeISerial2>>(new PrimitiveBinaryReader(ms1Out));
+            // confirms ISerializable can't do it :(
+            Assert.Empty(result2);
+        }
+
+        [Fact]
+        public void TestReshapeISerial2()
+        {
+            var hash1 = new HashSet<ReshapeISerial1>()
+            {
+                new ReshapeISerial1 { ID = 1, Fu = "Snafu", },
+                new ReshapeISerial1 { ID = 2, Fu = "Futon", },
+            };
+
+            var ms1Out = new MemoryStream();
+            Serializer.Serialize(hash1, new PrimitiveBinaryWriter(ms1Out), new SerializationSettings { IgnoreISerializable = true });
+
+            ms1Out.Position = 0;
+            var result2 = Serializer.Deserialize<HashSet<ReshapeISerial2>>(new PrimitiveBinaryReader(ms1Out));
+            Assert.Equal(2, result2.Count);
+            Assert.Contains(result2, x => x.ID == 1);
+            Assert.Contains(result2, x => x.ID == 2);
+        }
+
         public class CRA1
         {
             public int ID { get; set; }
@@ -500,10 +548,10 @@ namespace TestApp
                 Assert.Equal(big2, big3.Other);
             };
 
-            var text = Serializer.ToSerializedString(big);
+            var text = Serializer.ToSerializedString(big, new SerializationSettings { IgnoreISerializable = false });
             var text2 = Serializer.ToSerializedString(big, new SerializationSettings { IgnoreISerializable = true });
             Assert.NotEqual(text, text2);
-            check(Serializer.Clone(big));
+            check(Serializer.Clone(big, new SerializationSettings { IgnoreISerializable = false }));
             check(Serializer.Clone(big, new SerializationSettings { IgnoreISerializable = true }));
         }
 

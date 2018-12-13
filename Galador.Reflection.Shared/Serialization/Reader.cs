@@ -492,10 +492,10 @@ namespace Galador.Reflection.Serialization
                     ReadDict(o ?? od);
                     break;
                 case RuntimeCollectionType.ICollectionT:
-                    ReadCollection(o ?? od, args.TypeData);
+                    ReadCollection(o ?? od, type, args.TypeData);
                     break;
                 case RuntimeCollectionType.IDictionaryKV:
-                    ReadDict(o ?? od, args.TypeData);
+                    ReadDict(o ?? od, type, args.TypeData);
                     break;
             }
 
@@ -558,7 +558,7 @@ namespace Galador.Reflection.Serialization
                 }
             }
         }
-        void ReadCollection(object o, TypeData tSrc)
+        void ReadCollection(object o, RuntimeType oType, TypeData tSrc)
         {
             var isRO = input.ReadBool();
             if (isRO)
@@ -573,13 +573,19 @@ namespace Galador.Reflection.Serialization
             else
             {
                 var rtValue = tSrc.Collection1.RuntimeType();
+                bool overrides = false;
+                if (oType.CollectionType == RuntimeCollectionType.ICollectionT)
+                {
+                    overrides = true;
+                    rtValue = oType.Collection1;
+                }
                 if (rtValue != null)
                 {
                     if (tSrc.mReadCollection == null)
                     {
-                        tSrc.mReadCollection = FastMethod.GetMethod(GetType().TryGetMethods(nameof(ReadCollectionT), new[] { rtValue.Type }, typeof(object), typeof(TypeData)).First());
+                        tSrc.mReadCollection = FastMethod.GetMethod(GetType().TryGetMethods(nameof(ReadCollectionT), new[] { rtValue.Type }, typeof(object), typeof(TypeData), typeof(RuntimeType)).First());
                     }
-                    tSrc.mReadCollection.Invoke(this, o, tSrc);
+                    tSrc.mReadCollection.Invoke(this, o, tSrc, overrides ? oType : null);
                     return;
                 }
             }
@@ -595,11 +601,11 @@ namespace Galador.Reflection.Serialization
                 }
             }
         }
-        void ReadCollectionT<T>(object o, TypeData tSrc)
+        void ReadCollectionT<T>(object o, TypeData tSrc, RuntimeType hint)
         {
             var l = o as ICollection<T>;
             var count = (int)input.ReadVInt();
-            var eArgs = new ReadArgs(tSrc.Collection1);
+            var eArgs = new ReadArgs(tSrc.Collection1, hint?.Collection1);
             for (int i = 0; i < count; i++)
             {
                 var value = ReadImpl(eArgs);
@@ -607,7 +613,7 @@ namespace Galador.Reflection.Serialization
                     l.Add((T)AsType(value));
             }
         }
-        void ReadDict(object o, TypeData tSrc)
+        void ReadDict(object o, RuntimeType oType, TypeData tSrc)
         {
             var isRO = input.ReadBool();
             if (isRO)
@@ -623,13 +629,20 @@ namespace Galador.Reflection.Serialization
             {
                 var rtKey = tSrc.Collection1.RuntimeType();
                 var rtValue = tSrc.Collection2.RuntimeType();
+                bool overrides = false;
+                if (oType.CollectionType == RuntimeCollectionType.IDictionaryKV)
+                {
+                    overrides = true;
+                    rtKey = oType.Collection1;
+                    rtValue = oType.Collection2;
+                }
                 if (rtKey != null && rtValue != null)
                 {
                     if (tSrc.mReadCollection == null)
                     {
-                        tSrc.mReadCollection = FastMethod.GetMethod(GetType().TryGetMethods(nameof(ReadDictKV), new[] { rtKey.Type, rtValue.Type }, typeof(object), typeof(TypeData)).First());
+                        tSrc.mReadCollection = FastMethod.GetMethod(GetType().TryGetMethods(nameof(ReadDictKV), new[] { rtKey.Type, rtValue.Type }, typeof(object), typeof(TypeData), typeof(RuntimeType)).First());
                     }
-                    tSrc.mReadCollection.Invoke(this, o, tSrc);
+                    tSrc.mReadCollection.Invoke(this, o, tSrc, overrides ? oType : null);
                     return;
                 }
             }
@@ -647,12 +660,12 @@ namespace Galador.Reflection.Serialization
                 }
             }
         }
-        void ReadDictKV<K, V>(object o, TypeData tSrc)
+        void ReadDictKV<K, V>(object o, TypeData tSrc, RuntimeType hint)
         {
             var d = o as IDictionary<K, V>;
             var count = (int)input.ReadVInt();
-            var eKey = new ReadArgs(tSrc.Collection1);
-            var eValue = new ReadArgs(tSrc.Collection2);
+            var eKey = new ReadArgs(tSrc.Collection1, hint?.Collection1);
+            var eValue = new ReadArgs(tSrc.Collection2, hint?.Collection2);
             for (int i = 0; i < count; i++)
             {
                 var key = ReadImpl(eKey);

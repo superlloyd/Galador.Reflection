@@ -79,7 +79,10 @@ namespace Galador.Reflection.Serialization
                     foreach (var item in Objects.OfType<IDeserialized>())
                         item.Deserialized();
                     foreach (var item in Objects.OfType<SRS.IDeserializationCallback>())
-                        item.OnDeserialization(this);
+                    {
+                        try { item.OnDeserialization(this); }
+                        catch (Exception ex) { Log.Error(ex); } // don't worry about native serialization
+                    }
                 }
             }
         }

@@ -139,6 +139,18 @@ namespace Galador.Reflection.Serialization
 
         public IEnumerable<object> Objects { get { return idToObjects.Values; } }
 
+        public LostData GetLost(object target)
+        {
+            if (!lostProperty.TryGetValue(target, out var lost))
+            {
+                lost = new LostData(target);
+                lostProperty[target] = lost;
+            }
+            return lost;
+        }
+        readonly Dictionary<object, LostData> lostProperty = new Dictionary<object, LostData>(new ReferenceEqualityComparer());
+
+        public IEnumerable<LostData> GetLostProperties => lostProperty.Values;
 
         #region GenerateCSharpCode()
 

@@ -17,6 +17,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\IO\PrimitiveBinaryWriter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\IO\PrimitiveTextReader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\IO\PrimitiveTextWriter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Serialization\LostData.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\ObjectData.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\Reader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Serialization\RuntimeType.cs" />

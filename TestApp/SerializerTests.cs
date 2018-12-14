@@ -21,10 +21,16 @@ namespace TestApp
             public int ID { get; set; }
             public string Fu { get; set; }
         }
-        public class ReshapeISerial2
+        public class ReshapeISerial2 : IDeserialized
         {
             public int ID { get; set; }
             public string Bar { get; set; }
+
+            void IDeserialized.Deserialized(LostData lost)
+            {
+                var m = lost.Members.Cast<LostData.Member>().FirstOrDefault(x => x.Name == "Fu");
+                Bar = m?.Value as string;
+            }
         }
 
         [Fact]
@@ -60,8 +66,8 @@ namespace TestApp
             ms1Out.Position = 0;
             var result2 = Serializer.Deserialize<HashSet<ReshapeISerial2>>(new PrimitiveBinaryReader(ms1Out));
             Assert.Equal(2, result2.Count);
-            Assert.Contains(result2, x => x.ID == 1);
-            Assert.Contains(result2, x => x.ID == 2);
+            Assert.Equal("Snafu", result2.FirstOrDefault(x => x.ID == 1).Bar);
+            Assert.Equal("Futon", result2.FirstOrDefault(x => x.ID == 2).Bar);
         }
 
         public class CRA1

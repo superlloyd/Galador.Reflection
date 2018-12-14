@@ -14,6 +14,6 @@ namespace Galador.Reflection.Serialization
         /// <summary>
         /// On completion of the deserialization process this method will be called.
         /// </summary>
-        void Deserialized();
+        void Deserialized(LostData lost);
     }
 }

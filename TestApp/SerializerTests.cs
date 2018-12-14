@@ -28,7 +28,7 @@ namespace TestApp
 
             void IDeserialized.Deserialized(LostData lost)
             {
-                var m = lost.Members.Cast<LostData.Member>().FirstOrDefault(x => x.Name == "Fu");
+                var m = lost.Members.FirstOrDefault(x => x.Name == "Fu");
                 Bar = m?.Value as string;
             }
         }

@@ -20,7 +20,7 @@ namespace Galador.Reflection.Utils
     /// Specialized list of <typeparamref name="T"/> which must be <see cref="IMember"/>.
     /// Index them by both int index but also name.
     /// </summary>
-    public class MemberList<T> : IReadOnlyList<T>, IReadOnlyDictionary<string, T>, IEnumerable<T>
+    public class MemberList<T> : IReadOnlyList<T>, IEnumerable<T>
         where T : IMember
     {
         List<T> list = new List<T>();
@@ -65,10 +65,7 @@ namespace Galador.Reflection.Utils
         /// <summary>
         /// All the member's names.
         /// </summary>
-        public IEnumerable<string> MemberNames { get { return dict.Keys; } }
-        IEnumerable<string> IReadOnlyDictionary<string, T>.Keys { get { return dict.Keys; } }
-
-        IEnumerable<T> IReadOnlyDictionary<string, T>.Values { get { return list; } }
+        public IEnumerable<string> MemberNames => dict.Keys;
 
         /// <summary>
         /// Whether a member with such a name exists.
@@ -76,15 +73,12 @@ namespace Galador.Reflection.Utils
         /// <param name="name">The member's name.</param>
         /// <returns>Whether there is such a member.</returns>
         public bool Contains(string name) { return dict.ContainsKey(name); }
-        bool IReadOnlyDictionary<string, T>.ContainsKey(string name) { return dict.ContainsKey(name); }
 
         /// <summary>
         /// Enumerate the members.
         /// </summary>
         public IEnumerator<T> GetEnumerator() { return list.GetEnumerator(); }
-        bool IReadOnlyDictionary<string, T>.TryGetValue(string key, out T value) { return dict.TryGetValue(key, out value); }
 
-        IEnumerator<KeyValuePair<string, T>> IEnumerable<KeyValuePair<string, T>>.GetEnumerator() { return dict.GetEnumerator(); }
         IEnumerator IEnumerable.GetEnumerator() { return list.GetEnumerator(); }
     }
 }

@@ -82,7 +82,7 @@ namespace Galador.Reflection.Serialization
                     {
                         // Known Issue: native .NET serialization doesn't support breaking generic type parameter change
                         try { item.OnDeserialization(this); }
-                        catch (Exception ex) { Log.Error(ex); } 
+                        catch (InvalidCastException ex) { Log.Error(ex); } 
                     }
                 }
             }

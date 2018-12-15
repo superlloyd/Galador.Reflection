@@ -78,7 +78,7 @@ namespace Galador.Reflection.Serialization
                 {
                     foreach (var item in Objects.OfType<IDeserialized>())
                     {
-                        item.Deserialized(GetLost(item));
+                        item.Deserialized(GetLost(item, false) ?? new LostData(item));
                     }
                     foreach (var item in Objects.OfType<SRS.IDeserializationCallback>())
                     {

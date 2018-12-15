@@ -139,9 +139,9 @@ namespace Galador.Reflection.Serialization
 
         public IEnumerable<object> Objects { get { return idToObjects.Values; } }
 
-        public LostData GetLost(object target)
+        public LostData GetLost(object target, bool autoInsert = true)
         {
-            if (!lostProperty.TryGetValue(target, out var lost))
+            if (!lostProperty.TryGetValue(target, out var lost) && autoInsert)
             {
                 lost = new LostData(target);
                 lostProperty[target] = lost;

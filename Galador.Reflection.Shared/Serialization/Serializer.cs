@@ -84,7 +84,11 @@ namespace Galador.Reflection.Serialization
             var pw = new TokenPrimitiveWriter(ms);
             var ow = new Writer(pw)
             {
-                Settings = settings,
+                Settings = new SerializationSettings
+                {
+                    IgnoreISerializable = settings?.IgnoreISerializable ?? true,
+                    IgnoreTypeConverter = settings?.IgnoreTypeConverter ?? true,
+                },
             };
 
             ow.Write(instance);
@@ -94,6 +98,29 @@ namespace Galador.Reflection.Serialization
 
             var result = or.Read();
             return (T)result;
+        }
+
+        public static T2 Clone<T1, T2>(T1 instance, SerializationSettings settings = null)
+        {
+            var ms = new List<object>(256);
+
+            var pw = new TokenPrimitiveWriter(ms);
+            var ow = new Writer(pw)
+            {
+                Settings = new SerializationSettings
+                {
+                    IgnoreISerializable = settings?.IgnoreISerializable ?? true,
+                    IgnoreTypeConverter = settings?.IgnoreTypeConverter ?? true,
+                },
+            };
+
+            ow.Write(instance);
+
+            var pr = new TokenPrimitiveReader(ms);
+            var or = new Reader(pr);
+
+            var result = or.Read<T2>();
+            return (T2)result;
         }
 
         /// <summary>

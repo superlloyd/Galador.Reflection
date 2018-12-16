@@ -468,11 +468,19 @@ namespace Galador.Reflection.Serialization
                 var value = ReadImpl(margs);
                 if (o != null)
                 {
-                    if (p == null 
-                        || !p.RuntimeMember.CanSet
-                        || !p.RuntimeMember.SetValue(o, AsType(value)))
+                    try
                     {
-                        Log.Warning($"Can't restore Member {args.TypeData.FullName}.{m.Name}");
+                        if (p == null
+                            || !p.RuntimeMember.CanSet
+                            || !p.RuntimeMember.SetValue(o, AsType(value)))
+                        {
+                            Log.Warning($"Can't restore Member {args.TypeData.FullName}.{m.Name}");
+                            GetLost(o).Members.Add(new LostData.Member(m, AsType(value)));
+                        }
+                    }
+                    catch (SystemException se)
+                    {
+                        Log.Error(se);
                         GetLost(o).Members.Add(new LostData.Member(m, AsType(value)));
                     }
                 }
@@ -510,6 +518,17 @@ namespace Galador.Reflection.Serialization
             if (isRO)
                 return;
 
+            List<object> lost = null;
+            List<object> GetLost()
+            {
+                if (lost == null)
+                {
+                    lost = new List<object>();
+                    base.GetLost(o).IList = lost.AsReadOnly();
+                }
+                return lost;
+            }
+
             var list = o as IList;
             List<object> ilist = null;
             if (o is ObjectData od)
@@ -519,22 +538,28 @@ namespace Galador.Reflection.Serialization
             }
             else if (list == null)
             {
-                var lost = GetLost(o);
-                ilist = new List<object>();
-                lost.IList = ilist.AsReadOnly();
+                ilist = GetLost();
             }
 
             var count = (int)input.ReadVInt();
             for (int i = 0; i < count; i++)
             {
                 var value = ReadImpl(AObject);
-                if (list != null)
+                try
                 {
-                    list.Add(AsType(value));
+                    if (list != null)
+                    {
+                        list.Add(AsType(value));
+                    }
+                    else
+                    {
+                        ilist.Add(AsType(value));
+                    }
                 }
-                else
+                catch (SystemException ex)
                 {
-                    ilist.Add(value);
+                    Log.Error(ex);
+                    GetLost().Add(value);
                 }
             }
         }
@@ -543,6 +568,17 @@ namespace Galador.Reflection.Serialization
             var isRO = input.ReadBool();
             if (isRO)
                 return;
+
+            List<(object, object)> lost = null;
+            List<(object, object)> GetLost()
+            {
+                if (lost == null)
+                {
+                    lost = new List<(object, object)>();
+                    base.GetLost(o).IDictionary = lost.AsReadOnly();
+                }
+                return lost;
+            }
 
             var list = o as IDictionary;
             List<(object, object)> ilist = null;
@@ -553,9 +589,7 @@ namespace Galador.Reflection.Serialization
             }
             else if (list == null)
             {
-                var lost = GetLost(o);
-                ilist = new List<(object, object)>();
-                lost.IDictionary = ilist.AsReadOnly();
+                ilist = GetLost();
             }
 
             var count = (int)input.ReadVInt();
@@ -563,13 +597,21 @@ namespace Galador.Reflection.Serialization
             {
                 var key = ReadImpl(AObject);
                 var value = ReadImpl(AObject);
-                if (list != null)
+                try
                 {
-                    list.Add(AsType(key), AsType(value));
+                    if (list != null)
+                    {
+                        list.Add(AsType(key), AsType(value));
+                    }
+                    else
+                    {
+                        ilist.Add((key, value));
+                    }
                 }
-                else if (ilist != null)
+                catch (SystemException se)
                 {
-                    ilist.Add((key, value));
+                    Log.Error(se);
+                    GetLost().Add((key, value));
                 }
             }
         }
@@ -578,6 +620,17 @@ namespace Galador.Reflection.Serialization
             var isRO = input.ReadBool();
             if (isRO)
                 return;
+
+            List<object> lost = null;
+            List<object> GetLost()
+            {
+                if (lost == null)
+                {
+                    lost = new List<object>();
+                    base.GetLost(o).IList = lost.AsReadOnly();
+                }
+                return lost;
+            }
 
             List<object> ilist = null;
             if (o is ObjectData od)
@@ -603,9 +656,7 @@ namespace Galador.Reflection.Serialization
             }
             if (ilist == null)
             {
-                var lost = GetLost(o);
-                ilist = new List<object>();
-                lost.IList = ilist.AsReadOnly();
+                ilist = GetLost();
             }
 
             var count = (int)input.ReadVInt();
@@ -613,22 +664,28 @@ namespace Galador.Reflection.Serialization
             for (int i = 0; i < count; i++)
             {
                 var value = ReadImpl(eArgs);
-                ilist.Add(value);
+                try { ilist.Add(value); }
+                catch (SystemException se)
+                {
+                    Log.Error(se);
+                    GetLost().Add(value);
+                }
             }
         }
         void ReadCollectionT<T>(object o, TypeData tSrc, RuntimeType hint)
         {
-            var l = o as ICollection<T>;
-            List<object> ilist = null;
-            List<object> GetIList()
+            List<object> lost = null;
+            List<object> GetLost()
             {
-                if (ilist == null)
+                if (lost == null)
                 {
-                    ilist = new List<object>();
-                    GetLost(o).IList = ilist.AsReadOnly();
+                    lost = new List<object>();
+                    base.GetLost(o).IList = lost.AsReadOnly();
                 }
-                return ilist;
+                return lost;
             }
+
+            var l = o as ICollection<T>;
             var count = (int)input.ReadVInt();
             var eArgs = new ReadArgs(tSrc.Collection1, hint?.Collection1);
             for (int i = 0; i < count; i++)
@@ -636,11 +693,16 @@ namespace Galador.Reflection.Serialization
                 var value = AsType(ReadImpl(eArgs));
                 if (l != null && !l.IsReadOnly && value is T tValue)
                 {
-                    l.Add(tValue);
+                    try { l.Add(tValue); }
+                    catch (SystemException e)
+                    {
+                        Log.Error(e);
+                        GetLost().Add(value);
+                    }
                 }
                 else
                 {
-                    GetIList().Add(value);
+                    GetLost().Add(value);
                 }
             }
         }
@@ -649,6 +711,17 @@ namespace Galador.Reflection.Serialization
             var isRO = input.ReadBool();
             if (isRO)
                 return;
+
+            List<(object, object)> lost = null;
+            List<(object, object)> GetLost()
+            {
+                if (lost == null)
+                {
+                    lost = new List<(object, object)>();
+                    base.GetLost(o).IDictionary = lost.AsReadOnly();
+                }
+                return lost;
+            }
 
             List<(object, object)> ilist = null;
             if (o is ObjectData od)
@@ -676,8 +749,7 @@ namespace Galador.Reflection.Serialization
             }
             if (ilist == null)
             {
-                ilist = new List<(object, object)>();
-                GetLost(o).IDictionary = ilist.AsReadOnly();
+                ilist = GetLost();
             }
 
             var count = (int)input.ReadVInt();
@@ -687,22 +759,28 @@ namespace Galador.Reflection.Serialization
             {
                 var key = ReadImpl(eKey);
                 var value = ReadImpl(eValue);
-                ilist.Add((key, value));
+                try { ilist.Add((key, value)); }
+                catch (SystemException se)
+                {
+                    Log.Error(se);
+                    GetLost().Add((key, value));
+                }
             }
         }
         void ReadDictKV<K, V>(object o, TypeData tSrc, RuntimeType hint)
         {
-            var d = o as IDictionary<K, V>;
-            List<(object, object)> ilist = null;
-            List<(object, object)> GetIList()
+            List<(object, object)> lost = null;
+            List<(object, object)> GetLost()
             {
-                if (ilist == null)
+                if (lost == null)
                 {
-                    ilist = new List<(object, object)>();
-                    GetLost(o).IDictionary = ilist.AsReadOnly();
+                    lost = new List<(object, object)>();
+                    base.GetLost(o).IDictionary = lost.AsReadOnly();
                 }
-                return ilist;
+                return lost;
             }
+
+            var d = o as IDictionary<K, V>;
             var count = (int)input.ReadVInt();
             var eKey = new ReadArgs(tSrc.Collection1, hint?.Collection1);
             var eValue = new ReadArgs(tSrc.Collection2, hint?.Collection2);
@@ -713,10 +791,16 @@ namespace Galador.Reflection.Serialization
                 if (d != null && !d.IsReadOnly && key is K tKey && value is V tValue)
                 {
                     d.Add(tKey, tValue);
+                    try { d.Add(tKey, tValue); }
+                    catch (SystemException e)
+                    {
+                        Log.Error(e);
+                        GetLost().Add((key, value));
+                    }
                 }
                 else
                 {
-                    GetIList().Add((key, value));
+                    GetLost().Add((key, value));
                 }
             }
         }

@@ -45,10 +45,14 @@ namespace Galador.Reflection.Serialization
             return Read(AObject);
         }
 
-        public object ReadRaw()
+        public object Read(Type type, object suggested = null)
         {
-            readRaw = true;
-            return Read(AObject);
+            if (suggested != null && !type.IsInstanceOfType(suggested))
+                suggested = null;
+
+            readRaw = false;
+            var args = new ReadArgs(RObject.TypeData(), RuntimeType.GetType(type), suggested);
+            return Read(args);
         }
 
         public T Read<T>(T suggested = default(T))
@@ -56,6 +60,12 @@ namespace Galador.Reflection.Serialization
             readRaw = false;
             var args = new ReadArgs(RObject.TypeData(), RuntimeType.GetType(typeof(T)), suggested);
             return (T)Read(args);
+        }
+
+        public object ReadRaw()
+        {
+            readRaw = true;
+            return Read(AObject);
         }
 
         object Read(ReadArgs args)
@@ -355,15 +365,28 @@ namespace Galador.Reflection.Serialization
             var o = ReadImpl(AObject);
 
             var surrogate = args.InstanceType(readRaw)?.Surrogate;
-            if (surrogate != null)
+            if (readRaw || surrogate == null)
+            {
+                return new ObjectData(args.TypeData)
+                {
+                    SurrogateObject = o,
+                };
+            }
+
+            if (args.TypeHint != null && !args.TypeHint.Type.IsBaseClass(surrogate.Target.Type))
+            {
+                var hint = args.TypeHint?.Surrogate.SurrogateType ?? args.TypeHint;
+            }
+
+            //if (args.Instance != null)
+            //{
+            //    surrogate.Hydrate(o, args.Instance);
+            //    return args.Instance;
+            //}
+            //else
             {
                 return surrogate.Revert(o);
             }
-
-            return new ObjectData(args.TypeData)
-            {
-                SurrogateObject = o,
-            };
         }
 
         object ReadArray(ReadArgs args, ulong oid)

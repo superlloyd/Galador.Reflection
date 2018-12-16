@@ -132,15 +132,18 @@ namespace Galador.Reflection.Serialization
         {
             internal SurrogateInfo(Type target, Type surrogate)
             {
+                Target = RuntimeType.GetType(target);
                 SurrogateType = RuntimeType.GetType(surrogate);
 
                 var tInterface = typeof(ISurrogate<>).MakeGenericType(target);
                 Initialize = tInterface.TryGetMethods(nameof(ISurrogate<int>.Convert), null, target).First();
                 Instantiate = tInterface.GetRuntimeMethod(nameof(ISurrogate<int>.Revert), Array.Empty<Type>());
+                Populate = tInterface.TryGetMethods(nameof(ISurrogate<int>.Populate), null, target).First();
             }
 
+            public RuntimeType Target { get; }
             public RuntimeType SurrogateType { get; }
-            readonly MethodInfo Initialize, Instantiate;
+            readonly MethodInfo Initialize, Instantiate, Populate;
 
             public object Convert(object source)
             {
@@ -150,6 +153,8 @@ namespace Galador.Reflection.Serialization
             }
 
             public object Revert(object surrogate) => Instantiate.Invoke(surrogate, Array.Empty<object>());
+
+            public void Hydrate(object surrogate, object instance) => Populate.Invoke(surrogate, new object[] { instance });
         }
 
         static SurrogateInfo GetSurrogate(RuntimeType type) => GetSurrogate(type?.Type);

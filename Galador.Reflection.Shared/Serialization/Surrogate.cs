@@ -1,5 +1,6 @@
 ﻿using Galador.Reflection.Utils;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 
@@ -19,10 +20,16 @@ namespace Galador.Reflection.Serialization
         /// </summary>
         /// <param name="value">The value that must be saved.</param>
         void Convert(T value);
+
         /// <summary>
         /// Return the value that was serialized.
         /// </summary>
         T Revert();
+
+        /// <summary>
+        /// apply deserialized data into an existing value
+        /// </summary>
+        void Populate(T value);
     }
 
 #pragma warning disable 1591 // XML Comments
@@ -35,6 +42,8 @@ namespace Galador.Reflection.Serialization
         void ISurrogate<DBNull>.Convert(DBNull value) { }
 
         public DBNull Revert() { return DBNull.Value; }
+
+        void ISurrogate<DBNull>.Populate(DBNull value) => throw new NotSupportedException();
     }
 
     /// <summary>
@@ -55,6 +64,8 @@ namespace Galador.Reflection.Serialization
 
         public long Ticks { get; set; }
         public DateTimeKind Kind { get; set; }
+
+        void ISurrogate<DateTime>.Populate(DateTime value) => throw new NotSupportedException();
     }
 
     /// <summary>
@@ -75,6 +86,8 @@ namespace Galador.Reflection.Serialization
 
         public long Ticks { get; set; }
         public long Offset { get; set; }
+
+        void ISurrogate<DateTimeOffset>.Populate(DateTimeOffset value) => throw new NotSupportedException();
     }
 
     /// <summary>
@@ -93,12 +106,14 @@ namespace Galador.Reflection.Serialization
         }
 
         public long Ticks { get; set; }
+
+        void ISurrogate<TimeSpan>.Populate(TimeSpan value) => throw new NotSupportedException();
     }
 
     /// <summary>
     /// Built in surrogate for <see cref="Tuple{T1}"/>.
     /// </summary>
-    public class TupleSurrogate<T1> : ISurrogate<Tuple<T1>>
+    public class TupleSurrogate<T1> : ISurrogate<Tuple<T1>>, ISurrogate<ValueTuple<T1>>
     {
         void ISurrogate<Tuple<T1>>.Convert(Tuple<T1> value)
         {
@@ -109,6 +124,20 @@ namespace Galador.Reflection.Serialization
         {
             return Tuple.Create(Item1);
         }
+
+        void ISurrogate<Tuple<T1>>.Populate(Tuple<T1> value) => throw new NotSupportedException();
+
+        void ISurrogate<ValueTuple<T1>>.Convert(ValueTuple<T1> value)
+        {
+            this.Item1 = value.Item1;
+        }
+
+        ValueTuple<T1> ISurrogate<ValueTuple<T1>>.Revert()
+        {
+            return ValueTuple.Create(Item1);
+        }
+
+        void ISurrogate<ValueTuple<T1>>.Populate(ValueTuple<T1> value) => throw new NotSupportedException();
 
         public T1 Item1 { get; set; }
     }
@@ -130,6 +159,8 @@ namespace Galador.Reflection.Serialization
             return Tuple.Create(Item1, Item2);
         }
 
+        void ISurrogate<Tuple<T1, T2>>.Populate(Tuple<T1, T2> value) => throw new NotSupportedException();
+
         void ISurrogate<ValueTuple<T1, T2>>.Convert(ValueTuple<T1, T2> value)
         {
             this.Item1 = value.Item1;
@@ -141,6 +172,8 @@ namespace Galador.Reflection.Serialization
             return ValueTuple.Create(Item1, Item2);
         }
 
+        void ISurrogate<ValueTuple<T1, T2>>.Populate(ValueTuple<T1, T2> value) => throw new NotSupportedException();
+
         void ISurrogate<KeyValuePair<T1, T2>>.Convert(KeyValuePair<T1, T2> value)
         {
             this.Item1 = value.Key;
@@ -151,6 +184,8 @@ namespace Galador.Reflection.Serialization
         {
             return new KeyValuePair<T1, T2>(Item1, Item2);
         }
+
+        void ISurrogate<KeyValuePair<T1, T2>>.Populate(KeyValuePair<T1, T2> value) => throw new NotSupportedException();
 
         public T1 Item1 { get; set; }
         public T2 Item2 { get; set; }
@@ -173,6 +208,8 @@ namespace Galador.Reflection.Serialization
             return Tuple.Create(Item1, Item2, Item3);
         }
 
+        void ISurrogate<Tuple<T1, T2, T3>>.Populate(Tuple<T1, T2, T3> value) => throw new NotSupportedException();
+
         void ISurrogate<ValueTuple<T1, T2, T3>>.Convert(ValueTuple<T1, T2, T3> value)
         {
             this.Item1 = value.Item1;
@@ -184,6 +221,8 @@ namespace Galador.Reflection.Serialization
         {
             return ValueTuple.Create(Item1, Item2, Item3);
         }
+
+        void ISurrogate<ValueTuple<T1, T2, T3>>.Populate(ValueTuple<T1, T2, T3> value) => throw new NotSupportedException();
 
         public T1 Item1 { get; set; }
         public T2 Item2 { get; set; }
@@ -208,6 +247,8 @@ namespace Galador.Reflection.Serialization
             return Tuple.Create(Item1, Item2, Item3, Item4);
         }
 
+        void ISurrogate<Tuple<T1, T2, T3, T4>>.Populate(Tuple<T1, T2, T3, T4> value) => throw new NotSupportedException();
+
         void ISurrogate<ValueTuple<T1, T2, T3, T4>>.Convert(ValueTuple<T1, T2, T3, T4> value)
         {
             this.Item1 = value.Item1;
@@ -220,6 +261,8 @@ namespace Galador.Reflection.Serialization
         {
             return ValueTuple.Create(Item1, Item2, Item3, Item4);
         }
+
+        void ISurrogate<ValueTuple<T1, T2, T3, T4>>.Populate(ValueTuple<T1, T2, T3, T4> value) => throw new NotSupportedException();
 
         public T1 Item1 { get; set; }
         public T2 Item2 { get; set; }
@@ -246,6 +289,8 @@ namespace Galador.Reflection.Serialization
             return Tuple.Create(Item1, Item2, Item3, Item4, Item5);
         }
 
+        void ISurrogate<Tuple<T1, T2, T3, T4, T5>>.Populate(Tuple<T1, T2, T3, T4, T5> value) => throw new NotSupportedException();
+
         void ISurrogate<ValueTuple<T1, T2, T3, T4, T5>>.Convert(ValueTuple<T1, T2, T3, T4, T5> value)
         {
             this.Item1 = value.Item1;
@@ -260,12 +305,99 @@ namespace Galador.Reflection.Serialization
             return ValueTuple.Create(Item1, Item2, Item3, Item4, Item5);
         }
 
+        void ISurrogate<ValueTuple<T1, T2, T3, T4, T5>>.Populate(ValueTuple<T1, T2, T3, T4, T5> value) => throw new NotSupportedException();
+
         public T1 Item1 { get; set; }
         public T2 Item2 { get; set; }
         public T3 Item3 { get; set; }
         public T4 Item4 { get; set; }
         public T5 Item5 { get; set; }
     }
+
+    /// <summary>
+    /// class that avoid saving extraneous properties like Comparer while enabling unload existing instances
+    /// </summary>
+    //public class HasSetSurrogate<T> : ISurrogate<HashSet<T>>, ICollection<T>
+    //{
+    //    ICollection<T> collection = new List<T>();
+
+    //    // ISurrogate
+
+    //    public void Convert(HashSet<T> value) => collection = value;
+
+    //    public HashSet<T> Revert() => new HashSet<T>(collection);
+
+    //    public void Populate(HashSet<T> value)
+    //    {
+    //        foreach (var item in collection)
+    //            value.Add(item);
+    //    }
+
+    //    // ICollection
+
+    //    public int Count => collection.Count;
+
+    //    public bool IsReadOnly => collection.IsReadOnly;
+
+    //    public void Add(T item) => collection.Add(item);
+
+    //    public void Clear() => collection.Clear();
+
+    //    public bool Contains(T item) => collection.Contains(item);
+
+    //    public void CopyTo(T[] array, int arrayIndex) => collection.CopyTo(array, arrayIndex);
+
+    //    public IEnumerator<T> GetEnumerator() => collection.GetEnumerator();
+
+    //    public bool Remove(T item) => collection.Remove(item);
+
+    //    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+    //}
+
+    /// <summary>
+    /// class that avoid saving extraneous properties like Comparer while enabling unload existing instances
+    /// </summary>
+    //public class DictionarySurrogate<TKey, TValue> : ISurrogate<Dictionary<TKey, TValue>>, ICollection<KeyValuePair<TKey, TValue>>
+    //{
+    //    ICollection<KeyValuePair<TKey, TValue>> collection = new List<KeyValuePair<TKey, TValue>>();
+
+    //    // ISurrogate
+
+    //    public void Convert(Dictionary<TKey, TValue> value) => collection = value;
+
+    //    public Dictionary<TKey, TValue> Revert()
+    //    {
+    //        var result = new Dictionary<TKey, TValue>();
+    //        Populate(result);
+    //        return result;
+    //    }
+
+    //    public void Populate(Dictionary<TKey, TValue> value)
+    //    {
+    //        foreach (var item in collection)
+    //            value[item.Key] = item.Value;
+    //    }
+
+    //    // ICollection
+
+    //    public int Count => collection.Count;
+
+    //    public bool IsReadOnly => collection.IsReadOnly;
+
+    //    public void Add(KeyValuePair<TKey, TValue> item) => collection.Add(item);
+
+    //    public void Clear() => collection.Clear();
+
+    //    public bool Contains(KeyValuePair<TKey, TValue> item) => collection.Contains(item);
+
+    //    public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex) => collection.CopyTo(array, arrayIndex);
+
+    //    public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator() => collection.GetEnumerator();
+
+    //    public bool Remove(KeyValuePair<TKey, TValue> item) => collection.Remove(item);
+
+    //    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+    //}
 
 #pragma warning restore 1591 // XML Comments
 }

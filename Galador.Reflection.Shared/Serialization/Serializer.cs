@@ -100,7 +100,9 @@ namespace Galador.Reflection.Serialization
             return (T)result;
         }
 
-        public static T2 Clone<T1, T2>(T1 instance, SerializationSettings settings = null)
+        public static T Transmogrify<T>(object instance, SerializationSettings settings = null) => (T)Transmogrify(instance, typeof(T), settings);
+
+        public static object Transmogrify(object instance, Type toType, SerializationSettings settings = null)
         {
             var ms = new List<object>(256);
 
@@ -119,8 +121,8 @@ namespace Galador.Reflection.Serialization
             var pr = new TokenPrimitiveReader(ms);
             var or = new Reader(pr);
 
-            var result = or.Read<T2>();
-            return (T2)result;
+            var result = or.Read(toType);
+            return result;
         }
 
         /// <summary>

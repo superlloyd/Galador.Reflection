@@ -30,6 +30,8 @@ namespace Galador.Reflection.Serialization
         /// apply deserialized data into an existing value
         /// </summary>
         void Populate(T value);
+
+        bool CanPopulate { get; }
     }
 
 #pragma warning disable 1591 // XML Comments
@@ -44,6 +46,8 @@ namespace Galador.Reflection.Serialization
         public DBNull Revert() { return DBNull.Value; }
 
         void ISurrogate<DBNull>.Populate(DBNull value) => throw new NotSupportedException();
+
+        bool ISurrogate<DBNull>.CanPopulate => false;
     }
 
     /// <summary>
@@ -62,10 +66,12 @@ namespace Galador.Reflection.Serialization
             return new DateTime(Ticks, Kind);
         }
 
+        void ISurrogate<DateTime>.Populate(DateTime value) => throw new NotSupportedException();
+
+        bool ISurrogate<DateTime>.CanPopulate => false;
+
         public long Ticks { get; set; }
         public DateTimeKind Kind { get; set; }
-
-        void ISurrogate<DateTime>.Populate(DateTime value) => throw new NotSupportedException();
     }
 
     /// <summary>
@@ -84,10 +90,12 @@ namespace Galador.Reflection.Serialization
             return new DateTimeOffset(Ticks, new TimeSpan(Offset));
         }
 
+        void ISurrogate<DateTimeOffset>.Populate(DateTimeOffset value) => throw new NotSupportedException();
+
+        bool ISurrogate<DateTimeOffset>.CanPopulate => false;
+
         public long Ticks { get; set; }
         public long Offset { get; set; }
-
-        void ISurrogate<DateTimeOffset>.Populate(DateTimeOffset value) => throw new NotSupportedException();
     }
 
     /// <summary>
@@ -105,9 +113,11 @@ namespace Galador.Reflection.Serialization
             return new TimeSpan(Ticks);
         }
 
-        public long Ticks { get; set; }
-
         void ISurrogate<TimeSpan>.Populate(TimeSpan value) => throw new NotSupportedException();
+
+        bool ISurrogate<TimeSpan>.CanPopulate => false;
+
+        public long Ticks { get; set; }
     }
 
     /// <summary>
@@ -127,6 +137,8 @@ namespace Galador.Reflection.Serialization
 
         void ISurrogate<Tuple<T1>>.Populate(Tuple<T1> value) => throw new NotSupportedException();
 
+        bool ISurrogate<Tuple<T1>>.CanPopulate => false;
+
         void ISurrogate<ValueTuple<T1>>.Convert(ValueTuple<T1> value)
         {
             this.Item1 = value.Item1;
@@ -138,6 +150,8 @@ namespace Galador.Reflection.Serialization
         }
 
         void ISurrogate<ValueTuple<T1>>.Populate(ValueTuple<T1> value) => throw new NotSupportedException();
+
+        bool ISurrogate<ValueTuple<T1>>.CanPopulate => false;
 
         public T1 Item1 { get; set; }
     }
@@ -161,6 +175,8 @@ namespace Galador.Reflection.Serialization
 
         void ISurrogate<Tuple<T1, T2>>.Populate(Tuple<T1, T2> value) => throw new NotSupportedException();
 
+        bool ISurrogate<Tuple<T1, T2>>.CanPopulate => false;
+
         void ISurrogate<ValueTuple<T1, T2>>.Convert(ValueTuple<T1, T2> value)
         {
             this.Item1 = value.Item1;
@@ -174,6 +190,8 @@ namespace Galador.Reflection.Serialization
 
         void ISurrogate<ValueTuple<T1, T2>>.Populate(ValueTuple<T1, T2> value) => throw new NotSupportedException();
 
+        bool ISurrogate<ValueTuple<T1, T2>>.CanPopulate => false;
+
         void ISurrogate<KeyValuePair<T1, T2>>.Convert(KeyValuePair<T1, T2> value)
         {
             this.Item1 = value.Key;
@@ -186,6 +204,8 @@ namespace Galador.Reflection.Serialization
         }
 
         void ISurrogate<KeyValuePair<T1, T2>>.Populate(KeyValuePair<T1, T2> value) => throw new NotSupportedException();
+
+        bool ISurrogate<KeyValuePair<T1, T2>>.CanPopulate => false;
 
         public T1 Item1 { get; set; }
         public T2 Item2 { get; set; }
@@ -210,6 +230,8 @@ namespace Galador.Reflection.Serialization
 
         void ISurrogate<Tuple<T1, T2, T3>>.Populate(Tuple<T1, T2, T3> value) => throw new NotSupportedException();
 
+        bool ISurrogate<Tuple<T1, T2, T3>>.CanPopulate => false;
+
         void ISurrogate<ValueTuple<T1, T2, T3>>.Convert(ValueTuple<T1, T2, T3> value)
         {
             this.Item1 = value.Item1;
@@ -223,6 +245,8 @@ namespace Galador.Reflection.Serialization
         }
 
         void ISurrogate<ValueTuple<T1, T2, T3>>.Populate(ValueTuple<T1, T2, T3> value) => throw new NotSupportedException();
+
+        bool ISurrogate<ValueTuple<T1, T2, T3>>.CanPopulate => false;
 
         public T1 Item1 { get; set; }
         public T2 Item2 { get; set; }
@@ -249,6 +273,8 @@ namespace Galador.Reflection.Serialization
 
         void ISurrogate<Tuple<T1, T2, T3, T4>>.Populate(Tuple<T1, T2, T3, T4> value) => throw new NotSupportedException();
 
+        bool ISurrogate<Tuple<T1, T2, T3, T4>>.CanPopulate => false;
+
         void ISurrogate<ValueTuple<T1, T2, T3, T4>>.Convert(ValueTuple<T1, T2, T3, T4> value)
         {
             this.Item1 = value.Item1;
@@ -263,6 +289,8 @@ namespace Galador.Reflection.Serialization
         }
 
         void ISurrogate<ValueTuple<T1, T2, T3, T4>>.Populate(ValueTuple<T1, T2, T3, T4> value) => throw new NotSupportedException();
+
+        bool ISurrogate<ValueTuple<T1, T2, T3, T4>>.CanPopulate => false;
 
         public T1 Item1 { get; set; }
         public T2 Item2 { get; set; }
@@ -291,6 +319,8 @@ namespace Galador.Reflection.Serialization
 
         void ISurrogate<Tuple<T1, T2, T3, T4, T5>>.Populate(Tuple<T1, T2, T3, T4, T5> value) => throw new NotSupportedException();
 
+        bool ISurrogate<Tuple<T1, T2, T3, T4, T5>>.CanPopulate => false;
+
         void ISurrogate<ValueTuple<T1, T2, T3, T4, T5>>.Convert(ValueTuple<T1, T2, T3, T4, T5> value)
         {
             this.Item1 = value.Item1;
@@ -307,6 +337,8 @@ namespace Galador.Reflection.Serialization
 
         void ISurrogate<ValueTuple<T1, T2, T3, T4, T5>>.Populate(ValueTuple<T1, T2, T3, T4, T5> value) => throw new NotSupportedException();
 
+        bool ISurrogate<ValueTuple<T1, T2, T3, T4, T5>>.CanPopulate => false;
+
         public T1 Item1 { get; set; }
         public T2 Item2 { get; set; }
         public T3 Item3 { get; set; }
@@ -317,87 +349,91 @@ namespace Galador.Reflection.Serialization
     /// <summary>
     /// class that avoid saving extraneous properties like Comparer while enabling unload existing instances
     /// </summary>
-    //public class HasSetSurrogate<T> : ISurrogate<HashSet<T>>, ICollection<T>
-    //{
-    //    ICollection<T> collection = new List<T>();
+    public class HasSetSurrogate<T> : ISurrogate<HashSet<T>>, ICollection<T>
+    {
+        ICollection<T> collection = new List<T>();
 
-    //    // ISurrogate
+        // ISurrogate
 
-    //    public void Convert(HashSet<T> value) => collection = value;
+        public void Convert(HashSet<T> value) => collection = value;
 
-    //    public HashSet<T> Revert() => new HashSet<T>(collection);
+        public HashSet<T> Revert() => new HashSet<T>(collection);
 
-    //    public void Populate(HashSet<T> value)
-    //    {
-    //        foreach (var item in collection)
-    //            value.Add(item);
-    //    }
+        public void Populate(HashSet<T> value)
+        {
+            foreach (var item in collection)
+                value.Add(item);
+        }
 
-    //    // ICollection
+        public bool CanPopulate => true;
 
-    //    public int Count => collection.Count;
+        // ICollection
 
-    //    public bool IsReadOnly => collection.IsReadOnly;
+        public int Count => collection.Count;
 
-    //    public void Add(T item) => collection.Add(item);
+        public bool IsReadOnly => collection.IsReadOnly;
 
-    //    public void Clear() => collection.Clear();
+        public void Add(T item) => collection.Add(item);
 
-    //    public bool Contains(T item) => collection.Contains(item);
+        public void Clear() => collection.Clear();
 
-    //    public void CopyTo(T[] array, int arrayIndex) => collection.CopyTo(array, arrayIndex);
+        public bool Contains(T item) => collection.Contains(item);
 
-    //    public IEnumerator<T> GetEnumerator() => collection.GetEnumerator();
+        public void CopyTo(T[] array, int arrayIndex) => collection.CopyTo(array, arrayIndex);
 
-    //    public bool Remove(T item) => collection.Remove(item);
+        public IEnumerator<T> GetEnumerator() => collection.GetEnumerator();
 
-    //    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-    //}
+        public bool Remove(T item) => collection.Remove(item);
+
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+    }
 
     /// <summary>
     /// class that avoid saving extraneous properties like Comparer while enabling unload existing instances
     /// </summary>
-    //public class DictionarySurrogate<TKey, TValue> : ISurrogate<Dictionary<TKey, TValue>>, ICollection<KeyValuePair<TKey, TValue>>
-    //{
-    //    ICollection<KeyValuePair<TKey, TValue>> collection = new List<KeyValuePair<TKey, TValue>>();
+    public class DictionarySurrogate<TKey, TValue> : ISurrogate<Dictionary<TKey, TValue>>, ICollection<KeyValuePair<TKey, TValue>>
+    {
+        ICollection<KeyValuePair<TKey, TValue>> collection = new List<KeyValuePair<TKey, TValue>>();
 
-    //    // ISurrogate
+        // ISurrogate
 
-    //    public void Convert(Dictionary<TKey, TValue> value) => collection = value;
+        public void Convert(Dictionary<TKey, TValue> value) => collection = value;
 
-    //    public Dictionary<TKey, TValue> Revert()
-    //    {
-    //        var result = new Dictionary<TKey, TValue>();
-    //        Populate(result);
-    //        return result;
-    //    }
+        public Dictionary<TKey, TValue> Revert()
+        {
+            var result = new Dictionary<TKey, TValue>();
+            Populate(result);
+            return result;
+        }
 
-    //    public void Populate(Dictionary<TKey, TValue> value)
-    //    {
-    //        foreach (var item in collection)
-    //            value[item.Key] = item.Value;
-    //    }
+        public void Populate(Dictionary<TKey, TValue> value)
+        {
+            foreach (var item in collection)
+                value[item.Key] = item.Value;
+        }
 
-    //    // ICollection
+        public bool CanPopulate => true;
 
-    //    public int Count => collection.Count;
+        // ICollection
 
-    //    public bool IsReadOnly => collection.IsReadOnly;
+        public int Count => collection.Count;
 
-    //    public void Add(KeyValuePair<TKey, TValue> item) => collection.Add(item);
+        public bool IsReadOnly => collection.IsReadOnly;
 
-    //    public void Clear() => collection.Clear();
+        public void Add(KeyValuePair<TKey, TValue> item) => collection.Add(item);
 
-    //    public bool Contains(KeyValuePair<TKey, TValue> item) => collection.Contains(item);
+        public void Clear() => collection.Clear();
 
-    //    public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex) => collection.CopyTo(array, arrayIndex);
+        public bool Contains(KeyValuePair<TKey, TValue> item) => collection.Contains(item);
 
-    //    public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator() => collection.GetEnumerator();
+        public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex) => collection.CopyTo(array, arrayIndex);
 
-    //    public bool Remove(KeyValuePair<TKey, TValue> item) => collection.Remove(item);
+        public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator() => collection.GetEnumerator();
 
-    //    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-    //}
+        public bool Remove(KeyValuePair<TKey, TValue> item) => collection.Remove(item);
+
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+    }
 
 #pragma warning restore 1591 // XML Comments
 }

@@ -13,11 +13,13 @@ namespace Galador.Reflection.Serialization
         /// <summary>
         /// Whether to ignore <c>ISerializable</c> interface when serializing. Necessary for compatibility with .NET Core.
         /// </summary>
+        /// <remarks>Set to ignore by default since this will make the serialization process less version change tolerant</remarks>
         public bool IgnoreISerializable { get; set; } = true;
 
         /// <summary>
         /// Whether to ignore <see cref="TypeConverter"/> when serializing. If they prove problematic.
         /// </summary>
+        /// <remarks>Set to ignore by defaulot since this will make the serialization process less version change tolerant</remarks>
         public bool IgnoreTypeConverter { get; set; } = true;
 
 

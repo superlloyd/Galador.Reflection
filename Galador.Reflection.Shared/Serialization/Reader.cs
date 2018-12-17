@@ -362,10 +362,15 @@ namespace Galador.Reflection.Serialization
 
         object ReadSurrogate(ReadArgs args)
         {
-            var o = ReadImpl(AObject);
+            var hint = args.InstanceType(readRaw);
+            var surrogateHint = hint?.Surrogate?.SurrogateType ?? hint;
 
-            var surrogate = args.InstanceType(readRaw)?.Surrogate;
-            if (readRaw || surrogate == null)
+            object o = readRaw
+                ? ReadImpl(AObject)
+                : ReadImpl(new ReadArgs(RObject.TypeData(), surrogateHint))
+                ;
+
+            if (readRaw || hint == null || (hint.Surrogate != null && hint.Surrogate.SurrogateType == null))
             {
                 return new ObjectData(args.TypeData)
                 {
@@ -373,20 +378,23 @@ namespace Galador.Reflection.Serialization
                 };
             }
 
-            if (args.TypeHint != null && !args.TypeHint.Type.IsBaseClass(surrogate.Target.Type))
+            if (hint.Surrogate != null)
             {
-                var hint = args.TypeHint?.Surrogate.SurrogateType ?? args.TypeHint;
+                if (args.Instance == null || hint.Surrogate.Target.Type.IsInstanceOfType(args.Instance))
+                {
+                    if (args.Instance != null && hint.Surrogate.CanHydrate(o))
+                    {
+                        hint.Surrogate.Hydrate(o, args.Instance);
+                        return args.Instance;
+                    }
+                    else
+                    {
+                        return hint.Surrogate.Revert(o);
+                    }
+                }
             }
 
-            //if (args.Instance != null)
-            //{
-            //    surrogate.Hydrate(o, args.Instance);
-            //    return args.Instance;
-            //}
-            //else
-            {
-                return surrogate.Revert(o);
-            }
+            return o;
         }
 
         object ReadArray(ReadArgs args, ulong oid)

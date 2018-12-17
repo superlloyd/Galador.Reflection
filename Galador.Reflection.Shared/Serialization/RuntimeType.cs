@@ -139,11 +139,13 @@ namespace Galador.Reflection.Serialization
                 Initialize = tInterface.TryGetMethods(nameof(ISurrogate<int>.Convert), null, target).First();
                 Instantiate = tInterface.GetRuntimeMethod(nameof(ISurrogate<int>.Revert), Array.Empty<Type>());
                 Populate = tInterface.TryGetMethods(nameof(ISurrogate<int>.Populate), null, target).First();
+                CanPopulate = tInterface.GetProperty(nameof(ISurrogate<int>.CanPopulate));
             }
 
             public RuntimeType Target { get; }
             public RuntimeType SurrogateType { get; }
             readonly MethodInfo Initialize, Instantiate, Populate;
+            readonly PropertyInfo CanPopulate;
 
             public object Convert(object source)
             {
@@ -155,6 +157,7 @@ namespace Galador.Reflection.Serialization
             public object Revert(object surrogate) => Instantiate.Invoke(surrogate, Array.Empty<object>());
 
             public void Hydrate(object surrogate, object instance) => Populate.Invoke(surrogate, new object[] { instance });
+            public bool CanHydrate(object surrogate) => (bool) CanPopulate.GetValue(surrogate);
         }
 
         static SurrogateInfo GetSurrogate(RuntimeType type) => GetSurrogate(type?.Type);

@@ -63,8 +63,9 @@ namespace Galador.Reflection.Serialization
                     return;
                 throw new InvalidOperationException($"{id} already registered");
             }
-            if (Contains(o))
-                throw new InvalidOperationException($"{o} already registered");
+            // can happen if if there was a surrogate previously but is now gone
+            //if (Contains(o))
+            //    throw new InvalidOperationException($"{o} already registered");
 
             idToObjects[id] = o;
             objectsToIds[o] = id;

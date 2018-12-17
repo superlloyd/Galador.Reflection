@@ -34,24 +34,6 @@ namespace TestApp
         }
 
         [Fact]
-        public void TestConfirmISerializableCanTTakeTheHeat()
-        {
-            var hash1 = new HashSet<ReshapeISerial1>()
-            {
-                new ReshapeISerial1 { ID = 1, Fu = "Snafu", },
-                new ReshapeISerial1 { ID = 2, Fu = "Futon", },
-            };
-
-            var ms1Out = new MemoryStream();
-            Serializer.Serialize(hash1, new PrimitiveBinaryWriter(ms1Out), new SerializationSettings { IgnoreISerializable = false });
-
-            ms1Out.Position = 0;
-            var result2 = Serializer.Deserialize<HashSet<ReshapeISerial2>>(new PrimitiveBinaryReader(ms1Out));
-            // confirms ISerializable can't do it :(
-            Assert.Empty(result2);
-        }
-
-        [Fact]
         public void TestReshapeISerial2()
         {
             var hash1 = new HashSet<ReshapeISerial1>()

@@ -173,6 +173,7 @@ namespace TestApp
         }
 
 #if __NET__
+        [Fact]
         public void WinFormTest()
         {
             var d = new TestForm();

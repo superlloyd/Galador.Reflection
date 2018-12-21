@@ -299,40 +299,44 @@ namespace Galador.Reflection.Serialization
             if (target == null && !resolved)
             {
                 resolved = true;
-                switch (Kind)
+                try
                 {
-                    case PrimitiveType.None:
-                        break;
-                    case PrimitiveType.Object:
-                        if (IsArray)
-                        {
-                            var type = Element.RuntimeType()?.Type;
-                            if (ArrayRank == 1)
-                                type = type?.MakeArrayType();
-                            else if (ArrayRank > 1)
-                                type = type?.MakeArrayType(ArrayRank);
-                            target = Serialization.RuntimeType.GetType(type);
-                        }
-                        else if (IsGenericParameter)
-                        {
-                            // nothing
-                        }
-                        else if (IsGeneric && !IsGenericTypeDefinition)
-                        {
-                            var type = Element.RuntimeType()?.Type;
-                            var parameters = GenericParameters.Select(x => x.RuntimeType()?.Type).ToArray();
-                            if (type != null && parameters.All(x => x != null))
-                                target = Serialization.RuntimeType.GetType(type.MakeGenericType(parameters));
-                        }
-                        else
-                        {
-                            target = Serialization.RuntimeType.GetType(FullName, Assembly);
-                        }
-                        break;
-                    default:
-                        target = Serialization.RuntimeType.GetType(PrimitiveConverter.GetType(Kind));
-                        break;
+                    switch (Kind)
+                    {
+                        case PrimitiveType.None:
+                            break;
+                        case PrimitiveType.Object:
+                            if (IsArray)
+                            {
+                                var type = Element.RuntimeType()?.Type;
+                                if (ArrayRank == 1)
+                                    type = type?.MakeArrayType();
+                                else if (ArrayRank > 1)
+                                    type = type?.MakeArrayType(ArrayRank);
+                                target = Serialization.RuntimeType.GetType(type);
+                            }
+                            else if (IsGenericParameter)
+                            {
+                                // nothing
+                            }
+                            else if (IsGeneric && !IsGenericTypeDefinition)
+                            {
+                                var type = Element.RuntimeType()?.Type;
+                                var parameters = GenericParameters.Select(x => x.RuntimeType()?.Type).ToArray();
+                                if (type != null && parameters.All(x => x != null))
+                                    target = Serialization.RuntimeType.GetType(type.MakeGenericType(parameters));
+                            }
+                            else
+                            {
+                                target = Serialization.RuntimeType.GetType(FullName, Assembly);
+                            }
+                            break;
+                        default:
+                            target = Serialization.RuntimeType.GetType(PrimitiveConverter.GetType(Kind));
+                            break;
+                    }
                 }
+                catch (SystemException se) { Log.Error(se); }
             }
             return target;
         }

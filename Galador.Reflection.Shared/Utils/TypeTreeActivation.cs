@@ -58,6 +58,15 @@ namespace Galador.Reflection.Utils
             return t.DeclaredConstructors.Any();
         }
 
+        public static void Register(ITypeTree<ServiceDefinition> services, Type facade, object instance)
+        {
+            if (services == null)
+                throw new ArgumentNullException(nameof(services));
+            if (facade == null)
+                throw new ArgumentNullException(nameof(facade));
+            services[facade] = new ServiceDefinition(instance ?? facade);
+        }
+
         static IEnumerable<Type> MergeKeys(ITypeTree first, ITypeTree second, Type type)
             => (first?.GetKeys(type) ?? Array.Empty<Type>())
             .Concat(second?.GetKeys(type) ?? Array.Empty<Type>())

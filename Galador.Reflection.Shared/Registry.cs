@@ -185,9 +185,7 @@ namespace Galador.Reflection
         public void Register(Type facade, object instance)
         {
             EnsureAlive();
-            if (facade == null)
-                throw new ArgumentNullException(nameof(facade));
-            services[facade] = new ServiceDefinition(instance ?? facade);
+            TypeTreeActivation.Register(services, facade, instance);
         }
 
         /// <summary>

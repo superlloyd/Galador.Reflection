@@ -353,7 +353,7 @@ namespace Galador.Reflection.Serialization
             {
                 case RuntimeCollectionType.IList:
                     addInterface();
-                    w.Write("Ilist");
+                    w.Write("IList");
                     break;
                 case RuntimeCollectionType.ICollectionT:
                     addInterface();

@@ -26,7 +26,7 @@ namespace TestApp
             public int ID { get; set; }
             public string Bar { get; set; }
 
-            void IDeserialized.Deserialized(LostData lost)
+            void IDeserialized.OnDeserialized(LostData lost)
             {
                 var m = lost.Members.FirstOrDefault(x => x.Name == "Fu");
                 Bar = m?.Value as string;

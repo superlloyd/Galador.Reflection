@@ -198,7 +198,11 @@ namespace Galador.Reflection
         /// </summary>
         /// <param name="type">The type to check for registration.</param>
         /// <returns>Whether the given type is registered</returns>
-        public bool IsRegistered(Type type) { return services.ContainsKey(type); }
+        public bool IsRegistered(Type type)
+        {
+            EnsureAlive();
+            return services.ContainsKey(type);
+        }
 
         #endregion
 
@@ -209,7 +213,11 @@ namespace Galador.Reflection
         /// </summary>
         public Registry CreateScope() => new Registry(services, null);
 
-        public void ResolveProperties(object instance) => TypeTreeActivation.ResolveProperties(services, scope, instance);
+        public void ResolveProperties(object instance)
+        {
+            EnsureAlive();
+            TypeTreeActivation.ResolveProperties(services, scope, instance);
+        }
 
         public T Resolve<T>() => (T)Resolve(typeof(T));
 
@@ -248,7 +256,11 @@ namespace Galador.Reflection
         /// </summary>
         /// <param name="type">The type to check for creation.</param>
         /// <returns>Whether the type can be instantiated</returns>
-        public bool CanCreate(Type type) => TypeTreeActivation.CanCreate(services, scope, type);
+        public bool CanCreate(Type type)
+        {
+            EnsureAlive();
+            return TypeTreeActivation.CanCreate(services, scope, type);
+        }
 
         /// <summary>
         /// Create that object from scratch regardless of registration
@@ -266,6 +278,10 @@ namespace Galador.Reflection
         /// <param name="type">The type to instantiate.</param>
         /// <returns>A newly created instance</returns>
         /// <exception cref="InvalidOperationException">If no appropriate constructor can be found.</exception>
-        public object Create(Type type, params object[] parameters) => TypeTreeActivation.Create(services, scope, type, parameters);
+        public object Create(Type type, params object[] parameters)
+        {
+            EnsureAlive();
+            return TypeTreeActivation.Create(services, scope, type, parameters);
+        }
     }
 }

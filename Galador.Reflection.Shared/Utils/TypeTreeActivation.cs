@@ -241,6 +241,9 @@ namespace Galador.Reflection.Utils
 
         public static object Create(ITypeTree<ServiceDefinition> services, ITypeTree<object> scope, Type type, params object[] parameters)
         {
+            if (type.IsValueType)
+                return Activator.CreateInstance(type);
+
             if (scope == null)
                 scope = new TypeTree<object>();
 
@@ -267,7 +270,7 @@ namespace Galador.Reflection.Utils
                     var p = qc.ppp[i];
                     var impa = p.GetCustomAttribute<ImportAttribute>();
                     var t = (impa != null ? impa.ImportedType : null) ?? p.ParameterType;
-                    var descendant = MergeKeys(services, scope, t).Where(x => x != t).FirstOrDefault();
+                    var descendant = MergeKeys(services, scope, t).Where(x => x != type).FirstOrDefault();
                     var val = parameters != null ? parameters.FirstOrDefault(x => t.IsInstanceOfType(x)) : null;
                     if (val != null)
                     {
@@ -336,7 +339,7 @@ namespace Galador.Reflection.Utils
                         var t = (impa != null ? impa.ImportedType : null) ?? p.ParameterType;
                         if (t.IsValueType)
                             continue;
-                        var descendant = MergeKeys(services, scope, t).Where(x => x != t).FirstOrDefault();
+                        var descendant = MergeKeys(services, scope, t).Where(x => x != type).FirstOrDefault();
                         if (descendant != null)
                             continue;
                         if (p.HasDefaultValue)

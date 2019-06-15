@@ -28,7 +28,7 @@ namespace Galador.Reflection.Utils
     public class TypeTree<T> : ITypeTree<T>
         where T : class
     {
-        [DebuggerDisplay("({Key}, {Data}, Descendants: {Descendants.Count})")]
+        [DebuggerDisplay("({Key.FullName}, {Data}, Descendants: {Descendants.Count})")]
         class TypeNode
         {
             public TypeNode(Type key)

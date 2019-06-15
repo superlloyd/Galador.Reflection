@@ -8,7 +8,7 @@ using System.Text;
 
 namespace Galador.Reflection.Utils
 {
-    [DebuggerDisplay("({Type}, {Instance})")]
+    [DebuggerDisplay("({Type?.FullName}, {Instance})")]
     public class ServiceDefinition
     {
         public ServiceDefinition(Type type)

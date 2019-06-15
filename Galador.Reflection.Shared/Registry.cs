@@ -12,7 +12,7 @@ namespace Galador.Reflection
     #region ExportAttribute, ImportAttribute
 
     /// <summary>
-    /// Out of the box hleper attribute for automatic registration with <see cref="Registry.RegisterAssemblies(Assembly[])"/>
+    /// Out of the box helper attribute for automatic registration with <see cref="Registry.RegisterAssemblies(Assembly[])"/>
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
     public class ExportAttribute : Attribute
@@ -20,8 +20,8 @@ namespace Galador.Reflection
     }
 
     /// <summary>
-    /// When one resolve a type (i.e. create an instance with <see cref="Registry.Resolve(Type, LifetimeScope)"/> or <see cref="Registry.Create(Type, LifetimeScope)"/>), 
-    /// all their property marked with this attribute will also be set using <see cref="Registry.Resolve(Type, LifetimeScope)"/>
+    /// When one resolve a type (i.e. create an instance with <see cref="Registry.Resolve(Type)"/> or <see cref="Registry.Create(Type)"/>), 
+    /// all their property marked with this attribute will also be set using <see cref="Registry.Resolve(Type)"/>
     /// Can also be used on constructor parameter to specify a particular type to use.
     /// </summary>
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Parameter, AllowMultiple = false)]
@@ -46,10 +46,9 @@ namespace Galador.Reflection
     /// <summary>
     /// This class is a IServiceProvider, IOC, and MEF clone all together.
     /// Services are registered explicitly with <see cref="Register(Type, object)"/> or automatically with <see cref="RegisterAssemblies(Assembly[])"/> assembly.
-    /// Then service can then be acquired / resolved, using constructor and property injection lazily with <see cref="Resolve(Type, LifetimeScope)"/>.
+    /// Then service can then be acquired / resolved, using constructor and property injection lazily with <see cref="Resolve(Type)"/>.
     /// Each registered service will be created only once. Imported object (with <see cref="ImportAttribute"/>) which are not registered as service will
-    /// be created, only once per request, with <see cref="Create(Type, LifetimeScope)"/> and stored in the <see cref="LifetimeScope"/> for reuse during the request
-    /// as it traverses the object dependencies tree.
+    /// be created as well and cached for reuse.
     /// </summary>
     public sealed class Registry : IDisposable, IServiceProvider
     {
@@ -212,7 +211,7 @@ namespace Galador.Reflection
 
         public void ResolveProperties(object instance) => TypeTreeActivation.ResolveProperties(services, scope, instance);
 
-        public T Resolve<T>() { return (T)ResolveAll(typeof(T)).First(); }
+        public T Resolve<T>() => (T)Resolve(typeof(T));
 
         public object Resolve(Type type)
         {
@@ -220,7 +219,7 @@ namespace Galador.Reflection
             return TypeTreeActivation.ResolveSingle(services, scope, type);
         }
 
-        public IEnumerable<T> ResolveAll<T>() { return ResolveAll(typeof(T)).OfType<T>(); }
+        public IEnumerable<T> ResolveAll<T>() => ResolveAll(typeof(T)).OfType<T>(); 
 
         public IEnumerable<object> ResolveAll(Type type)
         {
@@ -240,7 +239,6 @@ namespace Galador.Reflection
         /// with arguments that can also be created (or resolved).
         /// </summary>
         /// <typeparam name="T">The type to check for creation.</typeparam>
-        /// <param name="cache">A cache of instance to possibly use for construction.</param>
         /// <returns>Whether the type can be instantiated</returns>
         public bool CanCreate<T>() { return CanCreate(typeof(T)); }
 
@@ -249,7 +247,6 @@ namespace Galador.Reflection
         /// with arguments that can also be created (or resolved).
         /// </summary>
         /// <param name="type">The type to check for creation.</param>
-        /// <param name="cache">A cache of instance to possibly use for construction.</param>
         /// <returns>Whether the type can be instantiated</returns>
         public bool CanCreate(Type type) => TypeTreeActivation.CanCreate(services, scope, type);
 
@@ -257,7 +254,6 @@ namespace Galador.Reflection
         /// Create that object from scratch regardless of registration
         /// </summary>
         /// <typeparam name="T">The type to instantiate.</typeparam>
-        /// <param name="cache">A cache of possible instance to use as property, constructor argument and the like, on top of registered services.</param>
         /// <returns>A newly created instance</returns>
         /// <exception cref="InvalidOperationException">If no appropriate constructor can be found.</exception>
         public T Create<T>() { return (T)Create(typeof(T)); }
@@ -268,7 +264,6 @@ namespace Galador.Reflection
         /// Create that object from scratch regardless of registration
         /// </summary>
         /// <param name="type">The type to instantiate.</param>
-        /// <param name="cache">A cache of possible instance to use as property, constructor argument and the like, on top of registered services.</param>
         /// <returns>A newly created instance</returns>
         /// <exception cref="InvalidOperationException">If no appropriate constructor can be found.</exception>
         public object Create(Type type, params object[] parameters) => TypeTreeActivation.Create(services, scope, type, parameters);

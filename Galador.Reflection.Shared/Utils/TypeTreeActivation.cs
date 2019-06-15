@@ -252,22 +252,16 @@ namespace Galador.Reflection.Utils
                 createSession = new List<ICreateCallback>();
             try
             {
-                var ctors = FindConstructors(services, scope, type);
-                var qc = (
-                    from c in ctors
-                    where c.IsPublic // private constructor are private for a reason, don't use them!
-                    let ppp = c.GetParameters()
-                    orderby c.IsPublic descending, ppp.Length descending
-                    select new { c, ppp }
-                )
-                .FirstOrDefault();
-                if (qc == null)
+                // private constructor are private for a reason, don't use them!
+                var ctor = FindConstructors(services, scope, type).FirstOrDefault(x => x.IsPublic);
+                if (ctor == null)
                     throw new InvalidOperationException($"Type {type.FullName} can't be Activated, no constructor can be called at this time.");
 
-                var cargs = new object[qc.ppp.Length];
-                for (int i = 0; i < qc.ppp.Length; i++)
+                var pis = ctor.GetParameters();
+                var cargs = new object[pis.Length];
+                for (int i = 0; i < pis.Length; i++)
                 {
-                    var p = qc.ppp[i];
+                    var p = pis[i];
                     var impa = p.GetCustomAttribute<ImportAttribute>();
                     var t = (impa != null ? impa.ImportedType : null) ?? p.ParameterType;
                     var descendant = MergeKeys(services, scope, t).Where(x => x != type).FirstOrDefault();
@@ -286,10 +280,10 @@ namespace Galador.Reflection.Utils
                     }
                     else if (CanBeInstantiated(t))
                     {
-                        cargs[i] = Create(services, scope, t);
+                        cargs[i] = Resolve(services, scope, t).FirstOrDefault();
                     }
                 }
-                var fc = FastMethod.GetMethod(qc.c);
+                var fc = FastMethod.GetMethod(ctor);
                 var result = fc.Invoke(null, cargs);
                 if (scope != null)
                     scope[type] = result;
@@ -322,35 +316,45 @@ namespace Galador.Reflection.Utils
         {
             if (FindSession == null)
                 FindSession = new Stack<Type>();
-            if (FindSession.Contains(type))
-                yield break;
+            if (FindSession.Contains(type) || !CanBeInstantiated(type))
+                return Array.Empty<ConstructorInfo>();
             FindSession.Push(type);
             try
             {
-                if (!CanBeInstantiated(type))
-                    yield break;
-                var ctors = type.GetTypeInfo().DeclaredConstructors;
-                foreach (var c in ctors)
+                return
+                    from c in type.GetTypeInfo().DeclaredConstructors
+                    let parameters = c.GetParameters()
+                    where parameters.All(x => CanCreateParameter(x))
+                    let N = parameters.Length
+                    let difficulty = parameters.Select(x => IsKnownParameter(x) ? 0 : 1).Sum()
+                    orderby difficulty ascending, N descending
+                    select c
+                ;
+
+                bool CanCreateParameter(ParameterInfo pi)
                 {
-                    bool ok = true;
-                    foreach (var p in c.GetParameters())
-                    {
-                        var impa = p.GetCustomAttribute<ImportAttribute>();
-                        var t = (impa != null ? impa.ImportedType : null) ?? p.ParameterType;
-                        if (t.IsValueType)
-                            continue;
-                        var descendant = MergeKeys(services, scope, t).Where(x => x != type).FirstOrDefault();
-                        if (descendant != null)
-                            continue;
-                        if (p.HasDefaultValue)
-                            continue;
-                        if (CanCreate(services, scope, p.ParameterType))
-                            continue;
-                        ok = false;
-                        break;
-                    }
-                    if (ok)
-                        yield return c;
+                    var impa = pi.GetCustomAttribute<ImportAttribute>();
+                    var t = (impa != null ? impa.ImportedType : null) ?? pi.ParameterType;
+                    if (t.IsValueType)
+                        return true;
+                    var descendant = MergeKeys(services, scope, t).Where(x => x != type).FirstOrDefault();
+                    if (descendant != null)
+                        return true;
+                    if (pi.HasDefaultValue)
+                        return true;
+                    if (CanCreate(services, scope, pi.ParameterType))
+                        return true;
+                    return false;
+                }
+
+                bool IsKnownParameter(ParameterInfo pi)
+                {
+                    var impa = pi.GetCustomAttribute<ImportAttribute>();
+                    var t = (impa != null ? impa.ImportedType : null) ?? pi.ParameterType;
+                    var descendant = MergeKeys(services, scope, t).Where(x => x != type).FirstOrDefault();
+                    if (descendant != null)
+                        return true;
+                    return false;
                 }
             }
             finally

@@ -214,7 +214,11 @@ namespace Galador.Reflection
 
         public T Resolve<T>() { return (T)ResolveAll(typeof(T)).First(); }
 
-        public object Resolve(Type type) { return ResolveAll(type).First(); }
+        public object Resolve(Type type)
+        {
+            EnsureAlive();
+            return TypeTreeActivation.ResolveSingle(services, scope, type);
+        }
 
         public IEnumerable<T> ResolveAll<T>() { return ResolveAll(typeof(T)).OfType<T>(); }
 

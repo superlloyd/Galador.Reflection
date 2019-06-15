@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 
@@ -27,6 +28,7 @@ namespace Galador.Reflection.Utils
     public class TypeTree<T> : ITypeTree<T>
         where T : class
     {
+        [DebuggerDisplay("({Key}, {Data}, Descendants: {Descendants.Count})")]
         class TypeNode
         {
             public TypeNode(Type key)
@@ -36,6 +38,8 @@ namespace Galador.Reflection.Utils
             public readonly Type Key;
             public T Data;
             public readonly List<TypeNode> Descendants = new List<TypeNode>();
+
+            public override string ToString() => $"{nameof(TypeNode)}({Key}, {Data}, Descendants: {Descendants.Count})";
 
             public int Count() => (Data == null ? 0 : 1) + Descendants.Select(x => x.Count()).Sum();
 
@@ -118,6 +122,13 @@ namespace Galador.Reflection.Utils
             foreach (var intfc in pi.ImplementedInterfaces)
             {
                 var pn = GetOrCreate(intfc);
+                pn.Descendants.Add(node);
+            }
+
+            // will happen for interfaces, but make sure everything is resolved by "object"
+            if (pi.BaseType == null && key != typeof(object))
+            {
+                var pn = GetOrCreate(typeof(object));
                 pn.Descendants.Add(node);
             }
 

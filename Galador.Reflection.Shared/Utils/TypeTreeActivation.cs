@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 
 namespace Galador.Reflection.Utils
 {
+    [DebuggerDisplay("({Type}, {Instance})")]
     public class ServiceDefinition
     {
         public ServiceDefinition(Type type)
@@ -67,16 +69,104 @@ namespace Galador.Reflection.Utils
             services[facade] = new ServiceDefinition(instance ?? facade);
         }
 
-        static IEnumerable<Type> MergeKeys(ITypeTree first, ITypeTree second, Type type)
-            => (first?.GetKeys(type) ?? Array.Empty<Type>())
-            .Concat(second?.GetKeys(type) ?? Array.Empty<Type>())
-            .Distinct();
+        public static IEnumerable<Type> MergeKeys(ITypeTree<ServiceDefinition> services, ITypeTree<object> scope, Type type)
+        {
+            IEnumerable<Type> e1, e2;
+            if (type == typeof(object) || type == null)
+            {
+                e1 = services?.GetKeys();
+                e2 = scope?.GetKeys();
+            }
+            else
+            {
+                e1 = services?.GetKeys(type);
+                e2 = scope?.GetKeys(type);
+            }
+            return (e1 ?? Array.Empty<Type>())
+                .Concat(e2 ?? Array.Empty<Type>())
+                .Distinct();
+        }
 
-        static IEnumerable<Type> MergeKeys(ITypeTree first, ITypeTree second, Predicate<Type> matching)
-            => (first?.GetKeys() ?? Array.Empty<Type>())
-            .Concat(second?.GetKeys() ?? Array.Empty<Type>())
+        public static IEnumerable<Type> MergeKeys(ITypeTree<ServiceDefinition> services, ITypeTree<object> scope, Predicate<Type> matching)
+            => MergeKeys(services, scope, typeof(object))
             .Where(x => matching(x))
             .Distinct();
+
+        public static object ResolveSingle(ITypeTree<ServiceDefinition> services, ITypeTree<object> scope, Type type)
+        {
+            Type descendant = null;
+            foreach (var key in MergeKeys(services, scope, type))
+            {
+                if (descendant == null)
+                {
+                    descendant = key;
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Resolution ambiguous, multiple descendant found for {type}");
+                }
+            }
+
+            return SolveExact(services, scope, descendant ?? type);
+        }
+
+        public static IEnumerable<object> Resolve(ITypeTree<ServiceDefinition> services, ITypeTree<object> scope, Type type)
+            => Resolve(services, scope, type, MergeKeys(services, scope, type));
+
+        public static IEnumerable<object> Resolve(ITypeTree<ServiceDefinition> services, ITypeTree<object> scope, Predicate<Type> matching)
+            => Resolve(services, scope, null, MergeKeys(services, scope, matching));
+
+        static IEnumerable<object> Resolve(ITypeTree<ServiceDefinition> services, ITypeTree<object> scope, Type root, IEnumerable<Type> types)
+        {
+            if (scope == null)
+                scope = new TypeTree<object>();
+
+            var any = false;
+            foreach (var key in types)
+            {
+                any = true;
+                yield return SolveExact(services, scope, key);
+            }
+
+            if (!any && root != null && CanCreate(services, scope, root))
+            {
+                var result = Create(services, scope, root);
+                if (!root.IsValueType)
+                    scope[root] = result;
+                yield return result;
+            }
+        }
+
+        static object SolveExact(ITypeTree<ServiceDefinition> services, ITypeTree<object> scope, Type type)
+        {
+            if (services?.ContainsKey(type) ?? false)
+            {
+                var sd = services[type];
+                if (sd.Instance != null)
+                {
+                    return sd.Instance;
+                }
+
+                if (!scope.ContainsKey(type))
+                {
+                    var value = Create(services, scope, type);
+                    scope[type] = value;
+                    return value;
+                }
+            }
+
+            if (scope.ContainsKey(type))
+            {
+                return scope[type];
+            }
+            else
+            {
+                var value = Create(services, scope, type);
+                if (!type.IsValueType)
+                    scope[type] = value;
+                return value;
+            }
+        }
 
         public static void ResolveProperties(ITypeTree<ServiceDefinition> services, ITypeTree<object> scope, object instance)
         {
@@ -143,56 +233,10 @@ namespace Galador.Reflection.Utils
                 else
                 {
                     // simple property
-                    var o = Resolve(services, scope, pi.ImportedType ?? p.Type.Type).First();
+                    var o = ResolveSingle(services, scope, pi.ImportedType ?? p.Type.Type);
                     item.p.SetValue(instance, o);
                 }
             }
-        }
-
-        public static IEnumerable<object> Resolve(ITypeTree<ServiceDefinition> services, ITypeTree<object> scope, Type type)
-            => Resolve(services, scope, type, MergeKeys(services, scope, type));
-
-        public static IEnumerable<object> Resolve(ITypeTree<ServiceDefinition> services, ITypeTree<object> scope, Predicate<Type> matching)
-            => Resolve(services, scope, null, MergeKeys(services, scope, matching));
-
-        static IEnumerable<object> Resolve(ITypeTree<ServiceDefinition> services, ITypeTree<object> scope, Type root, IEnumerable<Type> types)
-        {
-            if (scope == null)
-                scope = new TypeTree<object>();
-
-            var any = false;
-            foreach (var key in types)
-            {
-                any = true;
-                yield return SolveExact(services, scope, key);
-            }
-
-            if (!any && root != null && CanCreate(services, scope, root))
-            {
-                var result = Create(services, scope, root);
-                scope[root] = result;
-                yield return result;
-            }
-        }
-
-        static object SolveExact(ITypeTree<ServiceDefinition> services, ITypeTree<object> scope, Type type)
-        {
-            if (services?.ContainsKey(type) ?? false)
-            {
-                var sd = services[type];
-                if (sd.Instance != null)
-                {
-                    return sd.Instance;
-                }
-
-                if (!scope.ContainsKey(type))
-                {
-                    var value = Create(services, scope, type);
-                    scope[type] = value;
-                    return value;
-                }
-            }
-            return scope[type];
         }
 
         public static object Create(ITypeTree<ServiceDefinition> services, ITypeTree<object> scope, Type type, params object[] parameters)
@@ -223,24 +267,23 @@ namespace Galador.Reflection.Utils
                     var p = qc.ppp[i];
                     var impa = p.GetCustomAttribute<ImportAttribute>();
                     var t = (impa != null ? impa.ImportedType : null) ?? p.ParameterType;
-                    var vault = MergeKeys(services, scope, t).Where(x => x != t).FirstOrDefault();
-                    var val = parameters != null ? parameters.FirstOrDefault(x => p.ParameterType.IsInstanceOfType(x)) : null;
+                    var descendant = MergeKeys(services, scope, t).Where(x => x != t).FirstOrDefault();
+                    var val = parameters != null ? parameters.FirstOrDefault(x => t.IsInstanceOfType(x)) : null;
                     if (val != null)
                     {
                         cargs[i] = val;
                     }
-                    else if (vault != null)
+                    else if (descendant != null)
                     {
-                        cargs[i] = Resolve(services, scope, vault).First();
+                        cargs[i] = SolveExact(services, scope, descendant);
                     }
                     else if (p.HasDefaultValue)
                     {
                         cargs[i] = p.DefaultValue;
                     }
-                    else
+                    else if (CanBeInstantiated(t))
                     {
-                        var instance = Create(services, scope, p.ParameterType);
-                        cargs[i] = instance;
+                        cargs[i] = Create(services, scope, t);
                     }
                 }
                 var fc = FastMethod.GetMethod(qc.c);
@@ -293,8 +336,8 @@ namespace Galador.Reflection.Utils
                         var t = (impa != null ? impa.ImportedType : null) ?? p.ParameterType;
                         if (t.IsValueType)
                             continue;
-                        var vault = MergeKeys(services, scope, t).Where(x => x != t).FirstOrDefault();
-                        if (vault != null)
+                        var descendant = MergeKeys(services, scope, t).Where(x => x != t).FirstOrDefault();
+                        if (descendant != null)
                             continue;
                         if (p.HasDefaultValue)
                             continue;

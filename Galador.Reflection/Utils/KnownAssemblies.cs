@@ -15,39 +15,15 @@ namespace Galador.Reflection.Utils
         {
             var domain = AppDomain.CurrentDomain;
 
-            foreach (var ass in FilterOk(domain.GetAssemblies()))
+            foreach (var ass in domain.GetAssemblies())
                 assemblies[ass.GetName().Name] = ass;
 
             domain.AssemblyLoad += (o, e) =>
             {
-                var loaded = new[] { e.LoadedAssembly };
-                foreach (var ass in FilterOk(loaded))
-                {
-                    assemblies[ass.GetName().Name] = ass;
-                    AssemblyLoaded?.Invoke(ass);
-                }
+                var ass = e.LoadedAssembly;
+                assemblies[ass.GetName().Name] = ass;
+                AssemblyLoaded?.Invoke(ass);
             };
-
-            IEnumerable<Assembly> FilterOk(IEnumerable<Assembly> source)
-            {
-                if (source == null)
-                    yield break;
-                foreach (var ass in source)
-                {
-                    if (ass == null)
-                        continue;
-                    try
-                    {
-                        var dt = ass.DefinedTypes;
-                    }
-                    catch
-                    {
-                        Log.Warning(typeof(KnownAssemblies).FullName, $"Couldn't get Types from {ass.GetName().Name})");
-                        continue;
-                    }
-                    yield return ass;
-                }
-            }
         }
 
         static ConcurrentDictionary<string, Assembly> assemblies = new ConcurrentDictionary<string, Assembly>();

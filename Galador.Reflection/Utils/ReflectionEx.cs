@@ -13,6 +13,24 @@ namespace Galador.Reflection.Utils
     /// </summary>
     public static class ReflectionEx
     {
+        public static IEnumerable<Type> GetLoadableTypes(this Assembly assembly)
+        {
+            if (assembly == null) throw new ArgumentNullException(nameof(assembly));
+            try
+            {
+                return assembly.GetTypes();
+            }
+            catch (ReflectionTypeLoadException e)
+            {
+                return e.Types.Where(t => t != null);
+            }
+            catch
+            {
+                Log.Warning(typeof(KnownAssemblies).FullName, $"Couldn't get Types from {assembly.GetName().Name})");
+                return Array.Empty<Type>();
+            }
+        }
+
         /// <summary>
         /// Gets the member path from a lambda expression
         /// </summary>

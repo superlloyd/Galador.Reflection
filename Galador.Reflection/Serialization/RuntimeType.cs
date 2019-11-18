@@ -47,22 +47,26 @@ namespace Galador.Reflection.Serialization
         {
             lock (locker)
             {
-                foreach (var ti in assembly.DefinedTypes)
-                    Register(ti.AsType());
+                foreach (var t in assembly.GetLoadableTypes())
+                    Register(t);
             }
         }
         static void Register(Type type)
         {
             lock (locker)
             {
-                RegisterNameAlias(type);
-                RegisterSurrogates(type);
+                try
+                {
+                    RegisterNameAlias(type);
+                    RegisterSurrogates(type);
+                }
+                catch (TypeLoadException) { }
             }
         }
 
         static void RegisterNameAlias(Type type)
         {
-            var nattr = type.GetTypeInfo().GetCustomAttribute<SerializationNameAttribute>();
+            var nattr = type.GetCustomAttribute<SerializationNameAttribute>();
             if (nattr != null)
             {
                 if (typeAliases.TryGetValue(nattr, out var prev))
@@ -96,21 +100,21 @@ namespace Galador.Reflection.Serialization
 
         static IEnumerable<Type> GetSurrogatedTypes(Type type)
         {
-            if (type.GetTypeInfo().IsAbstract)
+            if (type.IsAbstract)
                 yield break;
             if (!type.TryGetConstructors().Any())
                 yield break;
             foreach (var t in type.GetTypeHierarchy())
             {
-                if (!t.GetTypeInfo().IsGenericType)
+                if (!t.IsGenericType)
                     continue;
                 var t2 = t.GetGenericTypeDefinition();
                 if (t2 != typeof(ISurrogate<>))
                     continue;
-                var t3 = t.GetTypeInfo().GenericTypeArguments[0];
-                if (t3.GetTypeInfo().IsGenericType)
+                var t3 = t.GenericTypeArguments[0];
+                if (t3.IsGenericType)
                 {
-                    if (!type.GetTypeInfo().IsGenericType)
+                    if (!type.IsGenericType)
                         continue;
                     if (t3.GenericTypeArguments.Length != type.GetTypeInfo().GenericTypeParameters.Length)
                         continue;
@@ -313,7 +317,7 @@ namespace Galador.Reflection.Serialization
 
             void CaptureName()
             {
-                var nattr = type.GetTypeInfo().GetCustomAttribute<SerializationNameAttribute>();
+                var nattr = type.GetCustomAttribute<SerializationNameAttribute>();
                 if (nattr != null)
                 {
                     FullName = nattr.FullName;
@@ -344,7 +348,7 @@ namespace Galador.Reflection.Serialization
             else if (type.IsGenericParameter)
             {
                 IsGenericParameter = true;
-                var pargs = type.DeclaringType.GetTypeInfo().GetGenericArguments();
+                var pargs = type.DeclaringType.GetGenericArguments();
                 for (int i = 0; i < pargs.Length; i++)
                     if (pargs[i].Name == type.Name)
                     {
@@ -526,7 +530,7 @@ namespace Galador.Reflection.Serialization
                 return converter;
             if (Type == null)
                 return null;
-            var attr = Type.GetTypeInfo().GetCustomAttribute<TypeConverterAttribute>();
+            var attr = Type.GetCustomAttribute<TypeConverterAttribute>();
             if (attr == null)
                 return null;
             var tc = TypeDescriptor.GetConverter(Type);

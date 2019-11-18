@@ -122,20 +122,23 @@ namespace Galador.Reflection
         public void RegisterAssemblies<T>(IEnumerable<Assembly> assemblies)
             where T : Attribute
         {
-            foreach (var ti in assemblies.Where(x => x != null).SelectMany(x => x.DefinedTypes))
+            foreach (var t in assemblies.Where(x => x != null).SelectMany(x => x.GetLoadableTypes()))
             {
-                var ea = ti.GetCustomAttributes<T>(false);
-                foreach (var export in ea)
+                try
                 {
-                    var t = ti.AsType();
-                    if (!TypeTreeActivation.CanBeInstantiated(t))
+                    var ea = t.GetCustomAttributes<T>(false);
+                    foreach (var export in ea)
                     {
-                        Log.Warning(this, $"[Registry]: Type {t.Name} can't be exported, it is not Resolvable.");
-                        continue;
+                        if (!TypeTreeActivation.CanBeInstantiated(t))
+                        {
+                            Log.Warning(this, $"[Registry]: Type {t.Name} can't be exported, it is not Resolvable.");
+                            continue;
+                        }
+                        Register(t);
+                        break; // register only once
                     }
-                    Register(t);
-                    break; // register only once
                 }
+                catch (TypeLoadException) { }
             }
         }
 

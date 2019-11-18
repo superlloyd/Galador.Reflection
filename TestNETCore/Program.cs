@@ -8,18 +8,18 @@ namespace TestNETCore
 {
     public class Program
     {
-        public static void Main(string[] args)
-        {
-            //KnownTypes.RegisterAssemblies(typeof(ReflectType2).GetTypeInfo().Assembly);
-            //KnownTypes.RegisterAssemblies(typeof(Program).GetTypeInfo().Assembly);
+        //public static void Main(string[] args)
+        //{
+        //    //KnownTypes.RegisterAssemblies(typeof(ReflectType2).GetTypeInfo().Assembly);
+        //    //KnownTypes.RegisterAssemblies(typeof(Program).GetTypeInfo().Assembly);
 
-            //RunSomeTests();
-            RunAllTests();
+        //    //RunSomeTests();
+        //    RunAllTests();
 
-            Console.WriteLine();
-            Console.WriteLine("Done.");
-            Console.ReadLine();
-        }
+        //    Console.WriteLine();
+        //    Console.WriteLine("Done.");
+        //    Console.ReadLine();
+        //}
 
         public static void RunSomeTests()
         {

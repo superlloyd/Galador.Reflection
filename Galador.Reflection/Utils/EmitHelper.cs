@@ -1,4 +1,4 @@
-﻿#if !__STD__ && !__IOS__
+﻿#if NET472 || NETCOREAPP2_1 || NETSTANDARD2_1
 // EMIT is only on .NET Standard 2.1
 
 using System;

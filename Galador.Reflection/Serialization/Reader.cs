@@ -80,7 +80,7 @@ namespace Galador.Reflection.Serialization
                 var result = ReadImpl(args);
                 if (readRecurseDepth > 1)
                     return result;
-                return AsType(result);
+                return AsNormalData(result);
             }
             finally
             {
@@ -494,7 +494,11 @@ namespace Galador.Reflection.Serialization
             {
                 var p = FindRuntimeMember(m);
                 var pt = m.Type;
-                var margs = new ReadArgs(pt, p?.Type, p?.RuntimeMember.GetValue(o));
+
+                object currentValue = null;
+                try { currentValue = p?.RuntimeMember.GetValue(o); }
+                catch (SystemException ex) { Log.Warning($"Can't read current value of {args.TypeData.FullName}.{m.Name}: {ex}"); }
+                var margs = new ReadArgs(pt, p?.Type, currentValue);
 
                 var value = ReadImpl(margs);
                 if (o != null)
@@ -503,16 +507,16 @@ namespace Galador.Reflection.Serialization
                     {
                         if (p == null
                             || !p.RuntimeMember.CanSet
-                            || !p.RuntimeMember.SetValue(o, AsType(value)))
+                            || !p.RuntimeMember.SetValue(o, AsNormalData(value)))
                         {
                             Log.Warning($"Can't restore Member {args.TypeData.FullName}.{m.Name}");
-                            GetLost(o).Members.Add(new LostData.Member(m, AsType(value)));
+                            GetLost(o).Members.Add(new LostData.Member(m, AsNormalData(value)));
                         }
                     }
                     catch (SystemException se)
                     {
                         Log.Error(se);
-                        GetLost(o).Members.Add(new LostData.Member(m, AsType(value)));
+                        GetLost(o).Members.Add(new LostData.Member(m, AsNormalData(value)));
                     }
                 }
                 else
@@ -580,11 +584,11 @@ namespace Galador.Reflection.Serialization
                 {
                     if (list != null)
                     {
-                        list.Add(AsType(value));
+                        list.Add(AsNormalData(value));
                     }
                     else
                     {
-                        ilist.Add(AsType(value));
+                        ilist.Add(AsNormalData(value));
                     }
                 }
                 catch (SystemException ex)
@@ -632,7 +636,7 @@ namespace Galador.Reflection.Serialization
                 {
                     if (list != null)
                     {
-                        list.Add(AsType(key), AsType(value));
+                        list.Add(AsNormalData(key), AsNormalData(value));
                     }
                     else
                     {
@@ -721,7 +725,7 @@ namespace Galador.Reflection.Serialization
             var eArgs = new ReadArgs(tSrc.Collection1, hint?.Collection1);
             for (int i = 0; i < count; i++)
             {
-                var value = AsType(ReadImpl(eArgs));
+                var value = AsNormalData(ReadImpl(eArgs));
                 if (l != null && !l.IsReadOnly && value is T tValue)
                 {
                     try { l.Add(tValue); }
@@ -817,8 +821,8 @@ namespace Galador.Reflection.Serialization
             var eValue = new ReadArgs(tSrc.Collection2, hint?.Collection2);
             for (int i = 0; i < count; i++)
             {
-                var key = AsType(ReadImpl(eKey));
-                var value = AsType(ReadImpl(eValue));
+                var key = AsNormalData(ReadImpl(eKey));
+                var value = AsNormalData(ReadImpl(eValue));
                 if (d != null && !d.IsReadOnly && key is K tKey && value is V tValue)
                 {
                     d.Add(tKey, tValue);

@@ -57,7 +57,7 @@ namespace Galador.Reflection.Serialization
 
         internal void Write(RuntimeType expected, object value)
         {
-            value = AsTypeData(value);
+            value = AsMetaData(value);
 
             // write id, continue if first time
             if (expected.IsReference)

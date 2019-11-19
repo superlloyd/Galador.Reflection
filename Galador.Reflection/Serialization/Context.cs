@@ -73,7 +73,7 @@ namespace Galador.Reflection.Serialization
 
         protected ulong NewId() => seed++;
 
-        protected object AsTypeData(object obj)
+        protected object AsMetaData(object obj)
         {
             if (obj is Type)
                 return RuntimeType.GetType((Type)obj).TypeData();
@@ -81,7 +81,7 @@ namespace Galador.Reflection.Serialization
                 return ((RuntimeType)obj).TypeData();
             return obj;
         }
-        protected object AsType(object obj)
+        protected object AsNormalData(object obj)
         {
             if (obj is TypeData)
                 return ((TypeData)obj).RuntimeType()?.Type;
@@ -101,7 +101,7 @@ namespace Galador.Reflection.Serialization
 
         public bool Contains(object o)
         {
-            o = AsTypeData(o);
+            o = AsMetaData(o);
             if (o == null)
                 return true;
             if (wellknown != null && wellknown.objectsToIds.ContainsKey(o))
@@ -124,7 +124,7 @@ namespace Galador.Reflection.Serialization
 
         public bool TryGetId(object o, out ulong id)
         {
-            o = AsTypeData(o);
+            o = AsMetaData(o);
             if (o == null)
             {
                 id = 0;

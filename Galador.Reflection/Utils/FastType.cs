@@ -237,7 +237,7 @@ namespace Galador.Reflection.Utils
                             foreach (var pi in ti.DeclaredFields)
                             {
                                 var mt = FastType.GetType(pi.FieldType);
-                                var m = new FastMember(pi, null);
+                                var m = new FastMember(this, pi, null);
                                 result.Add(m);
                             }
                             foreach (var pi in ti.DeclaredProperties)
@@ -253,7 +253,7 @@ namespace Galador.Reflection.Utils
                                         baseMember = GetType(pb.DeclaringType).DeclaredMembers[pi.Name];
                                 }
                                 var mt = FastType.GetType(pi.PropertyType);
-                                var m = new FastMember(pi, baseMember);
+                                var m = new FastMember(this, pi, baseMember);
                                 result.Add(m);
                             }
                             members = result;
@@ -314,8 +314,9 @@ namespace Galador.Reflection.Utils
     /// </summary>
     public sealed class FastMember : IMember
     {
-        internal FastMember(MemberInfo member, FastMember baseMember)
+        internal FastMember(FastType declaring, MemberInfo member, FastMember baseMember)
         {
+            DeclaringType = declaring;
             Name = member.Name;
             Member = member;
             BaseMember = baseMember ?? this;
@@ -347,6 +348,8 @@ namespace Galador.Reflection.Utils
         /// This is the member name for the member, i.e. <see cref="MemberInfo.Name"/>.
         /// </summary>
         public string Name { get; }
+
+        public FastType DeclaringType { get; }
 
         /// <summary>
         /// If this member is an override, that will be the original declaration

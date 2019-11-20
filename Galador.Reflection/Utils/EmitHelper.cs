@@ -23,6 +23,26 @@ namespace Galador.Reflection.Utils
         static readonly Type[] TwoObjects = new[] { typeof(object), typeof(object) };
         static readonly Type[] ManyObjects = new[] { typeof(object), typeof(object[]) };
 
+        static EmitHelper()
+        {
+            try
+            {
+                var dynam = new DynamicMethod(string.Empty, typeof(int), new Type[] { typeof(int) }, Module, true);
+                ILGenerator il = dynam.GetILGenerator();
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Mul);
+                il.Emit(OpCodes.Ret);
+                var sq = (Func<int, int>)dynam.CreateDelegate(typeof(Func<int, int>));
+                if (sq(2) == 4)
+                {
+                    SupportsEmit = true;
+                }
+            }
+            catch { }
+        }
+        public static bool SupportsEmit { get; private set; }
+
 #region CreateMethodHandler() CreateParameterlessConstructorHandler()
 
         public static MethodHandler CreateMethodHandler(MethodBase method, bool ctorDoNotCreate = false)

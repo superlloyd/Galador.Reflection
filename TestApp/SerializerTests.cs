@@ -182,7 +182,7 @@ namespace TestApp
             d2.Top += 10;
             d2.Left += 10;
             d2.Show();
-            System.Windows.Forms.Application.Run();
+            //System.Windows.Forms.Application.Run();
         }
 #endif
 

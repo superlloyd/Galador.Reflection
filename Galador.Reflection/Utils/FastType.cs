@@ -67,7 +67,7 @@ namespace Galador.Reflection.Utils
             if (IsGenericMeta || IsAbstract)
                 return null;
 
-#if NET472 || NETCOREAPP2_1 || NETSTANDARD2_1
+#if NET472 || NETCOREAPP2_1
             if (fastCtor != null)
                 return fastCtor();
 #endif
@@ -82,7 +82,7 @@ namespace Galador.Reflection.Utils
 
         FastMethod emtpy_constructor;
         object[] empty_params;
-#if NET472 || NETCOREAPP2_1 || NETSTANDARD2_1
+#if NET472 || NETCOREAPP2_1
         Func<object> fastCtor;
 #endif
         void SetConstructor()
@@ -90,7 +90,7 @@ namespace Galador.Reflection.Utils
             var ctor = Type.TryGetConstructors().OrderBy(x => x.GetParameters().Length).FirstOrDefault();
             if (ctor == null)
             {
-#if NET472 || NETCOREAPP2_1 || NETSTANDARD2_1
+#if NET472 || NETCOREAPP2_1
                 if (Type.GetTypeInfo().IsValueType)
                     fastCtor = EmitHelper.CreateParameterlessConstructorHandler(Type);
 #endif
@@ -182,10 +182,10 @@ namespace Galador.Reflection.Utils
             IsReference = !ti.IsValueType;
             BaseType = GetType(Type.GetTypeInfo().BaseType);
             IsMscorlib = IsFromMscorlib(type);
-            IsAbstract = type.GetTypeInfo().IsAbstract || type.IsInterface;
+            IsAbstract = type.GetTypeInfo().IsAbstract || type.IsInterface || ((type.Attributes & TypeAttributes.Abstract) != 0);
             IsGenericMeta = IsUndefined(type);
 
-            if (!type.IsArray && !ti.IsEnum && !IsAbstract)
+            if (!type.IsArray && !ti.IsEnum && !IsAbstract && !IsGenericMeta)
                 SetConstructor();
         }
 
@@ -340,8 +340,11 @@ namespace Galador.Reflection.Utils
                 CanSet = pi.SetMethod != null;
                 IsStatic = pi.GetMethod.IsStatic;
             }
-            InitializeAccessor();
-            InitializeStructAccessor();
+            if (!DeclaringType.IsGenericMeta)
+            {
+                InitializeAccessor();
+                InitializeStructAccessor();
+            }
         }
 
         /// <summary>
@@ -423,7 +426,7 @@ namespace Galador.Reflection.Utils
         public MemberInfo Member { get; }
 
         // performance fields, depends on platform
-#if NET472 || NETCOREAPP2_1 || NETSTANDARD2_1
+#if NET472 || NETCOREAPP2_1
         Action<object, object> setter;
         Func<object, object> getter;
         Action<object, Guid> setterGuid;
@@ -460,7 +463,7 @@ namespace Galador.Reflection.Utils
 
         #region InitializeStructAccessor() InitializeAccessor()
 
-#if NET472 || NETCOREAPP2_1 || NETSTANDARD2_1
+#if NET472 || NETCOREAPP2_1
         void InitializeStructAccessor()
         {
             switch (Type.Kind)
@@ -556,7 +559,7 @@ namespace Galador.Reflection.Utils
             if (Member is PropertyInfo)
             {
                 pInfo = (PropertyInfo)Member;
-#if NET472 || NETCOREAPP2_1 || NETSTANDARD2_1
+#if NET472 || NETCOREAPP2_1
                 getter = EmitHelper.CreatePropertyGetterHandler(pInfo);
                 if (pInfo.SetMethod != null)
                 {
@@ -569,14 +572,14 @@ namespace Galador.Reflection.Utils
                 fInfo = (FieldInfo)Member;
                 if (fInfo.IsLiteral)
                 {
-#if NET472 || NETCOREAPP2_1 || NETSTANDARD2_1
+#if NET472 || NETCOREAPP2_1
                     var value = fInfo.GetValue(null);
                     getter = (x) => value;
 #endif
                 }
                 else
                 {
-#if NET472 || NETCOREAPP2_1 || NETSTANDARD2_1
+#if NET472 || NETCOREAPP2_1
                     getter = EmitHelper.CreateFieldGetterHandler(fInfo);
                     setter = EmitHelper.CreateFieldSetterHandler(fInfo);
 #endif
@@ -604,7 +607,7 @@ namespace Galador.Reflection.Utils
                 if (instance == null)
                     return null;
             }
-#if NET472 || NETCOREAPP2_1 || NETSTANDARD2_1
+#if NET472 || NETCOREAPP2_1
             if (getter != null)
                 return getter(instance);
 #else
@@ -636,7 +639,7 @@ namespace Galador.Reflection.Utils
                     return false;
             }
 
-#if NET472 || NETCOREAPP2_1 || NETSTANDARD2_1
+#if NET472 || NETCOREAPP2_1
             if (setter != null)
             {
                 setter(instance, value);
@@ -661,7 +664,7 @@ namespace Galador.Reflection.Utils
 
         #region typed known structs: Get/Set Guid/Bool/Char/...()
 
-#if NET472 || NETCOREAPP2_1 || NETSTANDARD2_1
+#if NET472 || NETCOREAPP2_1
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static bool FastSet<T>(object instance, T value, Action<object, T> setter)
         {
@@ -686,7 +689,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetGuid(object instance, Guid value)
         {
-#if NET472 || NETCOREAPP2_1 || NETSTANDARD2_1
+#if NET472 || NETCOREAPP2_1
             return FastSet<Guid>(instance, value, setterGuid);
 #else
             return SetValue(instance, value);
@@ -695,7 +698,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Guid GetGuid(object instance)
         {
-#if NET472 || NETCOREAPP2_1 || NETSTANDARD2_1
+#if NET472 || NETCOREAPP2_1
             return FastGet<Guid>(instance, getterGuid);
 #else
             return As<Guid>(GetValue(instance));
@@ -705,7 +708,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetBool(object instance, bool value)
         {
-#if NET472 || NETCOREAPP2_1 || NETSTANDARD2_1
+#if NET472 || NETCOREAPP2_1
             return FastSet<bool>(instance, value, setterBool);
 #else
             return SetValue(instance, value);
@@ -714,7 +717,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool GetBool(object instance)
         {
-#if NET472 || NETCOREAPP2_1 || NETSTANDARD2_1
+#if NET472 || NETCOREAPP2_1
             return FastGet<bool>(instance, getterBool);
 #else
             return As<bool>(GetValue(instance));
@@ -724,7 +727,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetChar(object instance, char value)
         {
-#if NET472 || NETCOREAPP2_1 || NETSTANDARD2_1
+#if NET472 || NETCOREAPP2_1
             return FastSet<char>(instance, value, setterChar);
 #else
             return SetValue(instance, value);
@@ -733,7 +736,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public char GetChar(object instance)
         {
-#if NET472 || NETCOREAPP2_1 || NETSTANDARD2_1
+#if NET472 || NETCOREAPP2_1
             return FastGet<char>(instance, getterChar);
 #else
             return As<char>(GetValue(instance));
@@ -743,7 +746,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetInt8(object instance, byte value)
         {
-#if NET472 || NETCOREAPP2_1 || NETSTANDARD2_1
+#if NET472 || NETCOREAPP2_1
             return FastSet<byte>(instance, value, setterByte);
 #else
             return SetValue(instance, value);
@@ -752,7 +755,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public byte GetInt8(object instance)
         {
-#if NET472 || NETCOREAPP2_1 || NETSTANDARD2_1
+#if NET472 || NETCOREAPP2_1
             return FastGet<byte>(instance, getterByte);
 #else
             return As<byte>(GetValue(instance));
@@ -762,7 +765,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetUInt8(object instance, sbyte value)
         {
-#if NET472 || NETCOREAPP2_1 || NETSTANDARD2_1
+#if NET472 || NETCOREAPP2_1
             return FastSet<sbyte>(instance, value, setterSByte);
 #else
             return SetValue(instance, value);
@@ -771,7 +774,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public sbyte GetUInt8(object instance)
         {
-#if NET472 || NETCOREAPP2_1 || NETSTANDARD2_1
+#if NET472 || NETCOREAPP2_1
             return FastGet<sbyte>(instance, getterSByte);
 #else
             return As<sbyte>(GetValue(instance));
@@ -781,7 +784,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetInt16(object instance, short value)
         {
-#if NET472 || NETCOREAPP2_1 || NETSTANDARD2_1
+#if NET472 || NETCOREAPP2_1
             return FastSet<short>(instance, value, setterInt16);
 #else
             return SetValue(instance, value);
@@ -790,7 +793,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public short GetInt16(object instance)
         {
-#if NET472 || NETCOREAPP2_1 || NETSTANDARD2_1
+#if NET472 || NETCOREAPP2_1
             return FastGet<short>(instance, getterInt16);
 #else
             return As<short>(GetValue(instance));
@@ -800,7 +803,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetUInt16(object instance, ushort value)
         {
-#if NET472 || NETCOREAPP2_1 || NETSTANDARD2_1
+#if NET472 || NETCOREAPP2_1
             return FastSet<ushort>(instance, value, setterUInt16);
 #else
             return SetValue(instance, value);
@@ -809,7 +812,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ushort GetUInt16(object instance)
         {
-#if NET472 || NETCOREAPP2_1 || NETSTANDARD2_1
+#if NET472 || NETCOREAPP2_1
             return FastGet<ushort>(instance, getterUInt16);
 #else
             return As<ushort>(GetValue(instance));
@@ -819,7 +822,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetInt32(object instance, int value)
         {
-#if NET472 || NETCOREAPP2_1 || NETSTANDARD2_1
+#if NET472 || NETCOREAPP2_1
             return FastSet<int>(instance, value, setterInt32);
 #else
             return SetValue(instance, value);
@@ -828,7 +831,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int GetInt32(object instance)
         {
-#if NET472 || NETCOREAPP2_1 || NETSTANDARD2_1
+#if NET472 || NETCOREAPP2_1
             return FastGet<int>(instance, getterInt32);
 #else
             return As<int>(GetValue(instance));
@@ -838,7 +841,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetUInt32(object instance, uint value)
         {
-#if NET472 || NETCOREAPP2_1 || NETSTANDARD2_1
+#if NET472 || NETCOREAPP2_1
             return FastSet<uint>(instance, value, setterUInt32);
 #else
             return SetValue(instance, value);
@@ -847,7 +850,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint GetUInt32(object instance)
         {
-#if NET472 || NETCOREAPP2_1 || NETSTANDARD2_1
+#if NET472 || NETCOREAPP2_1
             return FastGet<uint>(instance, getterUInt32);
 #else
             return As<uint>(GetValue(instance));
@@ -857,7 +860,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetInt64(object instance, long value)
         {
-#if NET472 || NETCOREAPP2_1 || NETSTANDARD2_1
+#if NET472 || NETCOREAPP2_1
             return FastSet<long>(instance, value, setterInt64);
 #else
             return SetValue(instance, value);
@@ -866,7 +869,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public long GetInt64(object instance)
         {
-#if NET472 || NETCOREAPP2_1 || NETSTANDARD2_1
+#if NET472 || NETCOREAPP2_1
             return FastGet<long>(instance, getterInt64);
 #else
             return As<long>(GetValue(instance));
@@ -876,7 +879,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetUInt64(object instance, ulong value)
         {
-#if NET472 || NETCOREAPP2_1 || NETSTANDARD2_1
+#if NET472 || NETCOREAPP2_1
             return FastSet<ulong>(instance, value, setterUInt64);
 #else
             return SetValue(instance, value);
@@ -885,7 +888,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ulong GetUInt64(object instance)
         {
-#if NET472 || NETCOREAPP2_1 || NETSTANDARD2_1
+#if NET472 || NETCOREAPP2_1
             return FastGet<ulong>(instance, getterUInt64);
 #else
             return As<ulong>(GetValue(instance));
@@ -895,7 +898,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetSingle(object instance, float value)
         {
-#if NET472 || NETCOREAPP2_1 || NETSTANDARD2_1
+#if NET472 || NETCOREAPP2_1
             return FastSet<float>(instance, value, setterSingle);
 #else
             return SetValue(instance, value);
@@ -904,7 +907,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float GetSingle(object instance)
         {
-#if NET472 || NETCOREAPP2_1 || NETSTANDARD2_1
+#if NET472 || NETCOREAPP2_1
             return FastGet<float>(instance, getterSingle);
 #else
             return As<float>(GetValue(instance));
@@ -914,7 +917,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetDouble(object instance, double value)
         {
-#if NET472 || NETCOREAPP2_1 || NETSTANDARD2_1
+#if NET472 || NETCOREAPP2_1
             return FastSet<double>(instance, value, setterDouble);
 #else
             return SetValue(instance, value);
@@ -923,7 +926,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double GetDouble(object instance)
         {
-#if NET472 || NETCOREAPP2_1 || NETSTANDARD2_1
+#if NET472 || NETCOREAPP2_1
             return FastGet<double>(instance, getterDouble);
 #else
             return As<double>(GetValue(instance));
@@ -933,7 +936,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SetDecimal(object instance, decimal value)
         {
-#if NET472 || NETCOREAPP2_1 || NETSTANDARD2_1
+#if NET472 || NETCOREAPP2_1
             return FastSet<decimal>(instance, value, setterDecimal);
 #else
             return SetValue(instance, value);
@@ -942,7 +945,7 @@ namespace Galador.Reflection.Utils
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public decimal GetDecimal(object instance)
         {
-#if NET472 || NETCOREAPP2_1 || NETSTANDARD2_1
+#if NET472 || NETCOREAPP2_1
             return FastGet<decimal>(instance, getterDecimal);
 #else
             return As<decimal>(GetValue(instance));

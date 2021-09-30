@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29509.3
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31717.71
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestApp", "TestApp\TestApp.csproj", "{321250AB-D521-4495-A614-62385E8B5407}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestApp", "TestApp\TestApp.csproj", "{321250AB-D521-4495-A614-62385E8B5407}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0BC3D4CC-A0C7-4552-89BE-2B1612F82C5D}"
 	ProjectSection(SolutionItems) = preProject
@@ -15,8 +15,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestAndroid", "TestAndroid\TestAndroid.csproj", "{2FDE361C-3C2E-4FEB-B6E5-12EFFEB37F06}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestNETCore", "TestNETCore\TestNETCore.csproj", "{E246A77B-1CC8-4FF1-921E-17897DD7CDF2}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Galador.Reflection", "Galador.Reflection\Galador.Reflection.csproj", "{B7D89600-3529-498F-B11E-F9790846B442}"
 EndProject
@@ -72,22 +70,6 @@ Global
 		{2FDE361C-3C2E-4FEB-B6E5-12EFFEB37F06}.Release|x86.ActiveCfg = Release|Any CPU
 		{2FDE361C-3C2E-4FEB-B6E5-12EFFEB37F06}.Release|x86.Build.0 = Release|Any CPU
 		{2FDE361C-3C2E-4FEB-B6E5-12EFFEB37F06}.Release|x86.Deploy.0 = Release|Any CPU
-		{E246A77B-1CC8-4FF1-921E-17897DD7CDF2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E246A77B-1CC8-4FF1-921E-17897DD7CDF2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E246A77B-1CC8-4FF1-921E-17897DD7CDF2}.Debug|ARM.ActiveCfg = Debug|Any CPU
-		{E246A77B-1CC8-4FF1-921E-17897DD7CDF2}.Debug|ARM.Build.0 = Debug|Any CPU
-		{E246A77B-1CC8-4FF1-921E-17897DD7CDF2}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{E246A77B-1CC8-4FF1-921E-17897DD7CDF2}.Debug|x64.Build.0 = Debug|Any CPU
-		{E246A77B-1CC8-4FF1-921E-17897DD7CDF2}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{E246A77B-1CC8-4FF1-921E-17897DD7CDF2}.Debug|x86.Build.0 = Debug|Any CPU
-		{E246A77B-1CC8-4FF1-921E-17897DD7CDF2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E246A77B-1CC8-4FF1-921E-17897DD7CDF2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E246A77B-1CC8-4FF1-921E-17897DD7CDF2}.Release|ARM.ActiveCfg = Release|Any CPU
-		{E246A77B-1CC8-4FF1-921E-17897DD7CDF2}.Release|ARM.Build.0 = Release|Any CPU
-		{E246A77B-1CC8-4FF1-921E-17897DD7CDF2}.Release|x64.ActiveCfg = Release|Any CPU
-		{E246A77B-1CC8-4FF1-921E-17897DD7CDF2}.Release|x64.Build.0 = Release|Any CPU
-		{E246A77B-1CC8-4FF1-921E-17897DD7CDF2}.Release|x86.ActiveCfg = Release|Any CPU
-		{E246A77B-1CC8-4FF1-921E-17897DD7CDF2}.Release|x86.Build.0 = Release|Any CPU
 		{B7D89600-3529-498F-B11E-F9790846B442}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{B7D89600-3529-498F-B11E-F9790846B442}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B7D89600-3529-498F-B11E-F9790846B442}.Debug|ARM.ActiveCfg = Debug|Any CPU

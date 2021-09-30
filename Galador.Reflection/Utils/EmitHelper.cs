@@ -1,7 +1,4 @@
-﻿#if NET472 || NETCOREAPP2_1
-// EMIT is only on .NET Standard 2.1
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -43,7 +40,7 @@ namespace Galador.Reflection.Utils
         }
         public static bool SupportsEmit { get; private set; }
 
-#region CreateMethodHandler() CreateParameterlessConstructorHandler()
+        #region CreateMethodHandler() CreateParameterlessConstructorHandler()
 
         public static MethodHandler CreateMethodHandler(MethodBase method, bool ctorDoNotCreate = false)
         {
@@ -145,9 +142,9 @@ namespace Galador.Reflection.Utils
             return (Func<object>)dynam.CreateDelegate(typeof(Func<object>));
         }
 
-#endregion
+        #endregion
 
-#region CreateFieldSetterHandler() CreatePropertySetterHandler() CreateFieldGetterHandler() CreatePropertyGetterHandler()
+        #region CreateFieldSetterHandler() CreatePropertySetterHandler() CreateFieldGetterHandler() CreatePropertyGetterHandler()
 
         public static Action<object, object> CreateFieldSetterHandler(FieldInfo fieldInfo)
         {
@@ -221,9 +218,9 @@ namespace Galador.Reflection.Utils
             return (Func<object, object>)dynam.CreateDelegate(typeof(Func<object, object>));
         }
 
-#endregion
+        #endregion
 
-#region Private Helpers
+        #region Private Helpers
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static void PushInstance(this ILGenerator il, Type type)
@@ -247,9 +244,9 @@ namespace Galador.Reflection.Utils
                 il.Emit(OpCodes.Unbox_Any, type);
         }
 
-#endregion
+        #endregion
 
-#region addition: Create[Field|Property][Getter|Setter]<T>()
+        #region addition: Create[Field|Property][Getter|Setter]<T>()
 
         public static Action<object, T> CreateFieldSetter<T>(FieldInfo member)
         {
@@ -306,8 +303,7 @@ namespace Galador.Reflection.Utils
             return (Func<object, T>)dynam.CreateDelegate(typeof(Func<object, T>));
         }
 
-#endregion
+        #endregion
     }
 }
 
-#endif

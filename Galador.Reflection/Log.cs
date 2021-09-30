@@ -5,34 +5,10 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 
-#if NET472
-using System.Configuration;
-#endif
-
 namespace Galador.Reflection
 {
     public static class Log
     {
-        static Log()
-        {
-#if NET472
-            var prefix = "Log::";
-            var allkeys = ConfigurationManager.AppSettings.AllKeys.Where(x => x.StartsWith(prefix));
-            foreach (var key in allkeys)
-            {
-                var name = key.Substring(prefix.Length);
-                var svalue = ConfigurationManager.AppSettings[key];
-                var value = string.Compare(svalue, "true", true) == 0
-                    || string.Compare(svalue, "on", true) == 0
-                    || string.Compare(svalue, "enable", true) == 0
-                    || string.Compare(svalue, "enabled", true) == 0
-                    || string.Compare(svalue, "1", true) == 0
-                    ;
-                if (value) Enable(name, true);
-            }
-#endif
-        }
-
         public static void Write(string msg) { Trace.Write(msg); }
         public static void WriteLine(string msg) { Trace.WriteLine(msg); }
         public static void Flush() { Trace.Flush(); }

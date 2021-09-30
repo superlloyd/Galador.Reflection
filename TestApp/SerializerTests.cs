@@ -172,7 +172,6 @@ namespace TestApp
             Assert.Equal(o.Me, o);
         }
 
-#if __NET__
         [Fact]
         public void WinFormTest()
         {
@@ -184,7 +183,6 @@ namespace TestApp
             d2.Show();
             //System.Windows.Forms.Application.Run();
         }
-#endif
 
         class Annotation1
         {

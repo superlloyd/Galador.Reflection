@@ -52,7 +52,7 @@ namespace Galador.Reflection.Serialization
 
         // context code
         readonly Dictionary<ulong, object> idToObjects = new Dictionary<ulong, object>();
-        readonly Dictionary<object, ulong> objectsToIds = new Dictionary<object, ulong>(new ReferenceEqualityComparer());
+        readonly Dictionary<object, ulong> objectsToIds = new Dictionary<object, ulong>(new Galador.Reflection.Utils.ReferenceEqualityComparer());
         ulong seed = 50;
 
         protected void Register(ulong id, object o)
@@ -149,7 +149,7 @@ namespace Galador.Reflection.Serialization
             }
             return lost;
         }
-        readonly Dictionary<object, LostData> lostProperty = new Dictionary<object, LostData>(new ReferenceEqualityComparer());
+        readonly Dictionary<object, LostData> lostProperty = new Dictionary<object, LostData>(new Galador.Reflection.Utils.ReferenceEqualityComparer());
 
         public IEnumerable<LostData> GetLostProperties => lostProperty.Values;
 

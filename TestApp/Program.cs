@@ -1,4 +1,5 @@
-﻿using Galador.Reflection.Serialization;
+﻿#if COMMAND_LINE
+using Galador.Reflection.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,8 +15,8 @@ namespace TestApp
         {
             var tSer = new SerializationTests();
 
-            //tSer.CheckWriteIsFastEnough();
-            //tSer.CheckReadIsFastEnough();
+            tSer.CheckWriteIsFastEnough();
+            tSer.CheckReadIsFastEnough();
 
             var ctxt = new Context();
             var csharp = ctxt.GenerateCSharpCode("Generated"
@@ -31,3 +32,4 @@ namespace TestApp
 
     }
 }
+#endif

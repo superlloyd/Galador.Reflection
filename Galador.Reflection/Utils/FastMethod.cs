@@ -13,9 +13,7 @@ namespace Galador.Reflection.Utils
     {
         ParameterInfo[] parameters;
         MethodBase method;
-#if NET472 || NETCOREAPP2_1
         MethodHandler fastMethod;
-#endif
 
         /// <summary>
         /// Name of the method.
@@ -41,9 +39,7 @@ namespace Galador.Reflection.Utils
         {
             parameters = method.GetParameters();
             this.method = method;
-#if NET472 || NETCOREAPP2_1
             fastMethod = EmitHelper.CreateMethodHandler(method);
-#endif
         }
 
         /// <summary>
@@ -69,9 +65,7 @@ namespace Galador.Reflection.Utils
         {
             parameters = method.GetParameters();
             this.method = method;
-#if NET472 || NETCOREAPP2_1
             fastMethod = EmitHelper.CreateMethodHandler(method, doNotCreate);
-#endif
         }
 
         /// <summary>
@@ -98,13 +92,7 @@ namespace Galador.Reflection.Utils
                     args2[i] = parameters[i].DefaultValue;
                 args = args2;
             }
-#if NET472 || NETCOREAPP2_1
             return fastMethod(target, args);
-#else
-            if (method is ConstructorInfo)
-                return ((ConstructorInfo)method).Invoke(args);
-            return method.Invoke(target, args);
-#endif
         }
     }
 }

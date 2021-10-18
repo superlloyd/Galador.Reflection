@@ -118,12 +118,16 @@ namespace TestApp
             {
                 Other = new Model(),
             };
-            var b = PropertyBinding.Create(m, x => x.Name, x => x.Other.Name);
+            var m0 = new Model()
+            {
+                Other = new Model(),
+            };
+            var b = PropertyBinding.Create(() => m.Name, () => m0.Name);
 
             m.Name = "Albert";
-            Assert.Equal(m.Name, m.Other.Name);
+            Assert.Equal(m.Name, m0.Name);
             m.Name = "Einstein";
-            Assert.Equal(m.Name, m.Other.Name);
+            Assert.Equal(m.Name, m0.Name);
 
             var m2 = new Model();
             var b2 = PropertyBinding.Create(() => m.Name, () => m2.Name);
@@ -131,6 +135,10 @@ namespace TestApp
             Assert.Equal(m.Name, m2.Name);
             m.Name = "Landau";
             Assert.Equal(m.Name, m2.Name);
+
+            b.Dispose();
+            m.Name = "fufuf";
+            Assert.NotEqual(m.Name, m0.Name);
 
             GC.KeepAlive(m);
         }

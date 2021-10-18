@@ -14,7 +14,7 @@ namespace Galador.Reflection
 {
     #region PropertyBinding
 
-    public class PropertyBinding
+    public class PropertyBinding : IDisposable
     {
         PropertyPath From, To;
 
@@ -56,9 +56,10 @@ namespace Galador.Reflection
             }
         }
 
-        public static PropertyBinding Create<T, TP>(T root, Expression<Func<T, TP>> from, Expression<Func<T, TP>> to, bool twoWays = false)
+        public void Dispose()
         {
-            return new PropertyBinding(PropertyPath.Create(root, from), PropertyPath.Create(root, to), twoWays);
+            From.Dispose();
+            To.Dispose();
         }
 
         public static PropertyBinding Create<TP>(Expression<Func<TP>> from, Expression<Func<TP>> to, bool twoWays = false)
@@ -122,9 +123,9 @@ namespace Galador.Reflection
     /// this interface is not fired. Very much like XAML UI. They are also weak event, keep a reference to the <see cref="PropertyPath"/>
     /// or it will disappear and no event will be fired.
     /// </remarks>
-    public class PropertyPath : INotifyPropertyChanged
+    public class PropertyPath : INotifyPropertyChanged, IDisposable
     {
-        #region Watch()
+        #region Watch() Create()
 
         /// <summary>
         /// Create a property watch with a method to be called when it <see cref="Value"/> change, with the new value.
@@ -172,10 +173,6 @@ namespace Galador.Reflection
             return pv;
         }
 
-        #endregion
-
-        #region Create()
-
         /// <summary>
         /// Creates a string typed <see cref="PropertyPath"/> from a root and an <see cref="Expression{TDelegate}"/>.
         /// Only member path is supported.
@@ -220,21 +217,21 @@ namespace Galador.Reflection
             var path = ReflectionEx.GetLambdaPath(e, out root);
             if (path.Length == 0)
                 throw new ArgumentException();
-            pvalues = new PropertyValue[path.Length];
-            roValues = new ReadOnlyCollection<PropertyValue>(pvalues);
+            elements = new PropertyValue[path.Length];
             for (int i = 0; i < path.Length; i++)
             {
-                var meIndex = i;
                 var pv = new PropertyValue(this, i, path[i]);
-                pvalues[i] = pv;
+                elements[i] = pv;
             }
             Root = root;
-        } 
+        }
 
         #endregion
 
-        PropertyValue[] pvalues;
-        ReadOnlyCollection<PropertyValue> roValues;
+        bool isDisposed;
+        PropertyValue[] elements;
+
+        void DisposeCheck() { if (isDisposed) throw new ObjectDisposedException(GetType().FullName); }
 
         #region Root
 
@@ -244,15 +241,20 @@ namespace Galador.Reflection
         /// <exception cref="System.InvalidCastException">If one try to set a value that can't be fit in the expression path</exception>
         public object Root
         {
-            get { return root; }
+            get 
+            {
+                DisposeCheck();
+                return root; 
+            }
             set
             {
+                DisposeCheck();
                 if (Equals(Root, value))
                     return;
-                if (value != null && !pvalues[0].Member.Member.DeclaringType.IsInstanceOf(value))
+                if (value != null && !elements[0].Member.Member.DeclaringType.IsInstanceOf(value))
                     throw new InvalidCastException();
                 root = value;
-                pvalues[0].Object = root;
+                elements[0].Object = root;
                 OnPropertyChanged();
             }
         }
@@ -267,26 +269,53 @@ namespace Galador.Reflection
         /// </summary>
         public object Value
         {
-            get { return pvalues[pvalues.Length - 1].Value; }
-            set { pvalues[pvalues.Length - 1].Value = value; }
+            get 
+            {
+                DisposeCheck();
+                return elements[elements.Length - 1].Value; 
+            }
+            set 
+            {
+                DisposeCheck();
+                elements[elements.Length - 1].Value = value; 
+            }
         }
 
         #endregion
 
         /// <summary>
-        /// Gets the elements of the path.
-        /// i.e. if the property path is <c>myObject.A.B.C</c>, it will be the values of <c>A, B, C</c>.
-        /// </summary>
-        public ReadOnlyCollection<PropertyValue> Elements { get { return roValues; } }
-
-        /// <summary>
         /// Occurs when either <see cref="Root"/> or <see cref="Value"/> change.
         /// </summary>
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler PropertyChanged
+        {
+            add
+            {
+                DisposeCheck();
+                mPropertyChanged += value;
+            }
+            remove
+            {
+                DisposeCheck();
+                mPropertyChanged -= value;
+            }
+        }
+        PropertyChangedEventHandler mPropertyChanged;
 
         void OnPropertyChanged([CallerMemberName]string pName = null)
         {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(pName));
+            mPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(pName));
+        }
+
+        public void Dispose()
+        {
+            if (isDisposed)
+                return;
+            isDisposed = true;
+
+            mPropertyChanged = null;
+            root = null;
+            for (int i = elements.Length - 1; i >= 0; i--)
+                elements[i].Object = null;
         }
 
         #region class PropertyValue
@@ -296,7 +325,7 @@ namespace Galador.Reflection
         ///  i.e. if the property path is <c>myObject.A.B.C</c>, there will be one for <c>A</c>, <c>B</c> and <c>C</c>.
         ///  Can either represent a path using a <see cref="PropertyInfo"/> or <see cref="FieldInfo"/>.
         /// </summary>
-        public class PropertyValue
+        class PropertyValue
         {
             internal PropertyValue(PropertyPath path, int index, MemberInfo member)
             {
@@ -368,6 +397,8 @@ namespace Galador.Reflection
 
             void UpdateValue()
             {
+                if (Path.isDisposed)
+                    return;
                 var v = GetMemberValue();
                 if (Equals(v, Value))
                     return;
@@ -383,6 +414,8 @@ namespace Galador.Reflection
                 get { return mValue; }
                 internal set
                 {
+                    if (Path.isDisposed)
+                        return;
                     if (Equals(value, Value))
                         return;
                     SetMemberValue(value);
@@ -394,17 +427,13 @@ namespace Galador.Reflection
 
             void OnValueChanged()
             {
-                if (index == Path.Elements.Count - 1)
+                if (Path.isDisposed)
+                    return;
+                if (index == Path.elements.Length - 1)
                     Path.OnPropertyChanged(nameof(Value));
                 else
-                    Path.Elements[index + 1].Object = Value;
-                ValueChanged?.Invoke(this, EventArgs.Empty);
+                    Path.elements[index + 1].Object = Value;
             }
-
-            /// <summary>
-            /// Fired when <see cref="Value"/> changes.
-            /// </summary>
-            public event EventHandler ValueChanged;
         }
 
         #endregion

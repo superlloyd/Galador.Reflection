@@ -52,8 +52,8 @@ namespace Galador.Reflection
     /// </summary>
     public sealed class Registry : IDisposable, IServiceProvider
     {
-        TypeTree<ServiceDefinition> services = new TypeTree<ServiceDefinition>();
-        TypeTree<object> scope = new TypeTree<object>();
+        readonly TypeTree<ServiceDefinition> services = new TypeTree<ServiceDefinition>();
+        readonly TypeTree<object> scope = new TypeTree<object>();
 
         #region ctor() Dispose()
 

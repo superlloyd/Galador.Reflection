@@ -41,13 +41,12 @@ namespace Galador.Reflection.Utils
     public static class TypeTreeActivation
     {
         public static bool IsBaseClass(Type parent, Type child)
-        {
-            return parent.GetTypeInfo().IsAssignableFrom(child.GetTypeInfo());
-        }
+            => parent.IsAssignableFrom(child);
+
         public static bool IsInstance(Type parent, object child)
         {
             if (child == null)
-                return parent.GetTypeInfo().IsClass;
+                return parent.IsClass;
             return IsBaseClass(parent, child.GetType());
         }
         public static bool CanBeInstantiated(Type type)

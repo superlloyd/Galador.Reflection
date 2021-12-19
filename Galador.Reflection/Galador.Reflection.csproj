@@ -4,4 +4,16 @@
     <TargetFrameworks>net5.0;net472;net6.0</TargetFrameworks>
   </PropertyGroup>
 
+	<!-- Nuget publish data -->
+	<PropertyGroup>
+	  <PackageId>Galador.Reflection</PackageId>
+	  <Authors>Lloyd Dupont</Authors>
+	  <Version>1.1.0</Version>
+	  <PackageProjectUrl>https://github.com/superlloyd/Galador.Reflection</PackageProjectUrl>
+	  <Description>Here one can find:
+- A binary, strongly typed, yet verssion tolerant serializer (Serializer class).
+- Yet another type resolver (Registry class).
+- Fast Reflection type (FastType class)</Description>
+	</PropertyGroup>
+
 </Project>

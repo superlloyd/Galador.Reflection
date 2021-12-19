@@ -7,6 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestApp", "TestApp\TestApp.
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0BC3D4CC-A0C7-4552-89BE-2B1612F82C5D}"
 	ProjectSection(SolutionItems) = preProject
+		build.bat = build.bat
 		nuget\Galador.Reflection.nuspec = nuget\Galador.Reflection.nuspec
 		LICENSE.txt = LICENSE.txt
 		README.md = README.md

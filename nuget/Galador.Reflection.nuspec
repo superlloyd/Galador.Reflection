@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
    <metadata minClientVersion="2.8.1">
        <id>Galador.Reflection</id>
-       <version>1.0.0</version>
+       <version>1.1.0</version>
        <title>Compact .NET Serializer, FastType (reflection replacement) and Registry-IoC class</title>
        <authors>Lloyd Dupont</authors>
        <owners>Lloyd Dupont</owners>
@@ -18,6 +18,8 @@
      <releaseNotes>
        [1.0.0]
        Stable Nuget release
+	   [1.1.0]
+	   minor tweaks and .NET5 and 6 support
      </releaseNotes>
     <tags>xamarin, android, ios, windows</tags>
     <dependencies>

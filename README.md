@@ -37,13 +37,15 @@ But unlike JSON default format this also store object as reference and save type
 To serialize an object one does:
 
     var o = ....
-    var mem = new MemoryStream();
-    Serializer.Serialize(o, mem);
+    using var mem = new MemoryStream();
+    using var writer = new PrimitiveBinaryWriter(mem);
+    Serializer.Serialize(o, writer);
 
 To deserialize an object one does
 
-    var mem = OpenFile();
-    var o = Serializer.Deserialize(mem);
+    using var mem = OpenFile();
+    using var reader = new PrimitiveBinaryReader(mem);
+    var o = Serializer.Deserialize(reader);
 
 To serialize opaque type, such as a `Bitmap` one must create a surrogate class
 

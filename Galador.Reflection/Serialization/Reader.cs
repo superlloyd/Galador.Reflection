@@ -509,7 +509,9 @@ namespace Galador.Reflection.Serialization
                             || !p.RuntimeMember.CanSet
                             || !p.RuntimeMember.SetValue(o, AsNormalData(value)))
                         {
-                            Log.Warning($"Can't restore Member {args.TypeData.FullName}.{m.Name}");
+                            var warning = $"Can't restore Member {args.TypeData.FullName}.{m.Name}";
+                            if (warnOnce.Add(warning))
+                                Log.Warning(warning);
                             GetLost(o).Members.Add(new LostData.Member(m, AsNormalData(value)));
                         }
                     }
@@ -547,6 +549,8 @@ namespace Galador.Reflection.Serialization
 
             return o ?? od;
         }
+        private readonly HashSet<string> warnOnce = new HashSet<string>();
+
         void ReadList(object o)
         {
             var isRO = input.ReadBool();

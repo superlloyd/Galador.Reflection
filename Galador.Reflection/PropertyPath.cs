@@ -384,7 +384,7 @@ namespace Galador.Reflection
                     UpdateValue();
                     if (mObject is INotifyPropertyChanged)
                     {
-                        watcher = WeakEvents.AddWeakHandler((INotifyPropertyChanged)mObject, this, (x, args) =>
+                        watcher = AddWeakHandler((INotifyPropertyChanged)mObject, this, (x, args) =>
                         {
                             if (args.PropertyName == null || args.PropertyName == x.Name)
                                 x.UpdateValue();
@@ -394,6 +394,29 @@ namespace Galador.Reflection
             }
             object mObject;
             PropertyChangedEventHandler watcher;
+            
+            static PropertyChangedEventHandler AddWeakHandler<T>(INotifyPropertyChanged model, T target, Action<T, PropertyChangedEventArgs> action)
+                where T : class
+            {
+                var weakRef = new WeakReference(target);
+                PropertyChangedEventHandler handler = null;
+                handler = new PropertyChangedEventHandler(
+                    (s, e) =>
+                    {
+                        var strongRef = weakRef.Target as T;
+                        if (strongRef != null)
+                        {
+                            action(strongRef, e);
+                        }
+                        else
+                        {
+                            model.PropertyChanged -= handler;
+                            handler = null;
+                        }
+                    });
+                model.PropertyChanged += handler;
+                return handler;
+            }
 
             void UpdateValue()
             {

@@ -401,7 +401,7 @@ namespace Galador.Reflection.Serialization
                         var rType = GetType(m.Type.Type);
                         if (!rType.IsSupported)
                             continue;
-                        if (m.GetAttribute<NotSerializedAttribute>() != null)
+                        if (m.GetAttribute<NotSerializedAttribute>() != null || m.GetAttribute<NonSerializedAttribute>() != null)
                             continue;
                         if (m.GetAttribute<SerializedAttribute>() == null)
                         {

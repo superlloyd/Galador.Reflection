@@ -582,7 +582,8 @@ namespace TestApp
             Check(true);
             Check(' ');
             Check((byte)23);
-            Check(new TypeDescription(typeof(string[]))); // check TypeConverter
+            // no longer supported .. :(
+            //Check(new TypeDescription(typeof(string[]))); // check TypeConverter
             Check((sbyte)23);
             Check((short)23);
             Check((ushort)23);
@@ -758,7 +759,7 @@ namespace TestApp
         }
 
         [Fact]
-        public void CheckTypeRestored()
+        public unsafe void CheckTypeRestored()
         {
             CheckType(typeof(int*));
             CheckType<int***[]>();

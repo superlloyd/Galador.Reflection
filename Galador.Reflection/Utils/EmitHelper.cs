@@ -39,11 +39,18 @@ namespace Galador.Reflection.Utils
             catch { }
         }
         public static bool SupportsEmit { get; private set; }
+        public static void CheckSupportEmits()
+        {
+            if (!SupportsEmit)
+                throw new InvalidOperationException("Emit Unsupported");
+        }
 
         #region CreateMethodHandler() CreateParameterlessConstructorHandler()
 
         public static MethodHandler CreateMethodHandler(MethodBase method, bool ctorDoNotCreate = false)
         {
+            CheckSupportEmits();
+
             var dynam = new DynamicMethod(string.Empty, typeof(object), ManyObjects, Module, true);
             ILGenerator il = dynam.GetILGenerator();
 
@@ -106,6 +113,8 @@ namespace Galador.Reflection.Utils
 
         public static Func<object> CreateParameterlessConstructorHandler(Type type)
         {
+            CheckSupportEmits();
+
             var dynam = new DynamicMethod(string.Empty, typeof(object), Type.EmptyTypes, Module, true);
             ILGenerator il = dynam.GetILGenerator();
 
@@ -116,7 +125,9 @@ namespace Galador.Reflection.Utils
                 il.Emit(OpCodes.Box, type);
             }
             else
-                il.Emit(OpCodes.Newobj, type.GetTypeInfo().GetConstructor(Type.EmptyTypes));
+            {
+                il.Emit(OpCodes.Newobj, type.GetConstructor(Type.EmptyTypes));
+            }
 
             il.Emit(OpCodes.Ret);
 
@@ -124,6 +135,8 @@ namespace Galador.Reflection.Utils
         }
         public static Func<object> CreateParameterlessConstructorHandler(ConstructorInfo ctor)
         {
+            CheckSupportEmits();
+
             var dynam = new DynamicMethod(string.Empty, typeof(object), Type.EmptyTypes, Module, true);
             ILGenerator il = dynam.GetILGenerator();
 
@@ -148,6 +161,8 @@ namespace Galador.Reflection.Utils
 
         public static Action<object, object> CreateFieldSetterHandler(FieldInfo fieldInfo)
         {
+            CheckSupportEmits();
+
             var dynam = new DynamicMethod(string.Empty, typeof(void), TwoObjects, Module, true);
             ILGenerator il = dynam.GetILGenerator();
 
@@ -164,6 +179,8 @@ namespace Galador.Reflection.Utils
 
         public static Func<object, object> CreateFieldGetterHandler(FieldInfo fieldInfo)
         {
+            CheckSupportEmits();
+
             var dynam = new DynamicMethod(string.Empty, typeof(object), SingleObject, Module, true);
             ILGenerator il = dynam.GetILGenerator();
 
@@ -179,6 +196,8 @@ namespace Galador.Reflection.Utils
 
         public static Action<object, object> CreatePropertySetterHandler(PropertyInfo propertyInfo)
         {
+            CheckSupportEmits();
+
             var dynam = new DynamicMethod(string.Empty, typeof(void), TwoObjects, Module, true);
             ILGenerator il = dynam.GetILGenerator();
             MethodInfo methodInfo = propertyInfo.SetMethod;
@@ -200,6 +219,8 @@ namespace Galador.Reflection.Utils
 
         public static Func<object, object> CreatePropertyGetterHandler(PropertyInfo propertyInfo)
         {
+            CheckSupportEmits();
+
             var dynam = new DynamicMethod(string.Empty, typeof(object), SingleObject, Module, true);
             ILGenerator il = dynam.GetILGenerator();
             MethodInfo methodInfo = propertyInfo.GetMethod;
@@ -250,6 +271,8 @@ namespace Galador.Reflection.Utils
 
         public static Action<object, T> CreateFieldSetter<T>(FieldInfo member)
         {
+            CheckSupportEmits();
+
             var dynam = new DynamicMethod(string.Empty, typeof(void), new Type[] { typeof(object), typeof(T) }, Module, true);
             ILGenerator il = dynam.GetILGenerator();
 
@@ -263,6 +286,8 @@ namespace Galador.Reflection.Utils
         }
         public static Func<object, T> CreateFieldGetter<T>(FieldInfo member)
         {
+            CheckSupportEmits();
+
             var dynam = new DynamicMethod(string.Empty, typeof(T), new Type[] { typeof(object) }, Module, true);
             ILGenerator il = dynam.GetILGenerator();
 
@@ -275,6 +300,8 @@ namespace Galador.Reflection.Utils
         }
         public static Action<object, T> CreatePropertySetter<T>(PropertyInfo member)
         {
+            CheckSupportEmits();
+
             var dynam = new DynamicMethod(string.Empty, typeof(void), new Type[] { typeof(object), typeof(T) }, Module, true);
             ILGenerator il = dynam.GetILGenerator();
 
@@ -290,6 +317,8 @@ namespace Galador.Reflection.Utils
         }
         public static Func<object, T> CreatePropertyGetter<T>(PropertyInfo member)
         {
+            CheckSupportEmits();
+
             var dynam = new DynamicMethod(string.Empty, typeof(T), new Type[] { typeof(object) }, Module, true);
             ILGenerator il = dynam.GetILGenerator();
 

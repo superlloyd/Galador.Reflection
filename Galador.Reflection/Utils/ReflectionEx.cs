@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -170,7 +171,7 @@ namespace Galador.Reflection.Utils
         public static IEnumerable<ConstructorInfo> TryGetConstructors(this Type type, params Type[] argsType)
         {
             var ctors =
-                from ci in type.GetTypeInfo().DeclaredConstructors
+                from ci in type.GetConstructors()
                 where !ci.IsStatic
                 let okvalue = Catch(() => ci.GetParameters())
                 where okvalue.ok
@@ -305,7 +306,8 @@ namespace Galador.Reflection.Utils
         /// <returns>An uninitialized object</returns>
         internal static object GetUninitializedObject(this Type type)
         {
-            return System.Runtime.Serialization.FormatterServices.GetUninitializedObject(type);
+            Debugger.Break();
+            return System.Runtime.Serialization.FormatterServices.GetSafeUninitializedObject(type);
         }
 
     }

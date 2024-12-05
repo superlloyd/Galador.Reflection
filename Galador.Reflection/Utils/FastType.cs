@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.Serialization;
 using System.Threading.Tasks;
 
 namespace Galador.Reflection.Utils
@@ -75,7 +77,8 @@ namespace Galador.Reflection.Utils
             if (!IsReference)
                 return Activator.CreateInstance(Type);
 
-            return System.Runtime.Serialization.FormatterServices.GetUninitializedObject(Type);
+            //Debugger.Break();
+            return FormatterServices.GetSafeUninitializedObject(Type);
         }
 
         FastMethod emtpy_constructor;
@@ -83,25 +86,24 @@ namespace Galador.Reflection.Utils
         Func<object> fastCtor;
         void SetConstructor()
         {
-            var ctor = Type.TryGetConstructors().OrderBy(x => x.GetParameters().Length).FirstOrDefault();
-            if (ctor == null)
-            {
-                if (Type.GetTypeInfo().IsValueType)
-                    fastCtor = EmitHelper.CreateParameterlessConstructorHandler(Type);
-                return;
-            }
+            var (ctor, count) = (
+                from ci in Type.TryGetConstructors()
+                let ciargs = ci.GetParameters()
+                let cidefault = ciargs.Where(x => x.HasDefaultValue).Count()
+                orderby ciargs.Length - cidefault ascending, ciargs.Length descending
+                select (ci, ciargs.Length - cidefault)
+                ).FirstOrDefault();
 
-            var ps = ctor.GetParameters();
-            var cargs = new object[ps.Length];
-            for (int i = 0; i < ps.Length; i++)
+            switch ((CI: ctor, N: count))
             {
-                var p = ps[i];
-                if (!p.HasDefaultValue)
-                    return;
-                cargs[i] = p.DefaultValue;
+                case { CI: null } when Type.IsValueType:
+                    fastCtor = EmitHelper.CreateParameterlessConstructorHandler(Type);
+                    break;
+                case { CI: not null, N: 0 }:
+                    emtpy_constructor = new FastMethod(ctor);
+                    empty_params = ctor.GetParameters().Select(x => x.DefaultValue).ToArray();
+                    break;
             }
-            emtpy_constructor = new FastMethod(ctor);
-            empty_params = cargs;
         }
 
         #endregion

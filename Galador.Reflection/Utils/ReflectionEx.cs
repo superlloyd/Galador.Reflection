@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.Eventing.Reader;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -171,7 +174,7 @@ namespace Galador.Reflection.Utils
         public static IEnumerable<ConstructorInfo> TryGetConstructors(this Type type, params Type[] argsType)
         {
             var ctors =
-                from ci in type.GetConstructors()
+                from ci in type.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
                 where !ci.IsStatic
                 let okvalue = Catch(() => ci.GetParameters())
                 where okvalue.ok
@@ -190,57 +193,49 @@ namespace Galador.Reflection.Utils
         /// <param name="type">The type to search for constructor.</param>
         /// <param name="args">Constructor arguments.</param>
         /// <returns>A new object in case of success or null.</returns>
+        public static T TryConstruct<T>(params object[] args)
+            => (T)TryConstruct(typeof(T), args);
+
+        /// <summary>
+        /// Try to find a constructor matching the arguments and call it. It will also consider default parameters value.
+        /// </summary>
+        /// <param name="type">The type to search for constructor.</param>
+        /// <param name="args">Constructor arguments.</param>
+        /// <returns>A new object in case of success or null.</returns>
         public static object TryConstruct(this Type type, params object[] args)
         {
             var ctors =
-                from ci in type.GetTypeInfo().DeclaredConstructors
-                where !ci.IsStatic
-                let okvalue = Catch(() => ci.GetParameters())
-                where okvalue.ok
-                let ps = okvalue.value
-                let N = ps.Where(x => !x.HasDefaultValue).Count()
-                where !ci.IsStatic
-                where (args == null && N == 0) || (args != null && args.Length >= N && args.Length <= ps.Length)
-                where Enumerable.Range(0, args.Length).All(i => IsInstanceOf(ps[i].ParameterType, args[i]))
-                orderby ci.IsPublic descending, ps.Length descending
-                select ci;
-            var ctor = ctors.FirstOrDefault();
-            if (ctor == null && type.GetTypeInfo().IsValueType && (args == null || args.Length == 0))
-                return Activator.CreateInstance(type);
-            if (ctor == null)
-                return null;
-            return TryConstruct(ctor, args);
-        }
+                from ctor in type.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                let cparams = ctor.GetParameters()
+                where cparams.All(pi => GetParameters(pi).Any())
+                let pc = cparams.Select(pi => GetParameters(pi).First()).Count(x => x != null)
+                orderby pc descending, cparams.Length ascending, ctor.IsPublic descending
+                select new
+                {
+                    Ctor = ctor,
+                    Args = cparams.Select(pi => GetParameters(pi).First()).ToArray(),
+                };
 
-        /// <summary>
-        /// Try to call a constructor with the given argument. Will check argument type and will fill the blank with default parameter values.
-        /// </summary>
-        /// <param name="ctor">The constructor to used.</param>
-        /// <param name="args">The arguments to use.</param>
-        /// <returns>A newly constructed object, or null.</returns>
-        public static object TryConstruct(this ConstructorInfo ctor, params object[] args)
-        {
-            var (ok, ps) = Catch(() => ctor.GetParameters());
-            if (!ok)
-                return GetUninitializedObject(ctor.DeclaringType);
-            var cargs = new object[ps.Length];
-            for (int i = 0; i < ps.Length; i++)
+            var info = ctors.FirstOrDefault();
+            if (info == null)
             {
-                var p = ps[i];
-                if (args == null || args.Length <= i)
-                {
-                    if (!p.HasDefaultValue)
-                        return null;
-                    cargs[i] = p.DefaultValue;
-                }
-                else
-                {
-                    if (!IsInstanceOf(p.ParameterType, args[i]))
-                        return null;
-                    cargs[i] = args[i];
-                }
+                if (type.IsValueType)
+                    return Activator.CreateInstance(type);
+                return null;
             }
-            return ctor.Invoke(cargs);
+            return info.Ctor.Invoke(type, info.Args);
+
+            IEnumerable<object> GetParameters(ParameterInfo pi)
+            {
+                foreach (var x in args.Where(x => x != null).Where(x => pi.ParameterType.IsInstanceOf(x)))
+                    yield return x;
+
+                if (pi.HasDefaultValue)
+                    yield return pi.DefaultValue;
+
+                if (pi.ParameterType.IsClass || pi.ParameterType.IsInterface)
+                    yield return null;
+            }
         }
 
         /// <summary>
@@ -306,8 +301,11 @@ namespace Galador.Reflection.Utils
         /// <returns>An uninitialized object</returns>
         internal static object GetUninitializedObject(this Type type)
         {
-            Debugger.Break();
-            return System.Runtime.Serialization.FormatterServices.GetSafeUninitializedObject(type);
+#if NETFRAMEWORK
+            return FormatterServices.GetSafeUninitializedObject(type);
+#else
+            return RuntimeHelpers.GetUninitializedObject(type);
+#endif
         }
 
     }

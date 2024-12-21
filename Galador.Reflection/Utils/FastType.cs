@@ -77,8 +77,11 @@ namespace Galador.Reflection.Utils
             if (!IsReference)
                 return Activator.CreateInstance(Type);
 
-            //Debugger.Break();
+#if NETFRAMEWORK
             return FormatterServices.GetSafeUninitializedObject(Type);
+#else
+            return RuntimeHelpers.GetUninitializedObject(Type);
+#endif
         }
 
         FastMethod emtpy_constructor;
@@ -106,7 +109,7 @@ namespace Galador.Reflection.Utils
             }
         }
 
-        #endregion
+#endregion
 
         /// <summary>
         /// Whether this is a real class (<c>false</c>), or a generic one missing arguments (<c>true</c>).

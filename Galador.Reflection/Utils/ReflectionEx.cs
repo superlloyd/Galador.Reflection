@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Galador.Reflection.Utils
@@ -154,15 +155,33 @@ namespace Galador.Reflection.Utils
             return t.IsBaseClass(o.GetType());
         }
 
-
-        static (bool ok, T[] value) Catch<T>(Func<T[]> getter)
+        static ParameterInfo[] SafeGetParameters(Type type, ConstructorInfo ci)
         {
-            try { return (true, getter()); }
+            try
+            {
+                var parameters = ci.GetParameters();
+                if (parameters == null || parameters.Length == 0)
+                    return [];
+
+                foreach (var p in parameters)
+                {
+                    // check that one can read the default value, it cause issues in .NET9
+                    var has = p.HasDefaultValue;
+                }
+                return parameters;
+            }
             catch (Exception ex)
             {
-                Log.Warning(ex);
-                return (false, Array.Empty<T>());
+                try
+                {
+                    Log.Debug($"Couldn't Load Constructor {type.Name}({ci}): {ex.Message}");
+                }
+                catch
+                {
+                    Log.Debug($"Couldn't Load a Constructor for {type.Name}: {ex.Message}");
+                }
             }
+            return null;
         }
 
         /// <summary>
@@ -176,9 +195,8 @@ namespace Galador.Reflection.Utils
             var ctors =
                 from ci in type.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
                 where !ci.IsStatic
-                let okvalue = Catch(() => ci.GetParameters())
-                where okvalue.ok
-                let ps = okvalue.value
+                let ps = SafeGetParameters(type, ci)
+                where ps != null
                 let N = ps.Where(x => !x.HasDefaultValue).Count()
                 where (argsType == null && N == 0) || (argsType != null && argsType.Length >= N && argsType.Length <= ps.Length)
                 where argsType.Length == 0 || Enumerable.Range(0, argsType.Length).All(i => IsBaseClass(ps[i].ParameterType, argsType[i]))

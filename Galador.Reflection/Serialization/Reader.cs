@@ -490,6 +490,7 @@ namespace Galador.Reflection.Serialization
                 return candidates[ic];
             }
 
+            currentPath.Push();
             foreach (var m in args.TypeData.RuntimeMembers)
             {
                 var p = FindRuntimeMember(m);
@@ -500,6 +501,7 @@ namespace Galador.Reflection.Serialization
                 catch (SystemException ex) { Log.Warning($"Can't read current value of {args.TypeData.FullName}.{m.Name}: {ex}"); }
                 var margs = new ReadArgs(pt, p?.Type, currentValue);
 
+                currentPath.Set('.' + m.Name);
                 var value = ReadImpl(margs);
                 if (o != null)
                 {
@@ -534,18 +536,23 @@ namespace Galador.Reflection.Serialization
             switch (args.TypeData.CollectionType)
             {
                 case RuntimeCollectionType.IList:
+                    currentPath.Set("[..]");
                     ReadList(o ?? od);
                     break;
                 case RuntimeCollectionType.IDictionary:
+                    currentPath.Set("[..,..]");
                     ReadDict(o ?? od);
                     break;
                 case RuntimeCollectionType.ICollectionT:
+                    currentPath.Set("[]");
                     ReadCollection(o ?? od, type, args.TypeData);
                     break;
                 case RuntimeCollectionType.IDictionaryKV:
+                    currentPath.Set("[..,..]");
                     ReadDict(o ?? od, type, args.TypeData);
                     break;
             }
+            currentPath.Pop();
 
             return o ?? od;
         }

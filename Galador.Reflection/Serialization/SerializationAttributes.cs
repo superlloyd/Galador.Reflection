@@ -8,7 +8,7 @@ namespace Galador.Reflection.Serialization
     /// <summary>
     /// Attribute that control serialization behavior for a particular type.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface, AllowMultiple = false, Inherited = false)]
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface | AttributeTargets.Enum, AllowMultiple = false, Inherited = false)]
     public class SerializationSettingsAttribute : Attribute
     {
         /// <summary>

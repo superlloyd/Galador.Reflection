@@ -4,7 +4,8 @@
 	<TargetFramework>net9.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-
+	  <Nullable>enable</Nullable>
+	  <LangVersion>preview</LangVersion>
 	  <IsPackable>false</IsPackable>
   </PropertyGroup>
 

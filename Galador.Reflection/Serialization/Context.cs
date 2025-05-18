@@ -53,7 +53,10 @@ namespace Galador.Reflection.Serialization
         // context code
         readonly Dictionary<ulong, object> idToObjects = new Dictionary<ulong, object>();
         readonly Dictionary<object, ulong> objectsToIds = new Dictionary<object, ulong>(new Galador.Reflection.Utils.ReferenceEqualityComparer());
+        readonly Dictionary<object, string> objectsToPaths = new Dictionary<object, string>(new Galador.Reflection.Utils.ReferenceEqualityComparer());
         ulong seed = 50;
+
+        protected PropertyPathInfo currentPath = new PropertyPathInfo();
 
         protected void Register(ulong id, object o)
         {
@@ -69,6 +72,16 @@ namespace Galador.Reflection.Serialization
 
             idToObjects[id] = o;
             objectsToIds[o] = id;
+
+            var newPath = currentPath.ToString();
+            if (objectsToPaths.TryGetValue(o, out var previousPath))
+            {
+                Log.Warning($"Object.Read()\r\n\tResolving new path: {newPath}\r\n\tWith Old Object: {previousPath}");
+            }
+            else
+            {
+                objectsToPaths[o] = newPath;
+            }
         }
 
         protected ulong NewId() => seed++;

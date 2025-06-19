@@ -148,10 +148,16 @@ namespace Galador.Reflection.Utils
         /// <param name="t">The potential base class.</param>
         /// <param name="o">An instance of a possible subclass.</param>
         /// <returns>Whether <paramref name="o"/> is a <paramref name="t"/></returns>
-        public static bool IsInstanceOf(this Type t, object o)
+        public static bool IsInstanceOf(this Type t, object? o)
         {
             if (o == null)
+            {
+                var nt = Nullable.GetUnderlyingType(t);
+                if (nt != null)
+                    return true;
                 return t.IsClass || t.IsInterface;
+            }
+
             return t.IsBaseClass(o.GetType());
         }
 

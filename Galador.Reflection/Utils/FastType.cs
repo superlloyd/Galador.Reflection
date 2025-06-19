@@ -604,7 +604,7 @@ namespace Galador.Reflection.Utils
         /// <param name="instance">The instance on which the member value will be set.</param>
         /// <param name="value">The value that must be set.</param>
         /// <returns>Whether the value has been set, or not.</returns>
-        public bool SetValue(object instance, object value)
+        public bool SetValue(object? instance, object? value)
         {
             if (!CanSet)
                 return false;

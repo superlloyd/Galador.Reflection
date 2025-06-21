@@ -76,7 +76,7 @@ namespace Galador.Reflection.Serialization
             var newPath = currentPath.ToString();
             if (objectsToPaths.TryGetValue(o, out var previousPath))
             {
-                Log.Warning($"Object.Read()\r\n\tResolving new path: {newPath}\r\n\tWith Old Object: {previousPath}");
+                Log.Warning($"Object.Read()\r\n\tResolving new path: {newPath}\r\n\tWith Old Object: {previousPath}, for {o?.GetType().FullName}");
             }
             else
             {

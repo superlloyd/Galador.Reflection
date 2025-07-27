@@ -209,6 +209,8 @@ namespace Galador.Reflection
 
         #endregion
 
+        public IEnumerable<ServiceDefinition> Services => services.GetKeyValues().Select(x => x.value);
+
         object IServiceProvider.GetService(Type serviceType) { return Resolve(serviceType); }
 
         /// <summary>

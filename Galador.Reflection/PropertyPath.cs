@@ -239,7 +239,7 @@ namespace Galador.Reflection
         /// The root of the path. i.e. if the property path is <c>myObject.A.B.C</c>, it will be the value of <c>myObject</c>.
         /// </summary>
         /// <exception cref="System.InvalidCastException">If one try to set a value that can't be fit in the expression path</exception>
-        public object Root
+        public object? Root
         {
             get 
             {
@@ -258,7 +258,7 @@ namespace Galador.Reflection
                 OnPropertyChanged();
             }
         }
-        object root;
+        object? root;
 
         #endregion
 
@@ -299,9 +299,9 @@ namespace Galador.Reflection
                 mPropertyChanged -= value;
             }
         }
-        PropertyChangedEventHandler mPropertyChanged;
+        PropertyChangedEventHandler? mPropertyChanged;
 
-        void OnPropertyChanged([CallerMemberName]string pName = null)
+        void OnPropertyChanged([CallerMemberName]string? pName = null)
         {
             mPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(pName));
         }
@@ -350,14 +350,14 @@ namespace Galador.Reflection
             /// </summary>
             public string Name { get { return Member.Name; } }
 
-            void SetMemberValue(object value)
+            void SetMemberValue(object? value)
             {
                 if (Object == null)
                     return;
                 if (!Member.SetValue(Object, value))
                     throw new InvalidOperationException();
             }
-            object GetMemberValue()
+            object? GetMemberValue()
             {
                 if (Object == null)
                     return null;
@@ -367,7 +367,7 @@ namespace Galador.Reflection
             /// <summary>
             /// The instance to which this <see cref="Member"/> applies.
             /// </summary>
-            public object Object
+            public object? Object
             {
                 get { return mObject; }
                 internal set
@@ -392,10 +392,10 @@ namespace Galador.Reflection
                     }
                 }
             }
-            object mObject;
-            PropertyChangedEventHandler watcher;
+            object? mObject;
+            PropertyChangedEventHandler? watcher;
             
-            static PropertyChangedEventHandler AddWeakHandler<T>(INotifyPropertyChanged model, T target, Action<T, PropertyChangedEventArgs> action)
+            static PropertyChangedEventHandler? AddWeakHandler<T>(INotifyPropertyChanged model, T target, Action<T, PropertyChangedEventArgs> action)
                 where T : class
             {
                 var weakRef = new WeakReference(target);
@@ -432,7 +432,7 @@ namespace Galador.Reflection
             /// <summary>
             /// The value of the <see cref="Member"/> for <see cref="Object"/>.
             /// </summary>
-            public object Value
+            public object? Value
             {
                 get { return mValue; }
                 internal set
@@ -446,7 +446,7 @@ namespace Galador.Reflection
                     OnValueChanged();
                 }
             }
-            object mValue;
+            object? mValue;
 
             void OnValueChanged()
             {

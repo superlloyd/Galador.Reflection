@@ -28,7 +28,7 @@ namespace Galador.Reflection.Utils
         /// <summary>
         /// Gets the <see cref="FastType"/> associated with <paramref name="type"/> type.
         /// </summary>
-        public static FastType GetType(Type type)
+        public static FastType? GetType(Type? type)
         {
             if (type == null)
                 return null;
